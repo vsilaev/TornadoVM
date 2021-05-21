@@ -56,9 +56,6 @@ public class OCLInstalledCode extends InstalledCode implements TornadoInstalledC
 
     private final OCLKernelScheduler DEFAULT_SCHEDULER;
 
-    private static final int CL_MEM_SIZE = 8;
-
-    private final ByteBuffer buffer = ByteBuffer.allocate(CL_MEM_SIZE);
     private final byte[] code;
     private final OCLProgram program;
     private final OCLDeviceContext deviceContext;
@@ -80,7 +77,6 @@ public class OCLInstalledCode extends InstalledCode implements TornadoInstalledC
         this.kernel = kernel;
         this.program = program;
         valid = kernel != null;
-        buffer.order(deviceContext.getByteOrder());
     }
 
     @Override
@@ -121,7 +117,7 @@ public class OCLInstalledCode extends InstalledCode implements TornadoInstalledC
 
         int task;
         if (meta == null) {
-            task = deviceContext.enqueueNDRangeKernel(kernel, 1, null, singleThreadGlobalWorkSize, singleThreadLocalWorkSize, internalEvents);
+            task = deviceContext.enqueueNDRangeKernel(kernel, 1, null, singleThreadGlobalWorkSize, singleThreadLocalWorkSize, internalEvents); // OR NULL???
             deviceContext.flush();
             deviceContext.finish();
         } else {
@@ -183,6 +179,8 @@ public class OCLInstalledCode extends InstalledCode implements TornadoInstalledC
      */
     private void setKernelArgs(final OCLByteBuffer stack, final ObjectBuffer atomicSpace, TaskMetaData meta) {
         int index = 0;
+        ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
+        buffer.order(deviceContext.getByteOrder());
 
         if (deviceContext.needsBump()) {
             buffer.clear();
@@ -250,12 +248,11 @@ public class OCLInstalledCode extends InstalledCode implements TornadoInstalledC
         } else {
             waitEvents = events;
         }
-
         int task;
         if (meta == null) {
             task = deviceContext.enqueueNDRangeKernel(kernel, 1, null, singleThreadGlobalWorkSize, singleThreadLocalWorkSize, waitEvents);
         } else {
-            if (meta.isParallel()) {
+            if (meta.isParallel() || meta.isWorkerGridAvailable()) {
                 if (meta.enableThreadCoarsener()) {
                     task = DEFAULT_SCHEDULER.submit(kernel, meta, waitEvents, batchThreads);
                 } else {
@@ -269,7 +266,7 @@ public class OCLInstalledCode extends InstalledCode implements TornadoInstalledC
                         System.out.println("\tDevice  : " + ((OCLTornadoDevice) meta.getLogicDevice()).getPhysicalDevice().getDeviceName());
                     }
                 }
-                if (meta.getGlobalWork() == null) {
+                if ((meta.getGlobalWork() == null) || (meta.getGlobalWork().length == 0)) {
                     task = deviceContext.enqueueNDRangeKernel(kernel, 1, null, singleThreadGlobalWorkSize, singleThreadLocalWorkSize, waitEvents);
                 } else {
                     task = deviceContext.enqueueNDRangeKernel(kernel, 1, null, meta.getGlobalWork(), meta.getLocalWork(), waitEvents);
@@ -290,8 +287,8 @@ public class OCLInstalledCode extends InstalledCode implements TornadoInstalledC
         return task;
     }
 
-    private void executeSingleThread() {
-        deviceContext.enqueueNDRangeKernel(kernel, 1, null, singleThreadGlobalWorkSize, singleThreadLocalWorkSize, null);
+    private int executeSingleThread() {
+        return deviceContext.enqueueNDRangeKernel(kernel, 1, null, singleThreadGlobalWorkSize, singleThreadLocalWorkSize, null);
     }
 
     private void debugInfo(final TaskMetaData meta) {
@@ -336,7 +333,7 @@ public class OCLInstalledCode extends InstalledCode implements TornadoInstalledC
         return task;
     }
 
-    private void launchKernel(final OCLCallStack stack, final TaskMetaData meta, long batchThreads) {
+    private int launchKernel(final OCLCallStack stack, final TaskMetaData meta, long batchThreads) {
         final int task;
         if (meta.isParallel() || meta.isWorkerGridAvailable()) {
             task = submitParallel(meta, batchThreads);
@@ -351,7 +348,9 @@ public class OCLInstalledCode extends InstalledCode implements TornadoInstalledC
 
         // read the stack
         if (meta.enableExceptions()) {
-            stack.enqueueRead(null);
+            return stack.enqueueRead(new int[] {task});
+        } else {
+            return task;
         }
     }
 
@@ -361,7 +360,7 @@ public class OCLInstalledCode extends InstalledCode implements TornadoInstalledC
         }
     }
 
-    private void submitWithoutEvents(final OCLCallStack stack, final ObjectBuffer atomicSpace, final TaskMetaData meta, long batchThreads) {
+    private int submitWithoutEvents(final OCLCallStack stack, final ObjectBuffer atomicSpace, final TaskMetaData meta, long batchThreads) {
 
         checkKernelNotNull();
 
@@ -381,9 +380,9 @@ public class OCLInstalledCode extends InstalledCode implements TornadoInstalledC
 
         guarantee(kernel != null, "kernel is null");
         if (meta == null) {
-            executeSingleThread();
+            return executeSingleThread();
         } else {
-            launchKernel(stack, meta, batchThreads);
+            return launchKernel(stack, meta, batchThreads);
         }
     }
 
@@ -410,8 +409,7 @@ public class OCLInstalledCode extends InstalledCode implements TornadoInstalledC
 
     @Override
     public int launchWithoutDependencies(CallStack stack, ObjectBuffer atomicSpace, TaskMetaData meta, long batchThreads) {
-        submitWithoutEvents((OCLCallStack) stack, atomicSpace, meta, batchThreads);
-        return -1;
+        return submitWithoutEvents((OCLCallStack) stack, atomicSpace, meta, batchThreads);
     }
 
 }

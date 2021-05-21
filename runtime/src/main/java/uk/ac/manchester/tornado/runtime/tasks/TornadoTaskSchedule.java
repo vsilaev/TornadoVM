@@ -75,6 +75,7 @@ import uk.ac.manchester.tornado.api.common.Event;
 import uk.ac.manchester.tornado.api.common.SchedulableTask;
 import uk.ac.manchester.tornado.api.common.TaskPackage;
 import uk.ac.manchester.tornado.api.common.TornadoDevice;
+import uk.ac.manchester.tornado.api.common.TornadoExecutionHandler;
 import uk.ac.manchester.tornado.api.common.TornadoFunctions.Task;
 import uk.ac.manchester.tornado.api.common.TornadoFunctions.Task1;
 import uk.ac.manchester.tornado.api.common.TornadoFunctions.Task10;
@@ -92,6 +93,7 @@ import uk.ac.manchester.tornado.api.common.TornadoFunctions.Task7;
 import uk.ac.manchester.tornado.api.common.TornadoFunctions.Task8;
 import uk.ac.manchester.tornado.api.common.TornadoFunctions.Task9;
 import uk.ac.manchester.tornado.api.enums.TornadoDeviceType;
+import uk.ac.manchester.tornado.api.enums.TornadoExecutionStatus;
 import uk.ac.manchester.tornado.api.exceptions.TornadoBailoutRuntimeException;
 import uk.ac.manchester.tornado.api.exceptions.TornadoRuntimeException;
 import uk.ac.manchester.tornado.api.profiler.ProfilerType;
@@ -673,6 +675,51 @@ public class TornadoTaskSchedule implements AbstractTaskGraph {
         } else {
             executionContext.getDevices().forEach(TornadoDevice::sync);
         }
+    }
+
+    @Override
+    public CompletableFuture<AbstractTaskGraph> waitAsyncOn(Executor executor) {
+        TornadoExecutionFuture result = new TornadoExecutionFuture();
+        if (VM_USE_DEPS && event != null) {
+            event.waitOn(handleSingleTarget(executor, result));
+        } else {
+            List<? extends TornadoDevice> devices = executionContext.getDevices();
+            switch (devices.size()) {
+                case 0:
+                    // Do we need to executor.execute()?  
+                    result.success(this);
+                    break;
+                case 1: 
+                    devices.get(0).sync(handleSingleTarget(executor, result));
+                    break;   
+                default:
+                    AtomicInteger remaining = new AtomicInteger(devices.size());    
+                    TornadoExecutionHandler handler = (status, error) -> {
+                        if (result.isDone()) {
+                          return; 
+                        }
+                        int current = remaining.decrementAndGet();
+                        if (TornadoExecutionStatus.COMPLETE != status) {
+                            // Report first error, ignore rest
+                            executor.execute(() -> result.failure(error));                     
+                        } else if (current <= 0) {
+                            executor.execute(() -> result.success(this));                         
+                        } 
+                    }; 
+                    devices.forEach(device -> device.sync(handler));
+            }
+        }
+        return result;
+    }
+    
+    private TornadoExecutionHandler handleSingleTarget(Executor executor, TornadoExecutionFuture result) {
+        return (status, error) -> executor.execute(() -> {
+            if (TornadoExecutionStatus.COMPLETE == status) {
+                result.success(this);
+            } else {
+                result.failure(error); 
+            }  
+        });
     }
 
     @Override

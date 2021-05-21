@@ -27,9 +27,7 @@ package uk.ac.manchester.tornado.drivers.opencl;
 
 import static uk.ac.manchester.tornado.api.exceptions.TornadoInternalError.guarantee;
 
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 
 import uk.ac.manchester.tornado.drivers.opencl.enums.OCLKernelInfo;
 import uk.ac.manchester.tornado.drivers.opencl.exceptions.OCLException;
@@ -39,17 +37,12 @@ public class OCLKernel extends TornadoLogger {
 
     private final long oclKernelID;
     private final OCLDeviceContext deviceContext;
-    private final ByteBuffer buffer;
-    private String kernelName;
+    private final String kernelName;
 
     public OCLKernel(long id, OCLDeviceContext deviceContext) {
         this.oclKernelID = id;
         this.deviceContext = deviceContext;
-        this.buffer = ByteBuffer.allocate(1024);
-        this.buffer.order(OpenCL.BYTE_ORDER);
-        this.kernelName = "unknown";
-
-        queryName();
+        this.kernelName = queryName(id, deviceContext);
 
     }
 
@@ -60,6 +53,7 @@ public class OCLKernel extends TornadoLogger {
     native static void clSetKernelArgRef(long kernelId, int index, long buffer) throws OCLException;
 
     native static void clGetKernelInfo(long kernelId, int info, byte[] buffer) throws OCLException;
+    native static ByteBuffer clGetKernelInfo(long kernelId, int info) throws OCLException;
 
     public void setArg(int index, ByteBuffer buffer) {
         try {
@@ -110,22 +104,23 @@ public class OCLKernel extends TornadoLogger {
         }
     }
 
+    public long getOclKernelID() {
+        return oclKernelID;
+    }
+    
     public String getName() {
         return kernelName;
     }
 
-    private void queryName() {
-        Arrays.fill(buffer.array(), (byte) 0);
-        buffer.clear();
+    private static String queryName(long oclKernelID, OCLDeviceContext deviceContext) {
         try {
-            clGetKernelInfo(oclKernelID, OCLKernelInfo.CL_KERNEL_FUNCTION_NAME.getValue(), buffer.array());
-            kernelName = new String(buffer.array(), "ASCII").trim();
-        } catch (UnsupportedEncodingException | OCLException e) {
+            ByteBuffer result = clGetKernelInfo(oclKernelID, OCLKernelInfo.CL_KERNEL_FUNCTION_NAME.getValue());
+            return OpenCL.toString(result);
+        } catch (OCLException e) {
             e.printStackTrace();
         }
+        return "unknown";
     }
 
-    public long getOclKernelID() {
-        return oclKernelID;
-    }
+
 }

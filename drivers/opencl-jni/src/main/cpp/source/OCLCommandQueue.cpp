@@ -24,6 +24,7 @@
 #include <jni.h>
 
 #define CL_TARGET_OPENCL_VERSION 120
+#define CL_USE_DEPRECATED_OPENCL_1_1_APIS
 #ifdef __APPLE__
     #include <OpenCL/cl.h>
 #else
@@ -31,10 +32,92 @@
 #endif
 
 #include <iostream>
+#include <sys/time.h>
 
 #include "opencl_time_utils.h"
 #include "OCLCommandQueue.h"
+#include "global_vars.h"
+#include "utils.h"
 #include "ocl_log.h"
+
+struct read_callback_data {
+    jobject target;
+    void *buffer;
+    jlong capacity;
+    cl_event onCopied;
+};
+
+void invokeReadCallback(JNIEnv *env, jobject target, void *buffer, jlong capacity) {
+    jobject directBuffer = NULL;
+    if (buffer != NULL) {
+        directBuffer = env->NewDirectByteBuffer(buffer, capacity);  
+    } 
+    env->CallVoidMethod(target, JM_JAVA_UTIL_CONSUMER_ACCEPT, directBuffer);
+}
+
+void CL_CALLBACK pushHostData(cl_event event, cl_int eventStatus, void *user_data) {
+    cl_event onCopied;
+    JNI_EVENT_HANDLER(env, event, {
+        read_callback_data *payload  = static_cast<read_callback_data *>(user_data);
+        onCopied = payload->onCopied;
+
+        if (env != NULL) {
+            if (eventStatus == CL_COMPLETE) {
+                invokeReadCallback(env, payload->target, payload->buffer, payload->capacity);
+            } else {
+                free(payload->buffer);
+                invokeReadCallback(env, payload->target, NULL, -1);
+            }
+            env->DeleteGlobalRef(payload->target);
+        } else {
+            free(payload->buffer);
+        }
+        free(payload);
+    });
+    // Now fire the event visible to host 
+    // and used as a true marker/barrier/waitList
+    clSetUserEventStatus(onCopied, eventStatus);
+}
+
+void CL_CALLBACK releaseHostObject(cl_event event, cl_int eventStatus, void *user_data) {
+    JNI_EVENT_HANDLER(env, event, {
+        if (env != NULL) {
+            jobject hostObject = static_cast<jobject>(user_data);
+            env->DeleteGlobalRef(hostObject);
+        }
+    });
+}
+
+void retainAndReleaseOnEvent(JNIEnv *env, jobject target, cl_event event) {
+    jobject globalRef = env->NewGlobalRef(target);
+    cl_int status1 = clRetainEvent(event); 
+    LOG_OCL_AND_VALIDATE("clRetainEvent", status1);
+    if (status1 == CL_SUCCESS) {
+        cl_int status2 = clSetEventCallback(event, CL_COMPLETE, &releaseHostObject, globalRef);  
+        LOG_OCL_AND_VALIDATE("clSetEventCallback", status2);
+        if (status2 != CL_SUCCESS) {
+            env->DeleteGlobalRef(globalRef); 
+        }
+    } else {
+        env->DeleteGlobalRef(globalRef); 
+    }
+} 
+
+cl_event createCustomEvent(cl_command_queue commandQueue) {
+    cl_int status;
+    cl_context ctx;
+
+    status = clGetCommandQueueInfo(commandQueue, CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
+    LOG_OCL_AND_VALIDATE("clGetCommandQueueInfo", status);
+
+    if (status == CL_SUCCESS) {
+        cl_event event = clCreateUserEvent(ctx, &status); 
+        LOG_OCL_AND_VALIDATE("clGetCommandQueueInfo", status);
+        return event;
+    } else {
+        return (cl_event)(jlong)status;
+    }
+}
 
 /*
  * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue
@@ -60,7 +143,9 @@ JNIEXPORT void JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLCommandQu
     size_t return_size = 0;
     cl_int status = clGetCommandQueueInfo((cl_command_queue) queue_id, (cl_command_queue_info) param_name, len, (void *) value, &return_size);
     LOG_OCL_AND_VALIDATE("clGetCommandQueueInfo", status);
-    env->ReleasePrimitiveArrayCritical(array, value, 0);
+    if (value != NULL) { 
+        env->ReleasePrimitiveArrayCritical(array, value, 0);
+    }
 }
 
 /*
@@ -112,31 +197,45 @@ JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLCommandQ
 		printf("Kernel time: %ld (ns) \n", kernelTime);
 	}
 
-    if (array4 != NULL) {
+    if (javaArrayEvents != NULL) {
         env->ReleasePrimitiveArrayCritical(array4, javaArrayEvents, JNI_ABORT);
     }
 
-	if (array1 != NULL) {
-	    env->ReleasePrimitiveArrayCritical(array1, global_work_offset, JNI_ABORT);
-	}
-
-    if (array2 != NULL) {
-        env->ReleasePrimitiveArrayCritical(array2, global_work_size, JNI_ABORT);
-    }
-
-    if (array3 != NULL) {
+    if (local_work_size != NULL) {
         env->ReleasePrimitiveArrayCritical(array3, local_work_size, JNI_ABORT);
     }
 
-    return (jlong) kernelEvent;
+    if (global_work_size != NULL) {
+        env->ReleasePrimitiveArrayCritical(array2, global_work_size, JNI_ABORT);
+    }
+
+    if (global_work_offset != NULL) {
+        env->ReleasePrimitiveArrayCritical(array1, global_work_offset, JNI_ABORT);
+    }
+
+    return status == CL_SUCCESS ? (jlong) kernelEvent : (jlong)status;
+}
+
+/*
+ * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue
+ * Method:    clEnqueueMarker
+ * Signature: (J)J
+ */
+JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue_clEnqueueMarker
+(JNIEnv *env, jclass clazz, jlong queue_id) {
+    cl_event event;
+    cl_int status = clEnqueueMarker((cl_command_queue) queue_id, &event);
+    LOG_OCL_AND_VALIDATE("clEnqueueMarker", status);
+
+    return status == CL_SUCCESS ? (jlong) event : (jlong) status;
 }
 
 /*
  * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue
  * Method:    clEnqueueWaitForEvents
- * Signature: (J[J)V
+ * Signature: (J[J)J
  */
-JNIEXPORT void JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue_clEnqueueWaitForEvents
+JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue_clEnqueueWaitForEvents
 (JNIEnv *env, jclass clazz, jlong queue_id, jlongArray array) {
 
     jlong *arrayEvents = static_cast<jlong *>((array != NULL) ? env->GetPrimitiveArrayCritical(array, NULL) : NULL);
@@ -145,9 +244,15 @@ JNIEXPORT void JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLCommandQu
     cl_int status = clEnqueueWaitForEvents((cl_command_queue) queue_id, len, (cl_event *) events);
     LOG_OCL_AND_VALIDATE("clEnqueueWaitForEvents", status);
 
-    if (array != NULL) {
+    if (arrayEvents != NULL) {
         env->ReleasePrimitiveArrayCritical(array, arrayEvents, JNI_ABORT);
     }
+
+    if (status == CL_SUCCESS) {
+        return Java_uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue_clEnqueueMarker(env, clazz, queue_id);
+    } else {
+        return (jlong) status;
+    } 
 }
 
 /*
@@ -165,11 +270,27 @@ JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLCommandQ
     cl_int status = clEnqueueMarkerWithWaitList((cl_command_queue) queue_id, len, (cl_event *) events, &event);
     LOG_OCL_AND_VALIDATE("clEnqueueMarkerWithWaitList", status);
 
-    if (array != NULL) {
+    if (arrayEvents != NULL) {
         env->ReleasePrimitiveArrayCritical(array, arrayEvents, JNI_ABORT);
     }
 
-    return (jlong) event;
+    return status == CL_SUCCESS ? (jlong) event : (jlong) status;
+}
+
+/*
+ * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue
+ * Method:    clEnqueueBarrier
+ * Signature: (J)J
+ */
+JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue_clEnqueueBarrier
+(JNIEnv *env, jclass clazz, jlong queue_id) {
+    cl_int status = clEnqueueBarrier((cl_command_queue) queue_id);
+    LOG_OCL_AND_VALIDATE("clEnqueueBarrier", status);
+    if (status == CL_SUCCESS) {
+        return Java_uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue_clEnqueueMarker(env, clazz, queue_id);
+    } else {
+    	return (jlong) status;
+    } 
 }
 
 /*
@@ -185,10 +306,10 @@ JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLCommandQ
     cl_event event;
     cl_int status = clEnqueueBarrierWithWaitList((cl_command_queue) queue_id, len, (cl_event *) events, &event);
     LOG_OCL_AND_VALIDATE("clEnqueueBarrierWithWaitList", status);
-    if (array != NULL) {
+    if (arrayEvents != NULL) {
         env->ReleasePrimitiveArrayCritical(array, arrayEvents, JNI_ABORT);
     }
-    return (jlong) event;
+    return status == CL_SUCCESS ? (jlong) event : (jlong) status;
 }
 
 jlong transferFromHostToDevice(JNIEnv * env, jclass javaClass,
@@ -202,35 +323,101 @@ jlong transferFromHostToDevice(JNIEnv * env, jclass javaClass,
                                jlongArray javaArrayEvents   // Events array
                                ) {
 
-    cl_bool blocking_write = blocking ? CL_TRUE : CL_FALSE;
+    jbyte *buffer = static_cast<jbyte *>(env->GetPrimitiveArrayCritical(hostArray, NULL));
+
     jlong *arrayEvents = static_cast<jlong *>((javaArrayEvents != NULL) ? env->GetPrimitiveArrayCritical(javaArrayEvents, NULL) : NULL);
     jlong *events = (javaArrayEvents != NULL) ? &arrayEvents[1] : NULL;
     jsize numberOfEvents = (javaArrayEvents != NULL) ? arrayEvents[0] : 0;
 
-    jbyte *buffer = static_cast<jbyte *>(env->GetPrimitiveArrayCritical(hostArray, NULL));
     if (PRINT_DATA_SIZES) {
         std::cout << "[TornadoVM JNI] transferFromHostToDevice from " << deviceOffset << " (" << numBytes << ") from buffer: " << buffer << std::endl;
     }
-    cl_event event;
-    cl_int status = clEnqueueWriteBuffer((cl_command_queue) commandQueue, (cl_mem) devicePtr, blocking_write,
+    cl_event event = (cl_event)CL_INVALID_EVENT;
+    cl_int status = clEnqueueWriteBuffer((cl_command_queue) commandQueue, (cl_mem) devicePtr, CL_FALSE, // enqueue as non-blocking
                                          (size_t) deviceOffset, (size_t) numBytes, &buffer[hostOffset], (cl_uint) numberOfEvents,
                                          (cl_event *) events, &event);
     LOG_OCL_AND_VALIDATE("clEnqueueWriteBuffer", status);
+
     if (PRINT_DATA_TIMES) {
         long writeTime = getElapsedTimeEvent(event);
         std::cout << "[TornadoVM-JNI] H2D time: " << writeTime << " (ns)" << std::endl;
-    } else {
-        /* we must wait irrespective of jboolean blocking flag or we risk Java GC/OpenCL Runtime race condition */
-        clWaitForEvents(1, &event);
+    } 
+
+    if (status == CL_SUCCESS && blocking) {
+        status = clWaitForEvents(1, &event);
+        LOG_OCL_AND_VALIDATE("clEnqueueWriteBuffer-clWaitForEvents", status);
     }
-    if (hostArray != NULL) {
-        env->ReleasePrimitiveArrayCritical(hostArray, buffer, JNI_ABORT);
-    }
-    if (javaArrayEvents != NULL) {
+
+    if (arrayEvents != NULL) {
         env->ReleasePrimitiveArrayCritical(javaArrayEvents, arrayEvents, JNI_ABORT);
     }
-    return (jlong) event;
+
+    if (hostArray != NULL) {
+        env->ReleasePrimitiveArrayCritical(hostArray, buffer, JNI_ABORT);
+        // Temporary -- this doesn't prevent from moving memory
+        // but saves from GC-ing reference 
+        if (status == CL_SUCCESS && !blocking) {
+            retainAndReleaseOnEvent(env, hostArray, event); 
+        }
+    }
+    return status == CL_SUCCESS ? (jlong)event : (jlong)status;
 }
+
+/*
+ * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue
+ * Method:    writeBufferToDevice
+ * Signature: (JJZJJLjava/nio/ByteBuffer;[J)J
+ */
+JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue_writeBufferToDevice
+        (JNIEnv * env, jclass klass, jlong commandQueue, jlong devicePtr, jboolean blocking, jlong deviceOffset, jlong numBytes, jobject directBuffer, jlongArray javaArrayEvents) {
+    cl_bool blocking_write = blocking ? CL_TRUE : CL_FALSE;
+
+    void *buffer = env->GetDirectBufferAddress(directBuffer);
+
+    jlong *arrayEvents = static_cast<jlong *>((javaArrayEvents != NULL) ? env->GetPrimitiveArrayCritical(javaArrayEvents, NULL) : NULL);
+    jlong *events = (javaArrayEvents != NULL) ? &arrayEvents[1] : NULL;
+    jsize numberOfEvents = (javaArrayEvents != NULL) ? arrayEvents[0] : 0;
+
+    if (PRINT_DATA_SIZES) {
+        std::cout << "[TornadoVM JNI] transferFromHostToDevice from " << deviceOffset << " (" << numBytes << ") from buffer: " << buffer << std::endl;
+    }
+    cl_event event = (cl_event)CL_INVALID_EVENT;
+    cl_int status = clEnqueueWriteBuffer((cl_command_queue) commandQueue, (cl_mem) devicePtr, blocking_write,
+                                         (size_t) deviceOffset, (size_t) numBytes, buffer, (cl_uint) numberOfEvents,
+                                         (cl_event *) events, &event);
+    if (arrayEvents != NULL) {
+        env->ReleasePrimitiveArrayCritical(javaArrayEvents, arrayEvents, JNI_ABORT);
+    }
+
+    LOG_OCL_AND_VALIDATE("clEnqueueWriteBuffer", status);
+
+    if (PRINT_DATA_TIMES) {
+        long writeTime = getElapsedTimeEvent(event);
+        std::cout << "[TornadoVM-JNI] H2D time: " << writeTime << " (ns)" << std::endl;
+    }
+
+    if (status == CL_SUCCESS) {
+    	/*
+    	clWaitForEvents(1, &event);
+       	jint *xbuffer = static_cast<jint*>(buffer);
+       	xbuffer[0] = 0;
+       	xbuffer[1] = 0;
+       	xbuffer[2] = 0;
+    	clEnqueueReadBuffer((cl_command_queue) commandQueue, (cl_mem) devicePtr, CL_TRUE, // enqueue as blocking
+    	                                        (size_t) deviceOffset, (size_t) numBytes, buffer,
+    	                                        0, NULL, &event);
+
+       	std::cout << "---COPY-BACK::: " << xbuffer[0] << ", " << xbuffer[1] << ", " << xbuffer[2] << std::endl;
+    	*/
+    	if (!blocking) {
+            retainAndReleaseOnEvent(env, directBuffer, event);
+    	}
+        return (jlong) event;
+    } else {
+    	return (jlong) status;
+    }
+}
+
 
 /*
  * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue
@@ -313,37 +500,127 @@ jlong transfersFromDeviceToHost(JNIEnv *env, jclass javaClass,
                                 jlong devicePtr,                // Pointer to the device array
                                 jlongArray javaArrayEvents) {   // Array of previous events
 
-    cl_bool blocking_read = blocking ? CL_TRUE : CL_FALSE;
+    jbyte *buffer = static_cast<jbyte *>(env->GetPrimitiveArrayCritical(hostArray, NULL));
+
     jlong *eventsArray = static_cast<jlong *>((javaArrayEvents != NULL) ? env->GetPrimitiveArrayCritical(javaArrayEvents, NULL) : NULL);
     jlong *events = (javaArrayEvents != NULL) ? &eventsArray[1] : NULL;
     jsize num_events = (javaArrayEvents != NULL) ? eventsArray[0] : 0;
-    jbyte *buffer = static_cast<jbyte *>(env->GetPrimitiveArrayCritical(hostArray, NULL));
+
     if (PRINT_DATA_SIZES) {
         std::cout << "[TornadoVM JNI] transfersFromDeviceToHost from " << offset << " (" << numBytes << ") from buffer: " << buffer << std::endl;
     }
-    cl_event readEvent;
-    cl_int status = clEnqueueReadBuffer((cl_command_queue) commandQueue, (cl_mem) devicePtr, blocking_read,
+    cl_event event = (cl_event)CL_INVALID_EVENT;
+    cl_int status = clEnqueueReadBuffer((cl_command_queue) commandQueue, (cl_mem) devicePtr, CL_FALSE, // enqueue as non-blocking
                                         (size_t) offset, (size_t) numBytes, (void *) &buffer[hostOffset],
-                                        (cl_uint) num_events, (cl_event *) events, &readEvent);
+                                        (cl_uint) num_events, (cl_event *) events, &event);
+
+    if (eventsArray != NULL) {
+        env->ReleasePrimitiveArrayCritical(javaArrayEvents, eventsArray, JNI_ABORT);
+    }
+
     if (status != CL_SUCCESS) {
         printf("[ERROR] clEnqueueReadBuffer, code = %d n", status);
     }
     LOG_OCL_AND_VALIDATE("clEnqueueReadBuffer", status);
     if (PRINT_DATA_TIMES) {
-        long readTime = getElapsedTimeEvent(readEvent); /* clWaitForEvents call a side effect of this call so safe to not wait */
+        long readTime = getElapsedTimeEvent(event); /* clWaitForEvents call a side effect of this call so safe to not wait */
         std::cout << "[TornadoVM-JNI] D2H time: " << readTime << " (ns)" << std::endl;
-    } else {
-        /* we must wait irrespective of jboolean blocking flag or we risk Java GC/OpenCL Runtime race condition */
-        clWaitForEvents(1, &readEvent);
+    } 
+
+    if (status == CL_SUCCESS && blocking) {
+        status = clWaitForEvents(1, &event);
+        LOG_OCL_AND_VALIDATE("clEnqueueReadBuffer-clWaitForEvents", status);
     }
+
     if (hostArray != NULL) {
         env->ReleasePrimitiveArrayCritical(hostArray, buffer, JNI_ABORT);
+        // Temporary -- this doesn't prevent from moving memory
+        // but saves from GC-ing reference 
+        if (status == CL_SUCCESS && !blocking) {
+            retainAndReleaseOnEvent(env, hostArray, event); 
+        }
     }
-    if (javaArrayEvents != NULL) {
+
+    return status == CL_SUCCESS ? (jlong)event : (jlong)status;
+}
+
+/*
+ * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue
+ * Method:    readBufferFromDevice
+ * Signature: (JJZJJLjava/nio/ByteBuffer;[J[J)J
+ */
+JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue_readBufferFromDevice
+        (JNIEnv *env, jclass clazz, jlong commandQueue, jlong devicePtr, jboolean blocking,
+         jlong offset, jlong numBytes, jobject callback, jlongArray javaArrayEvents, jlongArray javaArrayProfilerEvents) {
+
+    cl_bool blocking_read = blocking ? CL_TRUE : CL_FALSE;
+
+    void *buffer = malloc(numBytes);
+    memset(buffer, 0, (size_t) numBytes); 
+
+    jlong *eventsArray = static_cast<jlong *>((javaArrayEvents != NULL) ? env->GetPrimitiveArrayCritical(javaArrayEvents, NULL) : NULL);
+    jlong *events = (javaArrayEvents != NULL) ? &eventsArray[1] : NULL;
+    jsize num_events = (javaArrayEvents != NULL) ? eventsArray[0] : 0;
+
+    if (PRINT_DATA_SIZES) {
+        std::cout << "[TornadoVM JNI] transfersFromDeviceToHost from " << offset << " (" << numBytes << ") from buffer: " << buffer << std::endl;
+    }
+    cl_event event = (cl_event)CL_INVALID_EVENT;
+    cl_int status = clEnqueueReadBuffer((cl_command_queue) commandQueue, (cl_mem) devicePtr, blocking_read,
+                                        (size_t) offset, (size_t) numBytes, buffer,
+                                        (cl_uint) num_events, (cl_event *) events, &event);
+
+    if (eventsArray != NULL) {
         env->ReleasePrimitiveArrayCritical(javaArrayEvents, eventsArray, JNI_ABORT);
     }
-    return (jlong) readEvent;
+
+    if (status != CL_SUCCESS) {
+        printf("[ERROR] clEnqueueReadBuffer, code = %d n", status);
+    }
+    LOG_OCL_AND_VALIDATE("clEnqueueReadBuffer", status);
+    if (PRINT_DATA_TIMES) {
+        long readTime = getElapsedTimeEvent(event); /* clWaitForEvents call a side effect of this call so safe to not wait */
+        std::cout << "[TornadoVM-JNI] D2H time: " << readTime << " (ns)" << std::endl;
+    }
+
+    if (status == CL_SUCCESS) { 
+    	if (NULL != javaArrayProfilerEvents && env->GetArrayLength(javaArrayProfilerEvents) > 0) {
+    		jlong elements[] = { (jlong)event };
+    		env->SetLongArrayRegion( javaArrayProfilerEvents, 0, 1, elements );
+    	}
+        if (blocking) {
+            invokeReadCallback(env, callback, buffer, numBytes);
+            return (jlong)event; 
+        } else {
+        	read_callback_data *payload = (read_callback_data*)(malloc(sizeof(read_callback_data)));
+            payload->target = env->NewGlobalRef(callback);
+            payload->buffer = buffer;
+            payload->capacity = numBytes;
+            payload->onCopied = createCustomEvent((cl_command_queue) commandQueue);
+
+            cl_int status1 = clRetainEvent(event); 
+            LOG_OCL_AND_VALIDATE("clRetainEvent", status1);
+            cl_int notifyStatus = status1;
+            if (status1 == CL_SUCCESS) {
+                cl_int status2 = clSetEventCallback(event, CL_COMPLETE, &pushHostData, payload);  
+                LOG_OCL_AND_VALIDATE("clSetEventCallback", status2);
+                notifyStatus = status2;
+            }
+            if (notifyStatus != CL_SUCCESS) {
+                env->DeleteGlobalRef(payload->target);
+                //free(buffer);
+                free(payload);   
+                return (jlong)notifyStatus;
+            } else {
+                return (jlong)payload->onCopied;
+            }
+        }
+    } else {
+        return (jlong)status;
+    }
+
 }
+
 
 /*
  * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue

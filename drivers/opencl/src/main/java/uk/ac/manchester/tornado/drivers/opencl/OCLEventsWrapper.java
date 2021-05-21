@@ -27,7 +27,6 @@ import static uk.ac.manchester.tornado.api.exceptions.TornadoInternalError.guara
 import static uk.ac.manchester.tornado.drivers.opencl.OCLEvent.EVENT_DESCRIPTIONS;
 import static uk.ac.manchester.tornado.drivers.opencl.enums.OCLCommandQueueProperties.CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
 import static uk.ac.manchester.tornado.runtime.common.Tornado.EVENT_WINDOW;
-import static uk.ac.manchester.tornado.runtime.common.Tornado.MAX_WAIT_EVENTS;
 import static uk.ac.manchester.tornado.runtime.common.Tornado.debug;
 import static uk.ac.manchester.tornado.runtime.common.Tornado.fatal;
 import static uk.ac.manchester.tornado.runtime.common.TornadoOptions.CIRCULAR_EVENTS;
@@ -36,6 +35,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.List;
+
+import uk.ac.manchester.tornado.api.exceptions.TornadoBailoutRuntimeException;
 
 /**
  * Class which holds mapping between OpenCL events and TornadoVM local events
@@ -46,55 +47,46 @@ import java.util.List;
  */
 class OCLEventsWrapper {
 
-    private final long[] events;
-    private final int[] descriptors;
-    private final long[] tags;
     private final BitSet retain;
+    private final OCLEvent[] events;
     private final OCLCommandQueue[] eventQueues;
     private int eventIndex;
-
-    private final OCLEvent internalEvent;
-    protected final long[] waitEventsBuffer;
 
     protected OCLEventsWrapper() {
         this.retain = new BitSet(EVENT_WINDOW);
         this.retain.clear();
-        this.events = new long[EVENT_WINDOW];
-        this.descriptors = new int[EVENT_WINDOW];
-        this.tags = new long[EVENT_WINDOW];
+        this.events = new OCLEvent[EVENT_WINDOW];
         this.eventQueues = new OCLCommandQueue[EVENT_WINDOW];
         this.eventIndex = 0;
-        this.waitEventsBuffer = new long[MAX_WAIT_EVENTS];
-        this.internalEvent = new OCLEvent();
     }
 
-    protected int registerEvent(long oclEventId, int descriptorId, long tag, OCLCommandQueue queue) {
+    protected int registerEvent(long oclEventID, int descriptorId, long tag, OCLCommandQueue queue) {
+        return registerEvent(oclEventID, oclEventID, descriptorId, tag, queue);
+    }
+    
+    protected int registerEvent(long oclEventID, long oclProfilerEventID, int descriptorId, long tag, OCLCommandQueue queue) {
         if (retain.get(eventIndex)) {
             findNextEventSlot();
         }
         final int currentEvent = eventIndex;
         guarantee(!retain.get(currentEvent), "overwriting retained event");
-
         /*
          * OpenCL can produce an out of resources error which results in an invalid
          * event (-1). If this happens, then we log a fatal exception and gracefully
          * exit.
          */
-        if (oclEventId == -1) {
-            fatal("invalid event: event=0x%x, description=%s, tag=0x%x\n", oclEventId, EVENT_DESCRIPTIONS[descriptorId], tag);
+        if (oclEventID <= 0) {
+            fatal("invalid event: status=0x%x, description=%s, tag=0x%x\n", oclEventID, EVENT_DESCRIPTIONS[descriptorId], tag);
             fatal("terminating application as system integrity has been compromised.");
-            System.exit(-1);
+            throw new TornadoBailoutRuntimeException("[ERROR] NO EventID received from the OpenCL driver, status : " + oclEventID);
+            //System.exit(-1);
         }
-
-        if (events[currentEvent] > 0 && !retain.get(currentEvent)) {
-            internalEvent.setEventId(currentEvent, events[currentEvent]);
-            releaseEvent(currentEvent);
-            internalEvent.release();
+        
+        if (events[currentEvent] != null && !retain.get(currentEvent)) {
+            //events[currentEvent].waitForEvents();
+            events[currentEvent].release();
         }
-        events[currentEvent] = oclEventId;
-        descriptors[currentEvent] = descriptorId;
-        tags[currentEvent] = tag;
-        eventQueues[currentEvent] = queue;
+        events[currentEvent] = new OCLEvent(queue, oclEventID, oclProfilerEventID, descriptorId, tag);
 
         findNextEventSlot();
         return currentEvent;
@@ -110,41 +102,46 @@ class OCLEventsWrapper {
         guarantee(eventIndex != -1, "event window is full (retained=%d, capacity=%d)", retain.cardinality(), EVENT_WINDOW);
     }
 
-    protected boolean serialiseEvents(int[] dependencies, OCLCommandQueue queue) {
+    protected long[] serialiseEvents(int[] dependencies, OCLCommandQueue queue) {
         boolean outOfOrderQueue = (queue.getProperties() & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE) == 1;
         if (dependencies == null || dependencies.length == 0 || !outOfOrderQueue) {
-            return false;
+            return null;
         }
-
-        Arrays.fill(waitEventsBuffer, 0);
+        long[] waitEventsBuffer = new long[dependencies.length + 1];
 
         int index = 0;
         for (final int value : dependencies) {
-            if (value != -1) {
+            if (value >= 0 && queue.equals(eventQueues[value])) {
                 index++;
-                waitEventsBuffer[index] = events[value];
-                debug("[%d] 0x%x - %s 0x%x\n", index, events[value], EVENT_DESCRIPTIONS[descriptors[value]], tags[value]);
+                OCLEvent event = events[value];
+                waitEventsBuffer[index] = event.getOclEventID();
+                debug("[%d] 0x%x - %s\n", index, event.getOclEventID(), event.getName());
 
             }
         }
         waitEventsBuffer[0] = index;
-        return (index > 0);
+        return (index > 0) ? waitEventsBuffer : null;
     }
 
     public List<OCLEvent> getEvents() {
         List<OCLEvent> result = new ArrayList<>();
         for (int i = 0; i < eventIndex; i++) {
-            final long eventId = events[i];
-            if (eventId <= 0) {
+            OCLEvent event = events[i];
+            if (event == null) {
                 continue;
             }
-            result.add(new OCLEvent(this, eventQueues[i], i, eventId));
+            result.add(event);
         }
         return result;
     }
 
     protected void reset() {
-        Arrays.fill(events, 0);
+        for (OCLEvent event : events) {
+            if (event != null) {
+                event.release();
+            }
+        }
+        Arrays.fill(events, null);
         eventIndex = 0;
     }
 
@@ -156,15 +153,7 @@ class OCLEventsWrapper {
         retain.clear(localEventID);
     }
 
-    protected long getOCLEvent(int localEventID) {
+    protected OCLEvent getOCLEvent(int localEventID) {
         return events[localEventID];
-    }
-
-    protected int getDescriptor(int localEventID) {
-        return descriptors[localEventID];
-    }
-
-    protected long getTag(int localEventID) {
-        return tags[localEventID];
     }
 }

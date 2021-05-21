@@ -41,6 +41,8 @@
  */
 package uk.ac.manchester.tornado.api;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 import uk.ac.manchester.tornado.api.common.Access;
 import uk.ac.manchester.tornado.api.common.SchedulableTask;
@@ -604,7 +606,15 @@ public interface TornadoAPI {
      */
     void execute();
 
+    CompletableFuture<TornadoAPI> executeAsync();
+
+    CompletableFuture<TornadoAPI> executeAsync(Executor executor);
+
     void execute(GridTask gridTask);
+
+    CompletableFuture<TornadoAPI> executeAsync(GridTask gridTask);
+
+    CompletableFuture<TornadoAPI> executeAsync(GridTask gridTask, Executor executor);
 
     /**
      * Run with dynamic reconfiguration with an input policy

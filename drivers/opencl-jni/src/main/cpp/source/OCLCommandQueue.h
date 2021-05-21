@@ -152,6 +152,14 @@ JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLCommandQ
 
 /*
  * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue
+ * Method:    writeBufferToDevice
+ * Signature: (JJZJJLjava/nio/ByteBuffer;[J)J
+ */
+JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue_writeBufferToDevice
+        (JNIEnv * env, jclass klass, jlong commandQueue, jlong devicePtr, jboolean blocking, jlong deviceOffset, jlong numBytes, jobject buffer, jlongArray javaArrayEvents);
+
+/*
+ * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue
  * Method:    readArrayFromDevice
  * Signature: (J[BJZJJJ[J)J
  */
@@ -209,10 +217,18 @@ JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLCommandQ
 
 /*
  * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue
- * Method:    clEnqueueWaitForEvents
- * Signature: (J[J)V
+ * Method:    readBufferFromDevice
+ * Signature: (JJZJJLjava/nio/ByteBuffer;[J[J)J
  */
-JNIEXPORT void JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue_clEnqueueWaitForEvents
+JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue_readBufferFromDevice
+       (JNIEnv *env, jclass clazz, jlong commandQueue, jlong devicePtr, jboolean blocking,
+        jlong offset, jlong numBytes, jobject callback, jlongArray javaArrayEvents, jlongArray javaArrayProfilerEvents);
+/*
+ * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue
+ * Method:    clEnqueueWaitForEvents
+ * Signature: (J[J)J
+ */
+JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue_clEnqueueWaitForEvents
         (JNIEnv *, jclass, jlong, jlongArray);
 
 /*
@@ -225,11 +241,27 @@ JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLCommandQ
 
 /*
  * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue
+ * Method:    clEnqueueMarker
+ * Signature: (J)J
+ */
+JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue_clEnqueueMarker
+        (JNIEnv *, jclass, jlong);
+
+/*
+ * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue
  * Method:    clEnqueueBarrierWithWaitList
  * Signature: (J[J)J
  */
 JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue_clEnqueueBarrierWithWaitList
         (JNIEnv *, jclass, jlong, jlongArray);
+
+/*
+ * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue
+ * Method:    clEnqueueBarrier
+ * Signature: (J)J
+ */
+JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue_clEnqueueBarrier
+        (JNIEnv *, jclass, jlong);
 
 /*
  * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue

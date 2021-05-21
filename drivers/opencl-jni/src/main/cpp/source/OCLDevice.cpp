@@ -41,12 +41,51 @@
  * Method:    clGetDeviceInfo
  * Signature: (JI[B)V
  */
-JNIEXPORT void JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLDevice_clGetDeviceInfo
+JNIEXPORT void JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLDevice_clGetDeviceInfo__JI_3B
 (JNIEnv *env, jclass clazz, jlong device_id, jint device_info, jbyteArray array) {
     jbyte *value = static_cast<jbyte *>(env->GetPrimitiveArrayCritical(array, 0));
     jsize len = env->GetArrayLength(array);
+
+    if (LOG_JNI) {
+        std::cout << "size of cl_device_info: " << sizeof(cl_device_info) << std::endl;
+        std::cout << "param_name: " <<  device_info << std::endl;
+        std::cout << "len: " << len << std::endl;
+    }
+
     size_t return_size = 0;
-    size_t status = clGetDeviceInfo((cl_device_id) device_id, (cl_device_info) device_info, len, (void *) value, &return_size);
+    cl_int status = clGetDeviceInfo((cl_device_id) device_id, (cl_device_info) device_info, len, (void *) value, &return_size);
     LOG_OCL_AND_VALIDATE("clGetDeviceInfo", status);
-    env->ReleasePrimitiveArrayCritical(array, value, 0);
+    if (NULL != value) {
+        env->ReleasePrimitiveArrayCritical(array, value, 0);
+    }
+}
+
+
+/*
+ * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLDevice
+ * Method:    clGetDeviceInfo
+ * Signature: (JI)Ljava/nio/ByteBuffer;
+ */
+JNIEXPORT jobject JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLDevice_clGetDeviceInfo__JI
+(JNIEnv *env, jclass clazz, jlong device_id, jint device_info) {
+    if (LOG_JNI) {
+        std::cout << "size of cl_device_info: " << sizeof(cl_device_info) << std::endl;
+        std::cout << "param_name: " <<  device_info << std::endl;
+    }
+
+    size_t return_size = 0;
+    cl_int status = clGetDeviceInfo((cl_device_id) device_id, (cl_device_info) device_info, 0, NULL, &return_size);
+    LOG_OCL_AND_VALIDATE("clGetDeviceInfo-size", status);
+    if (status != CL_SUCCESS || return_size < 1) {
+        return NULL;
+    }
+    void* value = malloc(return_size);
+    memset(value, 0, return_size);
+    status = clGetDeviceInfo((cl_device_id) device_id, (cl_device_info) device_info, return_size, value, NULL);
+    LOG_OCL_AND_VALIDATE("clGetDeviceInfo", status);
+    if (status == CL_SUCCESS) {
+        return env->NewDirectByteBuffer(value, return_size);
+    } else {
+        return NULL;
+    }
 }

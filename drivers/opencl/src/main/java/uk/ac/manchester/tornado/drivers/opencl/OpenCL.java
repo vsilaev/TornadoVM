@@ -39,12 +39,13 @@ import uk.ac.manchester.tornado.runtime.common.Tornado;
 import uk.ac.manchester.tornado.runtime.tasks.GlobalObjectState;
 import uk.ac.manchester.tornado.runtime.tasks.meta.TaskMetaData;
 
+import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import static uk.ac.manchester.tornado.runtime.common.Tornado.getProperty;
 import static uk.ac.manchester.tornado.runtime.common.TornadoOptions.VIRTUAL_DEVICE_ENABLED;
 
 public class OpenCL {
@@ -78,13 +79,7 @@ public class OpenCL {
             }
 
             // add a shutdown hook to free-up all OpenCL resources on VM exit
-            Runtime.getRuntime().addShutdownHook(new Thread() {
-                @Override
-                public void run() {
-                    setName("OpenCL-Cleanup-Thread");
-                    OpenCL.cleanup();
-                }
-            });
+            Runtime.getRuntime().addShutdownHook(new Thread(OpenCL::cleanup, "OpenCL-Cleanup-Thread"));
         }
     }
 
@@ -240,6 +235,30 @@ public class OpenCL {
     public static TornadoTargetDevice getDevice(int platformIndex, int deviceIndex) {
         final TornadoPlatform platform = platforms.get(platformIndex);
         return platform.createContext().createDeviceContext(deviceIndex).getDevice();
+    }
+    
+    static ByteBuffer createIntegerBuffer(int value) {
+        ByteBuffer result = ByteBuffer.allocate(Integer.BYTES).order(BYTE_ORDER).putInt(value);
+        result.rewind();
+        return result;
+    }
+    
+    static ByteBuffer createLongBuffer(long value) {
+        ByteBuffer result = ByteBuffer.allocate(Long.BYTES).order(BYTE_ORDER).putLong(value);
+        result.rewind();
+        return result;
+    }
+
+    
+    static String toString(ByteBuffer buffer) {
+        return toString(buffer, true);
+    }
+    
+    static String toString(ByteBuffer buffer, boolean trim) {
+        byte[] bytes = new byte[buffer.capacity()];
+        buffer.order(BYTE_ORDER).get(bytes);
+        String result = new String(bytes, StandardCharsets.US_ASCII);
+        return trim ? result.trim() : result;
     }
 
     public static void main(String[] args) {

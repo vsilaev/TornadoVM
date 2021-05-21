@@ -134,7 +134,7 @@ public class OCLContext extends TornadoLogger implements OCLExecutionEnvironment
             info("platform: version=%s (%s) on %s", platformVersion, platform.getVersion(), device.getDeviceName());
             info("device  : version=%s (%s) on %s", deviceVersion, device.getVersion(), device.getDeviceName());
 
-            queues[index] = new OCLCommandQueue(queueId, properties, deviceVersion);
+            queues[index] = new OCLCommandQueue(queueId, properties, deviceVersion, device.getByteOrder());
         } catch (OCLException e) {
             error(e.getMessage());
         }

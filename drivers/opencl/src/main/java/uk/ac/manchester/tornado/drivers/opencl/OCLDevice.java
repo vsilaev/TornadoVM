@@ -33,10 +33,8 @@ import uk.ac.manchester.tornado.drivers.opencl.enums.OCLLocalMemType;
 import uk.ac.manchester.tornado.runtime.common.RuntimeUtilities;
 import uk.ac.manchester.tornado.runtime.common.TornadoLogger;
 
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Arrays;
 
 import static uk.ac.manchester.tornado.drivers.opencl.OpenCL.CL_TRUE;
 import static uk.ac.manchester.tornado.runtime.common.RuntimeUtilities.humanReadableByteCount;
@@ -47,7 +45,6 @@ public class OCLDevice extends TornadoLogger implements OCLTargetDevice {
     private final long id;
     private final int index;
 
-    private final ByteBuffer buffer;
     private String name;
     private int deviceEndianLittle;
     private String openCLVersion;
@@ -66,7 +63,7 @@ public class OCLDevice extends TornadoLogger implements OCLTargetDevice {
     private OCLDeviceType deviceType;
 
     private static final int INIT_VALUE = -1;
-    private static final int MAX_BUFFER_SIZE = 8192;
+
     private String deviceVendorName;
     private String driverVersion;
     private String deviceVersion;
@@ -79,8 +76,6 @@ public class OCLDevice extends TornadoLogger implements OCLTargetDevice {
     public OCLDevice(int index, long id) {
         this.index = index;
         this.id = id;
-        this.buffer = ByteBuffer.allocate(MAX_BUFFER_SIZE);
-        this.buffer.order(OpenCL.BYTE_ORDER);
         initialValues();
         obtainDeviceProperties();
     }
@@ -114,15 +109,15 @@ public class OCLDevice extends TornadoLogger implements OCLTargetDevice {
 
     private void obtainDeviceProperties() {
         getDeviceOpenCLCVersion();
-        getDeviceEndianLittle();
+        isLittleEndian();
         getDeviceMaxComputeUnits();
         getDeviceMaxAllocationSize();
         getDeviceGlobalMemorySize();
         getDeviceLocalMemorySize();
         getDeviceMaxWorkItemDimensions();
-        getDeviceMaxWorkGroupSize_0();
+        getDeviceMaxWorkGroupSize();
         getDeviceMaxConstantBufferSize();
-        getDoubleFPConfig();
+        isDeviceDoubleFPSupported();
         getDeviceSingleFPConfig();
         getDeviceMemoryBaseAlignment();
         getDeviceMaxWorkItemSizes();
@@ -140,6 +135,7 @@ public class OCLDevice extends TornadoLogger implements OCLTargetDevice {
     }
 
     native static void clGetDeviceInfo(long id, int info, byte[] buffer);
+    native static ByteBuffer clGetDeviceInfo(long id, int info);
 
     public long getId() {
         return id;
@@ -149,171 +145,136 @@ public class OCLDevice extends TornadoLogger implements OCLTargetDevice {
         return index;
     }
 
+    private int queryIntegerValue(OCLDeviceInfo info) {
+        ByteBuffer buffer = OpenCL.createIntegerBuffer(-1);
+        clGetDeviceInfo(id, info.getValue(), buffer.array());
+        return buffer.getInt();
+    }
+    
+    private long queryLongValue(OCLDeviceInfo info) {
+        ByteBuffer buffer = OpenCL.createLongBuffer(-1L);
+        clGetDeviceInfo(id, info.getValue(), buffer.array());
+        return buffer.getLong();
+    }
+    
+    private String queryStringValue(OCLDeviceInfo info) {
+        ByteBuffer buffer = clGetDeviceInfo(id, info.getValue());
+        return OpenCL.toString(buffer);
+    }
+
     public OCLDeviceType getDeviceType() {
-        if (deviceType != OCLDeviceType.Unknown) {
-            return deviceType;
+        if (deviceType == OCLDeviceType.Unknown) {
+            long type = queryLongValue(OCLDeviceInfo.CL_DEVICE_TYPE);
+            deviceType = OCLDeviceType.toDeviceType(type);
         }
-        queryOpenCLAPI(OCLDeviceInfo.CL_DEVICE_TYPE.getValue());
-        long type = buffer.getLong();
-        deviceType = OCLDeviceType.toDeviceType(type);
         return deviceType;
     }
 
     public int getDeviceVendorId() {
         if (deviceVendorID == INIT_VALUE) {
-            queryOpenCLAPI(OCLDeviceInfo.CL_DEVICE_VENDOR_ID.getValue());
-            deviceVendorID = buffer.getInt();
+            deviceVendorID = queryIntegerValue(OCLDeviceInfo.CL_DEVICE_VENDOR_ID);
         }
         return deviceVendorID;
     }
 
     public int getDeviceMemoryBaseAlignment() {
-        if (deviceMemoryBaseAligment != INIT_VALUE) {
-            return deviceMemoryBaseAligment;
+        if (deviceMemoryBaseAligment == INIT_VALUE) {
+            deviceMemoryBaseAligment = queryIntegerValue(OCLDeviceInfo.CL_DEVICE_MEM_BASE_ADDR_ALIGN);
         }
-        queryOpenCLAPI(OCLDeviceInfo.CL_DEVICE_MEM_BASE_ADDR_ALIGN.getValue());
-        deviceMemoryBaseAligment = buffer.getInt();
         return deviceMemoryBaseAligment;
     }
 
     public boolean isDeviceAvailable() {
-        queryOpenCLAPI(OCLDeviceInfo.CL_DEVICE_AVAILABLE.getValue());
-        return buffer.getInt() == 1;
+        return queryIntegerValue(OCLDeviceInfo.CL_DEVICE_AVAILABLE) == 1;
     }
 
     @Override
     public String getDeviceName() {
         if (name == null) {
-            queryOpenCLAPI(OCLDeviceInfo.CL_DEVICE_NAME.getValue());
-            try {
-                name = new String(buffer.array(), "ASCII").trim();
-            } catch (UnsupportedEncodingException e) {
-                name = "unknown";
-            }
+            name = queryStringValue(OCLDeviceInfo.CL_DEVICE_NAME);
         }
-
         return name;
     }
 
     public String getDeviceVendor() {
-        if (deviceVendorName != null) {
-            return deviceVendorName;
-        }
-        queryOpenCLAPI(OCLDeviceInfo.CL_DEVICE_VENDOR.getValue());
-        try {
-            deviceVendorName = new String(buffer.array(), "ASCII").trim();
-        } catch (UnsupportedEncodingException e) {
-            deviceVendorName = "unknown";
+        if (deviceVendorName == null) {
+            deviceVendorName = queryStringValue(OCLDeviceInfo.CL_DEVICE_VENDOR);
         }
         return deviceVendorName;
     }
 
     public String getDriverVersion() {
-        if (driverVersion != null) {
-            return driverVersion;
-        }
-        queryOpenCLAPI(OCLDeviceInfo.CL_DRIVER_VERSION.getValue());
-        try {
-            driverVersion = new String(buffer.array(), "ASCII").trim();
-        } catch (UnsupportedEncodingException e) {
-            driverVersion = "unknown";
+        if (driverVersion == null) {
+            driverVersion = queryStringValue(OCLDeviceInfo.CL_DRIVER_VERSION);
         }
         return driverVersion;
     }
 
     public String getDeviceVersion() {
         if (deviceVersion == null) {
-            queryOpenCLAPI(OCLDeviceInfo.CL_DEVICE_VERSION.getValue());
-            try {
-                deviceVersion = new String(buffer.array(), "ASCII").trim();
-            } catch (UnsupportedEncodingException e) {
-                deviceVersion = "unknown";
-            }
+            deviceVersion = queryStringValue(OCLDeviceInfo.CL_DEVICE_VERSION);
         }
         return deviceVersion;
     }
 
     public String getDeviceOpenCLCVersion() {
         if (openCLVersion == null) {
-            queryOpenCLAPI(OCLDeviceInfo.CL_DEVICE_OPENCL_C_VERSION.getValue());
-            try {
-                openCLVersion = new String(buffer.array(), "ASCII").trim();
-            } catch (UnsupportedEncodingException e) {
-                openCLVersion = "unknown";
-            }
+            openCLVersion = queryStringValue(OCLDeviceInfo.CL_DEVICE_OPENCL_C_VERSION);
         }
         return openCLVersion;
     }
 
     public String getDeviceExtensions() {
-        if (deviceExtensions != null) {
-            return deviceExtensions;
-        }
-        queryOpenCLAPI(OCLDeviceInfo.CL_DEVICE_EXTENSIONS.getValue());
-        try {
-            deviceExtensions = new String(buffer.array(), "ASCII").trim();
-        } catch (UnsupportedEncodingException e) {
-            deviceExtensions = "unknown";
+        if (deviceExtensions == null) {
+            deviceExtensions = queryStringValue(OCLDeviceInfo.CL_DEVICE_EXTENSIONS);
         }
         return deviceExtensions;
     }
 
     @Override
     public int getDeviceMaxComputeUnits() {
-        if (maxComputeUnits != -1) {
-            return maxComputeUnits;
+        if (maxComputeUnits < 0) {
+            maxComputeUnits = queryIntegerValue(OCLDeviceInfo.CL_DEVICE_MAX_COMPUTE_UNITS);
         }
-        queryOpenCLAPI(OCLDeviceInfo.CL_DEVICE_MAX_COMPUTE_UNITS.getValue());
-        maxComputeUnits = buffer.getInt();
         return maxComputeUnits;
     }
 
     @Override
     public int getDeviceMaxClockFrequency() {
-        if (deviceMaxClockFrequency != INIT_VALUE) {
-            return deviceMaxClockFrequency;
+        if (deviceMaxClockFrequency < 0) {
+            deviceMaxClockFrequency = queryIntegerValue(OCLDeviceInfo.CL_DEVICE_MAX_CLOCK_FREQUENCY);
         }
-        queryOpenCLAPI(OCLDeviceInfo.CL_DEVICE_MAX_CLOCK_FREQUENCY.getValue());
-        deviceMaxClockFrequency = buffer.getInt();
         return deviceMaxClockFrequency;
     }
 
     @Override
     public long getDeviceMaxAllocationSize() {
-        if (maxAllocationSize != -1) {
-            return maxAllocationSize;
+        if (maxAllocationSize < 0) {
+            maxAllocationSize = queryLongValue(OCLDeviceInfo.CL_DEVICE_MAX_MEM_ALLOC_SIZE);
         }
-        queryOpenCLAPI(OCLDeviceInfo.CL_DEVICE_MAX_MEM_ALLOC_SIZE.getValue());
-        maxAllocationSize = buffer.getLong();
         return maxAllocationSize;
     }
 
     @Override
     public long getDeviceGlobalMemorySize() {
-        if (globalMemorySize != -1) {
-            return globalMemorySize;
+        if (globalMemorySize < 0) {
+            globalMemorySize = queryLongValue(OCLDeviceInfo.CL_DEVICE_GLOBAL_MEM_SIZE);
         }
-        queryOpenCLAPI(OCLDeviceInfo.CL_DEVICE_GLOBAL_MEM_SIZE.getValue());
-        globalMemorySize = buffer.getLong();
         return globalMemorySize;
     }
 
     @Override
     public long getDeviceLocalMemorySize() {
-        if (localMemorySize != -1) {
-            return localMemorySize;
+        if (localMemorySize < 0) {
+            localMemorySize = queryLongValue(OCLDeviceInfo.CL_DEVICE_LOCAL_MEM_SIZE);
         }
-        queryOpenCLAPI(OCLDeviceInfo.CL_DEVICE_LOCAL_MEM_SIZE.getValue());
-        localMemorySize = buffer.getLong();
         return localMemorySize;
     }
 
     public int getDeviceMaxWorkItemDimensions() {
-        if (maxWorkItemDimensions != -1) {
-            return maxWorkItemDimensions;
+        if (maxWorkItemDimensions < 0) {
+            maxWorkItemDimensions = queryIntegerValue(OCLDeviceInfo.CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS);
         }
-        queryOpenCLAPI(OCLDeviceInfo.CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS.getValue());
-        maxWorkItemDimensions = buffer.getInt();
         return maxWorkItemDimensions;
     }
 
@@ -323,10 +284,9 @@ public class OCLDevice extends TornadoLogger implements OCLTargetDevice {
             return maxWorkItemSizes;
         }
 
-        final int elements = getDeviceMaxWorkItemDimensions();
-
-        queryOpenCLAPI(OCLDeviceInfo.CL_DEVICE_MAX_WORK_ITEM_SIZES.getValue());
-        buffer.rewind();
+        int elements = getDeviceMaxWorkItemDimensions();
+        ByteBuffer buffer = clGetDeviceInfo(id, OCLDeviceInfo.CL_DEVICE_MAX_WORK_ITEM_SIZES.getValue())
+                            .order(OpenCL.BYTE_ORDER);
         maxWorkItemSizes = new long[elements];
         for (int i = 0; i < elements; i++) {
             maxWorkItemSizes[i] = buffer.getLong();
@@ -334,87 +294,60 @@ public class OCLDevice extends TornadoLogger implements OCLTargetDevice {
         return maxWorkItemSizes;
     }
 
-    private long getDeviceMaxWorkGroupSize_0() {
-        queryOpenCLAPI(OCLDeviceInfo.CL_DEVICE_MAX_WORK_GROUP_SIZE.getValue());
-        return buffer.getLong();
-    }
-
     @Override
     public long[] getDeviceMaxWorkGroupSize() {
-        if (maxWorkGroupSize != -1) {
-            return new long[] { maxWorkGroupSize };
+        if (maxWorkGroupSize < 0) {
+            maxWorkGroupSize = queryLongValue(OCLDeviceInfo.CL_DEVICE_MAX_WORK_GROUP_SIZE);
         }
-        maxWorkGroupSize = getDeviceMaxWorkGroupSize_0();
         return new long[] { maxWorkGroupSize };
     }
 
     @Override
     public long getDeviceMaxConstantBufferSize() {
-        if (maxConstantBufferSize != -1) {
-            return maxConstantBufferSize;
+        if (maxConstantBufferSize < 0) {
+            maxConstantBufferSize = queryLongValue(OCLDeviceInfo.CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE);
         }
-        queryOpenCLAPI(OCLDeviceInfo.CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE.getValue());
-        maxConstantBufferSize = buffer.getLong();
         return maxConstantBufferSize;
     }
 
-    private long getDoubleFPConfig() {
-        queryOpenCLAPI(OCLDeviceInfo.CL_DEVICE_DOUBLE_FP_CONFIG.getValue());
-        return buffer.getLong();
-    }
-
     public boolean isDeviceDoubleFPSupported() {
-        if (doubleFPConfig != -1) {
-            return doubleFPConfig != 0;
+        if (doubleFPConfig < 0) {
+            doubleFPConfig = queryLongValue(OCLDeviceInfo.CL_DEVICE_DOUBLE_FP_CONFIG);
         }
-        doubleFPConfig = getDoubleFPConfig();
         return doubleFPConfig != 0;
     }
 
     public long getDeviceSingleFPConfig() {
-        if (singleFPConfig != -1) {
-            return singleFPConfig;
+        if (singleFPConfig < 0) {
+            singleFPConfig = queryLongValue(OCLDeviceInfo.CL_DEVICE_SINGLE_FP_CONFIG);
         }
-        queryOpenCLAPI(OCLDeviceInfo.CL_DEVICE_SINGLE_FP_CONFIG.getValue());
-        singleFPConfig = buffer.getLong();
         return singleFPConfig;
     }
 
     public int getDeviceAddressBits() {
-        if (deviceAddressBits != INIT_VALUE) {
-            return deviceAddressBits;
+        if (deviceAddressBits < 0) {
+            deviceAddressBits = queryIntegerValue(OCLDeviceInfo.CL_DEVICE_ADDRESS_BITS);
         }
-        queryOpenCLAPI(OCLDeviceInfo.CL_DEVICE_ADDRESS_BITS.getValue());
-        deviceAddressBits = buffer.getInt();
         return deviceAddressBits;
     }
 
     public boolean hasDeviceUnifiedMemory() {
-        queryOpenCLAPI(OCLDeviceInfo.CL_DEVICE_HOST_UNIFIED_MEMORY.getValue());
-        return buffer.getInt() == OpenCL.CL_TRUE;
+        return queryIntegerValue(OCLDeviceInfo.CL_DEVICE_HOST_UNIFIED_MEMORY) == OpenCL.CL_TRUE;
     }
 
     public OCLLocalMemType getDeviceLocalMemoryType() {
-        if (localMemoryType != null) {
-            return localMemoryType;
+        if (localMemoryType == null) {
+            int type = queryIntegerValue(OCLDeviceInfo.CL_DEVICE_LOCAL_MEM_TYPE);
+            localMemoryType = OCLLocalMemType.toLocalMemType(type);
         }
-        queryOpenCLAPI(OCLDeviceInfo.CL_DEVICE_LOCAL_MEM_TYPE.getValue());
-        localMemoryType = OCLLocalMemType.toLocalMemType(buffer.getInt());
         return localMemoryType;
-    }
-
-    private int getDeviceEndianLittle() {
-        queryOpenCLAPI(OCLDeviceInfo.CL_DEVICE_ENDIAN_LITTLE.getValue());
-        deviceEndianLittle = buffer.getInt();
-        return deviceEndianLittle;
     }
 
     @Override
     public boolean isLittleEndian() {
-        if (deviceEndianLittle != -1) {
-            return deviceEndianLittle == CL_TRUE;
+        if (deviceEndianLittle < 0) {
+            deviceEndianLittle = queryIntegerValue(OCLDeviceInfo.CL_DEVICE_ENDIAN_LITTLE);
         }
-        getDeviceEndianLittle();
         return deviceEndianLittle == CL_TRUE;
     }
 
@@ -427,22 +360,10 @@ public class OCLDevice extends TornadoLogger implements OCLTargetDevice {
     }
 
     public String getVersion() {
-        if (version != null) {
-            return version;
-        }
-        queryOpenCLAPI(OCLDeviceInfo.CL_DEVICE_VERSION.getValue());
-        try {
-            version = new String(buffer.array(), "ASCII").trim();
-        } catch (UnsupportedEncodingException e) {
-            version = "OpenCL 0.0";
+        if (version == null) {
+            version = queryStringValue(OCLDeviceInfo.CL_DEVICE_VERSION);
         }
         return version;
-    }
-
-    private void queryOpenCLAPI(int value) {
-        Arrays.fill(buffer.array(), (byte) 0);
-        buffer.clear();
-        clGetDeviceInfo(id, value, buffer.array());
     }
 
     @Override

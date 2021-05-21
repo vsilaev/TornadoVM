@@ -37,7 +37,8 @@
 #include <iostream>
 #include "OCLEvent.h"
 #include "ocl_log.h"
-
+#include "global_vars.h"
+#include "utils.h"
 /*
  * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLEvent
  * Method:    clGetEventInfo
@@ -96,4 +97,31 @@ JNIEXPORT void JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLEvent_clR
         (JNIEnv *env, jclass clazz, jlong event) {
     cl_int status = clReleaseEvent((const cl_event) event);
     LOG_OCL_AND_VALIDATE("clReleaseEvent", status);
+}
+
+void CL_CALLBACK onOpenCLEventCompletion(cl_event event, cl_int eventStatus, void *user_data);
+
+/*
+ * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLEvent
+ * Method:    clAttachCallback
+ * Signature: (JLuk/ac/manchester/tornado/drivers/opencl/CLEvent$Callback;)V
+ */
+JNIEXPORT void JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLEvent_clAttachCallback
+        (JNIEnv *env, jclass clazz, jlong event, jobject callback) {
+    jobject sharedCallback = env->NewGlobalRef(callback);
+    cl_int status;
+    status = clRetainEvent((const cl_event) event); 
+    LOG_OCL_AND_VALIDATE("clRetainEvent", status);
+    status = clSetEventCallback((const cl_event) event, CL_COMPLETE, &onOpenCLEventCompletion, sharedCallback);
+    LOG_OCL_AND_VALIDATE("clSetEventCallback", status);
+}
+
+void CL_CALLBACK onOpenCLEventCompletion(cl_event event, cl_int eventStatus, void *user_data) {
+    JNI_EVENT_HANDLER(env, event, {
+        jobject target = static_cast<jobject>(user_data); 
+        env->CallVoidMethod(target, 
+                            JM_UK_AC_MANCHESTER_TORNADO_DRIVERS_OPENCL_OCLEVENT_CALLBACK_EXECUTE, 
+                            event, eventStatus);
+        env->DeleteGlobalRef(target);
+    });
 }

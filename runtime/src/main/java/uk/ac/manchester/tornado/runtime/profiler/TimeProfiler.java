@@ -23,7 +23,11 @@
  */
 package uk.ac.manchester.tornado.runtime.profiler;
 
-import java.util.HashMap;
+import java.util.Collections;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import uk.ac.manchester.tornado.api.profiler.ProfilerType;
 import uk.ac.manchester.tornado.api.profiler.TornadoProfiler;
@@ -38,32 +42,30 @@ public class TimeProfiler implements TornadoProfiler {
      * TODO remove this field when the {@link TimeProfiler} is refactored. Related to issue #94.
      */
     public static String NO_TASK_NAME = "noTask";
-
-    private HashMap<ProfilerType, Long> profilerTime;
-    private HashMap<String, HashMap<ProfilerType, Long>> taskTimers;
-    private HashMap<String, HashMap<ProfilerType, Long>> taskThroughputMetrics;
-    private HashMap<String, HashMap<ProfilerType, String>> taskDeviceIdentifiers;
-    private HashMap<String, HashMap<ProfilerType, String>> taskMethodNames;
+    private static final Long ZERO = Long.valueOf(0);
+    
+    private static final Function<String, Map<ProfilerType, Long>> NEW_SAFE_MAP_LONG = __ -> new ConcurrentHashMap<>();
+    private static final Function<String, Map<ProfilerType, String>> NEW_SAFE_MAP_STRING = __ -> new ConcurrentHashMap<>();
+    
+    private static final BiFunction<Long, Long, Long> ACCUMULATE  = (oldVal, newVal) -> oldVal == null ? newVal : oldVal + newVal;
+    private static final BiFunction<Long, Long, Long> RANGE  = (start, end) -> null == start ? ZERO : end - start;
+    
+    private final Map<ProfilerType, Long> profilerTime = new ConcurrentHashMap<>();
+    private final Map<String, Map<ProfilerType, Long>> taskTimers = new ConcurrentHashMap<>();
+    private final Map<String, Map<ProfilerType, Long>> taskThroughputMetrics = new ConcurrentHashMap<>();
+    private final Map<String, Map<ProfilerType, String>> taskDeviceIdentifiers = new ConcurrentHashMap<>();;
+    private final Map<String, Map<ProfilerType, String>> taskMethodNames = new ConcurrentHashMap<>();
 
     private StringBuffer indent;
 
     public TimeProfiler() {
-        profilerTime = new HashMap<>();
-        taskTimers = new HashMap<>();
-        taskDeviceIdentifiers = new HashMap<>();
-        taskMethodNames = new HashMap<>();
-        taskThroughputMetrics = new HashMap<>();
         indent = new StringBuffer("");
     }
 
     @Override
     public void addValueToMetric(ProfilerType type, String taskName, long value) {
-        if (!taskThroughputMetrics.containsKey(taskName)) {
-            taskThroughputMetrics.put(taskName, new HashMap<>());
-        }
-        HashMap<ProfilerType, Long> profilerType = taskThroughputMetrics.get(taskName);
-        profilerType.put(type, profilerType.get(type) != null ? profilerType.get(type) + value : value);
-        taskThroughputMetrics.put(taskName, profilerType);
+        Map<ProfilerType, Long> profilerType = taskThroughputMetrics.computeIfAbsent(taskName, NEW_SAFE_MAP_LONG);
+        profilerType.merge(type, value, ACCUMULATE);
     }
 
     @Override
@@ -75,85 +77,61 @@ public class TimeProfiler implements TornadoProfiler {
     @Override
     public void start(ProfilerType type, String taskName) {
         long start = System.nanoTime();
-        if (!taskTimers.containsKey(taskName)) {
-            taskTimers.put(taskName, new HashMap<>());
-        }
-        HashMap<ProfilerType, Long> profilerType = taskTimers.get(taskName);
+        Map<ProfilerType, Long> profilerType = taskTimers.computeIfAbsent(taskName, NEW_SAFE_MAP_LONG);
         profilerType.put(type, start);
-        taskTimers.put(taskName, profilerType);
     }
 
     @Override
     public void registerMethodHandle(ProfilerType type, String taskName, String methodName) {
-        if (!taskMethodNames.containsKey(taskName)) {
-            taskMethodNames.put(taskName, new HashMap<>());
-        }
-        HashMap<ProfilerType, String> profilerType = taskMethodNames.get(taskName);
+        Map<ProfilerType, String> profilerType = taskMethodNames.computeIfAbsent(taskName, NEW_SAFE_MAP_STRING);
         profilerType.put(type, methodName);
-        taskMethodNames.put(methodName, profilerType);
     }
 
     @Override
     public void registerDeviceName(ProfilerType type, String taskName, String deviceInfo) {
-        if (!taskDeviceIdentifiers.containsKey(taskName)) {
-            taskDeviceIdentifiers.put(taskName, new HashMap<>());
-        }
-        HashMap<ProfilerType, String> profilerType = taskDeviceIdentifiers.get(taskName);
+        Map<ProfilerType, String> profilerType = taskDeviceIdentifiers.computeIfAbsent(taskName, NEW_SAFE_MAP_STRING);
         profilerType.put(type, deviceInfo);
-        taskDeviceIdentifiers.put(taskName, profilerType);
     }
 
     @Override
     public void registerDeviceID(ProfilerType type, String taskName, String deviceID) {
-        if (!taskDeviceIdentifiers.containsKey(taskName)) {
-            taskDeviceIdentifiers.put(taskName, new HashMap<>());
-        }
-        HashMap<ProfilerType, String> profilerType = taskDeviceIdentifiers.get(taskName);
+        Map<ProfilerType, String> profilerType = taskDeviceIdentifiers.computeIfAbsent(taskName, NEW_SAFE_MAP_STRING);
         profilerType.put(type, deviceID);
-        taskDeviceIdentifiers.put(taskName, profilerType);
     }
 
     @Override
     public void stop(ProfilerType type) {
         long end = System.nanoTime();
-        long start = profilerTime.get(type);
-        long total = end - start;
-        profilerTime.put(type, total);
+        profilerTime.merge(type, end, RANGE);
     }
 
     @Override
     public void stop(ProfilerType type, String taskName) {
         long end = System.nanoTime();
-        HashMap<ProfilerType, Long> profiledType = taskTimers.get(taskName);
-        long start = profiledType.get(type);
-        long total = end - start;
-        profiledType.put(type, total);
-        taskTimers.put(taskName, profiledType);
+        Map<ProfilerType, Long> profiledType = taskTimers.computeIfAbsent(taskName, NEW_SAFE_MAP_LONG);
+        profiledType.merge(type, end, RANGE);
     }
 
     @Override
     public long getTimer(ProfilerType type) {
-        if (!profilerTime.containsKey(type)) {
-            return 0;
-        }
-        return profilerTime.get(type);
+        return profilerTime.getOrDefault(type, ZERO);
     }
 
     @Override
     public long getTaskTimer(ProfilerType type, String taskName) {
-        if (!taskTimers.containsKey(taskName)) {
-            return 0;
-        }
-        if (!taskTimers.get(taskName).containsKey(type)) {
-            return 0;
-        }
-        return taskTimers.get(taskName).get(type);
+        return taskTimers.getOrDefault(taskName, Collections.emptyMap()).getOrDefault(type, ZERO);
     }
 
     @Override
     public void setTimer(ProfilerType type, long time) {
         profilerTime.put(type, time);
     }
+    
+    @Override
+    public void setTaskTimer(ProfilerType type, String taskName, long time) {
+        Map<ProfilerType, Long> profiledType = taskTimers.computeIfAbsent(taskName, NEW_SAFE_MAP_LONG);
+        profiledType.put(type, time);
+    }    
 
     @Override
     public void dump() {
@@ -193,7 +171,7 @@ public class TimeProfiler implements TornadoProfiler {
             json.append(indent.toString() + "\"" + p + "\"" + ": " + "\"" + profilerTime.get(p) + "\",\n");
         }
         if (taskThroughputMetrics.containsKey(NO_TASK_NAME)) {
-            HashMap<ProfilerType, Long> noTaskValues = taskThroughputMetrics.get(NO_TASK_NAME);
+            Map<ProfilerType, Long> noTaskValues = taskThroughputMetrics.get(NO_TASK_NAME);
             for (ProfilerType p : noTaskValues.keySet()) {
                 json.append(indent.toString() + "\"" + p + "\"" + ": " + "\"" + noTaskValues.get(p) + "\",\n");
             }
@@ -251,17 +229,8 @@ public class TimeProfiler implements TornadoProfiler {
     }
 
     @Override
-    public void setTaskTimer(ProfilerType type, String taskID, long timer) {
-        if (!taskTimers.containsKey(taskID)) {
-            taskTimers.put(taskID, new HashMap<>());
-        }
-        taskTimers.get(taskID).put(type, timer);
-    }
-
-    @Override
     public void sum(ProfilerType acc, long value) {
-        long sum = getTimer(acc) + value;
-        profilerTime.put(acc, sum);
+        profilerTime.merge(acc, value, ACCUMULATE);
     }
 
 }

@@ -39,6 +39,7 @@ import static uk.ac.manchester.tornado.runtime.common.Tornado.ENABLE_PROFILING;
 import java.nio.ByteBuffer;
 
 import uk.ac.manchester.tornado.api.common.Event;
+import uk.ac.manchester.tornado.api.common.TornadoExecutionHandler;
 import uk.ac.manchester.tornado.api.enums.TornadoExecutionStatus;
 import uk.ac.manchester.tornado.drivers.opencl.enums.OCLCommandExecutionStatus;
 import uk.ac.manchester.tornado.drivers.opencl.enums.OCLProfilingInfo;
@@ -90,54 +91,49 @@ public class OCLEvent extends TornadoLogger implements Event {
     protected static final int DESC_SYNC_BARRIER = 15;
     protected static final int EVENT_NONE = 16;
 
-    private final long[] internalBuffer = new long[2];
-
-    private OCLCommandQueue queue;
-    private int localId;
-    private long oclEventID;
-    private final ByteBuffer buffer = ByteBuffer.allocate(8);
-    private String name;
+    private final OCLCommandQueue queue;
+    private final long oclEventID;
+    private final long oclProfilerEventID;
+    private final String name;
+    private final long tag;
+    private final String description;
     private int status;
 
-    OCLEvent() {
-        buffer.order(OpenCL.BYTE_ORDER);
+    static abstract class Callback {
+        abstract void execute(long oclEventID, int status);
     }
 
-    OCLEvent(final OCLEventsWrapper eventsWrapper, final OCLCommandQueue queue, final int event, final long oclEventID) {
-        this();
+    OCLEvent(OCLCommandQueue queue, long oclEventID, long oclProfilerEventID, int descriptorId, long tag) {
         this.queue = queue;
-        this.localId = event;
         this.oclEventID = oclEventID;
-        this.name = String.format("%s: 0x%x", EVENT_DESCRIPTIONS[eventsWrapper.getDescriptor(localId)], eventsWrapper.getTag(localId));
+        this.oclProfilerEventID = oclProfilerEventID > 0 ? oclProfilerEventID : oclEventID;
+        this.description = EVENT_DESCRIPTIONS[descriptorId];
+        this.tag = tag;
+        this.name = String.format("%s: 0x%x", description, tag);
         this.status = -1;
     }
 
-    void setEventId(int localId, long eventId) {
-        this.localId = localId;
-        this.oclEventID = eventId;
-    }
+    private native static void clGetEventInfo(long eventId, int param, byte[] buffer) throws OCLException;
 
-    native static void clGetEventInfo(long eventId, int param, byte[] buffer) throws OCLException;
+    private native static void clGetEventProfilingInfo(long eventId, long param, byte[] buffer) throws OCLException;
 
-    native static void clGetEventProfilingInfo(long eventId, long param, byte[] buffer) throws OCLException;
+    private native static void clWaitForEvents(long[] events) throws OCLException;
 
-    native static void clWaitForEvents(long[] events) throws OCLException;
+    private native static void clReleaseEvent(long eventId) throws OCLException;
 
-    native static void clReleaseEvent(long eventId) throws OCLException;
+    private native static void clAttachCallback(long eventId, Callback callback) throws OCLException;
 
     private long readEventTime(OCLProfilingInfo eventType) {
         if (!ENABLE_PROFILING) {
             return -1;
         }
-        long time = 0;
-        buffer.clear();
+        ByteBuffer buffer = OpenCL.createLongBuffer(0L);
         try {
-            clGetEventProfilingInfo(oclEventID, eventType.getValue(), buffer.array());
-            time = buffer.getLong();
+            clGetEventProfilingInfo(oclProfilerEventID, eventType.getValue(), buffer.array());
         } catch (OCLException e) {
             error(e.getMessage());
         }
-        return time;
+        return buffer.getLong();
     }
 
     @Override
@@ -169,16 +165,13 @@ public class OCLEvent extends TornadoLogger implements Event {
         if (status == 0) {
             return CL_COMPLETE;
         }
-
-        buffer.clear();
-
+        ByteBuffer buffer = OpenCL.createIntegerBuffer(0);
         try {
             clGetEventInfo(oclEventID, CL_EVENT_COMMAND_EXECUTION_STATUS.getValue(), buffer.array());
-            status = buffer.getInt();
         } catch (OCLException e) {
             error(e.getMessage());
         }
-
+        status = buffer.getInt();
         return createOCLCommandExecutionStatus(status);
     }
 
@@ -191,21 +184,54 @@ public class OCLEvent extends TornadoLogger implements Event {
                 queue.flush();
             case CL_QUEUED:
             case CL_RUNNING:
-                waitOnPassive();
+                waitForEvents();
                 break;
             case CL_ERROR:
             case CL_UNKNOWN:
                 fatal("error on event: %s", name);
         }
+        queue.awaitTransfers();
     }
 
-    private void waitOnPassive() {
-        try {
-            internalBuffer[0] = 1;
-            internalBuffer[1] = oclEventID;
-            clWaitForEvents(internalBuffer);
-        } catch (OCLException e) {
-            error(e.getMessage());
+    @Override
+    public void waitOn(TornadoExecutionHandler handler) {
+        TornadoExecutionHandler safeHandler = (status, error) -> {
+           queue.awaitTransfers();
+           handler.handle(status, error);
+        };
+        OCLCommandExecutionStatus oclStatus = getCLStatus();
+        switch (oclStatus) {
+            case CL_COMPLETE:
+                safeHandler.handle(TornadoExecutionStatus.COMPLETE, null);
+                break;
+            case CL_SUBMITTED:
+                queue.flush();
+            case CL_QUEUED:
+            case CL_RUNNING:
+                try {
+                    clAttachCallback(oclEventID, new Callback() {
+                        void execute(long oclEventID, int status) {
+                            if (status == CL_COMPLETE.getValue()) {
+                                safeHandler.handle(TornadoExecutionStatus.COMPLETE, null);
+                            } else {
+                                Throwable ex = new OCLException(
+                                    String.format("OpenCL error on event %s, code %s", name, status)
+                                );
+                                safeHandler.handle(TornadoExecutionStatus.ERROR, ex);  
+                            } 
+                        }  
+                    });
+                } catch (OCLException e) {
+                    queue.awaitTransfers();
+                    safeHandler.handle(TornadoExecutionStatus.ERROR, e);
+                }
+                break;
+            case CL_ERROR:
+            case CL_UNKNOWN:
+                Throwable ex = new OCLException(
+                    String.format("OpenCL error on event %s, code %s", name, status)
+                );
+                safeHandler.handle(TornadoExecutionStatus.ERROR, ex);  
         }
     }
 
@@ -271,6 +297,9 @@ public class OCLEvent extends TornadoLogger implements Event {
     void release() {
         try {
             clReleaseEvent(oclEventID);
+            if (oclProfilerEventID != oclEventID) {
+                clReleaseEvent(oclProfilerEventID);
+            }
         } catch (OCLException e) {
             error(e.getMessage());
         }

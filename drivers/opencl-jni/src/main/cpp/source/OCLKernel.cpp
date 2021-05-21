@@ -53,7 +53,7 @@ JNIEXPORT void JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLKernel_cl
 JNIEXPORT void JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLKernel_clSetKernelArg
 (JNIEnv *env, jclass clazz, jlong kernel_id, jint index, jlong size, jbyteArray array) {
     jbyte *value = static_cast<jbyte *>((array == NULL) ? NULL : env->GetPrimitiveArrayCritical(array, 0));
-    cl_uint status = clSetKernelArg((cl_kernel) kernel_id, (cl_uint) index, (size_t) size, (void*) value);
+    cl_int status = clSetKernelArg((cl_kernel) kernel_id, (cl_uint) index, (size_t) size, (void*) value);
     LOG_OCL_AND_VALIDATE("clSetKernelArg", status);
     if (value != NULL) {
         env->ReleasePrimitiveArrayCritical(array, value, 0);
@@ -65,14 +65,40 @@ JNIEXPORT void JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLKernel_cl
  * Method:    clGetKernelInfo
  * Signature: (JI[B)V
  */
-JNIEXPORT void JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLKernel_clGetKernelInfo
+JNIEXPORT void JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLKernel_clGetKernelInfo__JI_3B
 (JNIEnv *env, jclass clazz, jlong kernel_id, jint kernel_info, jbyteArray array) {
     jbyte *value;
     jsize len;
     value = static_cast<jbyte *>(env->GetPrimitiveArrayCritical(array, 0));
     len = env->GetArrayLength(array);
     size_t return_size = 0;
-    cl_uint status = clGetKernelInfo((cl_kernel) kernel_id, (cl_kernel_info) kernel_info, len, (void *) value, &return_size);
+    cl_int status = clGetKernelInfo((cl_kernel) kernel_id, (cl_kernel_info) kernel_info, len, (void *) value, &return_size);
     LOG_OCL_AND_VALIDATE("clGetKernelInfo", status);
-    env->ReleasePrimitiveArrayCritical(array, value, 0);
+    if (NULL != value) {
+        env->ReleasePrimitiveArrayCritical(array, value, 0);
+    }
+}
+
+/*
+ * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLKernel
+ * Method:    clGetKernelInfo
+ * Signature: (JI)Ljava/nio/ByteBuffer;
+ */
+JNIEXPORT jobject JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLKernel_clGetKernelInfo__JI
+(JNIEnv *env, jclass clazz, jlong kernel_id, jint kernel_info) {
+    size_t return_size = 0;
+    cl_int status = clGetKernelInfo((cl_kernel) kernel_id, (cl_kernel_info) kernel_info, 0, NULL, &return_size);
+    LOG_OCL_AND_VALIDATE("clGetKernelInfo-size", status);
+    if (status != CL_SUCCESS || return_size < 1) {
+        return NULL;
+    }
+    void* value = malloc(return_size);
+    memset(value, 0, return_size);
+    status = clGetKernelInfo((cl_kernel) kernel_id, (cl_kernel_info) kernel_info, return_size, value, NULL);
+    LOG_OCL_AND_VALIDATE("clGetKernelInfo", status);
+    if (status == CL_SUCCESS) {
+        return env->NewDirectByteBuffer(value, return_size);
+    } else {
+        return NULL;
+    }
 }

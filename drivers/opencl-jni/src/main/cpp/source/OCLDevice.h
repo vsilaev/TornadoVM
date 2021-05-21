@@ -32,9 +32,17 @@ extern "C" {
 /*
  * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLDevice
  * Method:    clGetDeviceInfo
+ * Signature: (JI)Ljava/nio/ByteBuffer;
+ */
+JNIEXPORT jobject JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLDevice_clGetDeviceInfo__JI
+        (JNIEnv *, jclass, jlong, jint);
+
+/*
+ * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLDevice
+ * Method:    clGetDeviceInfo
  * Signature: (JI[B)V
  */
-JNIEXPORT void JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLDevice_clGetDeviceInfo
+JNIEXPORT void JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLDevice_clGetDeviceInfo__JI_3B
         (JNIEnv *, jclass, jlong, jint, jbyteArray);
 
 #ifdef __cplusplus
