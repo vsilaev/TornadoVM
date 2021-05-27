@@ -490,15 +490,15 @@ JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLCommandQ
     return transferFromHostToDevice(env, klass, commandQueue, reinterpret_cast<jbyteArray>(hostArray), hostOffset, blocking, offset, numBytes, devicePtr, javaArrayEvents);
 }
 
-jlong transfersFromDeviceToHost(JNIEnv *env, jclass javaClass,
-                                jlong commandQueue,             // Pointer to the OpenCL command queue
-                                jbyteArray hostArray,           // Host array
-                                jlong hostOffset,               // Offset within the Host Array
-                                jboolean blocking,              // Perform a blocking/async call
-                                jlong offset,                   // Offset within the device buffer
-                                jlong numBytes,                 // Number of bytes to be copied
-                                jlong devicePtr,                // Pointer to the device array
-                                jlongArray javaArrayEvents) {   // Array of previous events
+jlong transferFromDeviceToHost(JNIEnv *env, jclass javaClass,
+                               jlong commandQueue,             // Pointer to the OpenCL command queue
+                               jbyteArray hostArray,           // Host array
+                               jlong hostOffset,               // Offset within the Host Array
+                               jboolean blocking,              // Perform a blocking/async call
+                               jlong offset,                   // Offset within the device buffer
+                               jlong numBytes,                 // Number of bytes to be copied
+                               jlong devicePtr,                // Pointer to the device array
+                               jlongArray javaArrayEvents) {   // Array of previous events
 
     jbyte *buffer = static_cast<jbyte *>(env->GetPrimitiveArrayCritical(hostArray, NULL));
 
@@ -507,7 +507,7 @@ jlong transfersFromDeviceToHost(JNIEnv *env, jclass javaClass,
     jsize num_events = (javaArrayEvents != NULL) ? eventsArray[0] : 0;
 
     if (PRINT_DATA_SIZES) {
-        std::cout << "[TornadoVM JNI] transfersFromDeviceToHost from " << offset << " (" << numBytes << ") from buffer: " << buffer << std::endl;
+        std::cout << "[TornadoVM JNI] transferFromDeviceToHost from " << offset << " (" << numBytes << ") from buffer: " << buffer << std::endl;
     }
     cl_event event = (cl_event)CL_INVALID_EVENT;
     cl_int status = clEnqueueReadBuffer((cl_command_queue) commandQueue, (cl_mem) devicePtr, CL_FALSE, // enqueue as non-blocking
@@ -563,7 +563,7 @@ JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLCommandQ
     jsize num_events = (javaArrayEvents != NULL) ? eventsArray[0] : 0;
 
     if (PRINT_DATA_SIZES) {
-        std::cout << "[TornadoVM JNI] transfersFromDeviceToHost from " << offset << " (" << numBytes << ") from buffer: " << buffer << std::endl;
+        std::cout << "[TornadoVM JNI] transferFromDeviceToHost from " << offset << " (" << numBytes << ") from buffer: " << buffer << std::endl;
     }
     cl_event event = (cl_event)CL_INVALID_EVENT;
     cl_int status = clEnqueueReadBuffer((cl_command_queue) commandQueue, (cl_mem) devicePtr, blocking_read,
@@ -630,7 +630,7 @@ JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLCommandQ
 JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue_readArrayFromDevice__J_3BJZJJJ_3J
         (JNIEnv *env, jclass clazz, jlong commandQueue, jbyteArray hostArray, jlong hostOffset, jboolean blocking,
          jlong offset, jlong numBytes, jlong devicePtr, jlongArray javaArrayEvents) {
-    return transfersFromDeviceToHost(env, clazz, commandQueue, hostArray, hostOffset, blocking, offset, numBytes, devicePtr, javaArrayEvents);
+    return transferFromDeviceToHost(env, clazz, commandQueue, hostArray, hostOffset, blocking, offset, numBytes, devicePtr, javaArrayEvents);
 }
 
 /*
@@ -641,7 +641,7 @@ JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLCommandQ
 JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue_readArrayFromDevice__J_3CJZJJJ_3J
         (JNIEnv *env, jclass clazz, jlong commandQueue, jcharArray hostArray, jlong hostOffset, jboolean blocking,
          jlong offset, jlong numBytes, jlong devicePtr, jlongArray javaArrayEvents) {
-    return transfersFromDeviceToHost(env, clazz, commandQueue, reinterpret_cast<jbyteArray>(hostArray), hostOffset, blocking, offset, numBytes,
+    return transferFromDeviceToHost(env, clazz, commandQueue, reinterpret_cast<jbyteArray>(hostArray), hostOffset, blocking, offset, numBytes,
                                      devicePtr, javaArrayEvents);
 }
 
@@ -653,7 +653,7 @@ JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLCommandQ
 JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue_readArrayFromDevice__J_3SJZJJJ_3J
         (JNIEnv *env, jclass clazz, jlong commandQueue, jshortArray hostArray, jlong hostOffset, jboolean blocking,
          jlong offset, jlong numBytes, jlong devicePtr, jlongArray javaArrayEvents) {
-    return transfersFromDeviceToHost(env, clazz, commandQueue, reinterpret_cast<jbyteArray>(hostArray), hostOffset, blocking, offset, numBytes,
+    return transferFromDeviceToHost(env, clazz, commandQueue, reinterpret_cast<jbyteArray>(hostArray), hostOffset, blocking, offset, numBytes,
                                      devicePtr, javaArrayEvents);
 }
 
@@ -665,7 +665,7 @@ JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLCommandQ
 JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue_readArrayFromDevice__J_3IJZJJJ_3J
         (JNIEnv *env, jclass clazz, jlong commandQueue, jintArray hostArray, jlong hostOffset, jboolean blocking,
          jlong offset, jlong numBytes, jlong devicePtr, jlongArray javaArrayEvents) {
-    return transfersFromDeviceToHost(env, clazz, commandQueue, reinterpret_cast<jbyteArray>(hostArray), hostOffset, blocking, offset, numBytes, devicePtr, javaArrayEvents);
+    return transferFromDeviceToHost(env, clazz, commandQueue, reinterpret_cast<jbyteArray>(hostArray), hostOffset, blocking, offset, numBytes, devicePtr, javaArrayEvents);
 }
 
 /*
@@ -676,7 +676,7 @@ JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLCommandQ
 JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue_readArrayFromDevice__J_3JJZJJJ_3J
         (JNIEnv *env, jclass clazz, jlong commandQueue, jlongArray hostArray, jlong hostOffset, jboolean blocking,
          jlong offset, jlong numBytes, jlong devicePtr, jlongArray javaArrayEvents) {
-    return transfersFromDeviceToHost(env, clazz, commandQueue, reinterpret_cast<jbyteArray>(hostArray), hostOffset, blocking, offset, numBytes, devicePtr, javaArrayEvents);
+    return transferFromDeviceToHost(env, clazz, commandQueue, reinterpret_cast<jbyteArray>(hostArray), hostOffset, blocking, offset, numBytes, devicePtr, javaArrayEvents);
 }
 
 /*
@@ -687,7 +687,7 @@ JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLCommandQ
 JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue_readArrayFromDevice__J_3FJZJJJ_3J
         (JNIEnv *env, jclass clazz, jlong commandQueue, jfloatArray hostArray, jlong hostOffset, jboolean blocking,
          jlong offset, jlong numBytes, jlong devicePtr, jlongArray javaArrayEvents) {
-    return transfersFromDeviceToHost(env, clazz, commandQueue, reinterpret_cast<jbyteArray>(hostArray), hostOffset, blocking, offset, numBytes, devicePtr, javaArrayEvents);
+    return transferFromDeviceToHost(env, clazz, commandQueue, reinterpret_cast<jbyteArray>(hostArray), hostOffset, blocking, offset, numBytes, devicePtr, javaArrayEvents);
 }
 /*
  * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue
@@ -697,5 +697,5 @@ JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLCommandQ
 JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue_readArrayFromDevice__J_3DJZJJJ_3J
         (JNIEnv *env, jclass clazz, jlong commandQueue, jdoubleArray hostArray, jlong hostOffset, jboolean blocking,
          jlong offset, jlong numBytes, jlong devicePtr, jlongArray javaArrayEvents) {
-    return transfersFromDeviceToHost(env, clazz, commandQueue, reinterpret_cast<jbyteArray>(hostArray), hostOffset, blocking, offset, numBytes, devicePtr, javaArrayEvents);
+    return transferFromDeviceToHost(env, clazz, commandQueue, reinterpret_cast<jbyteArray>(hostArray), hostOffset, blocking, offset, numBytes, devicePtr, javaArrayEvents);
 }
