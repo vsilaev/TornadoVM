@@ -296,7 +296,7 @@ public class TornadoVM extends TornadoLogger {
         return allEvents;
     }
 
-    private List<Integer> executeStreamIn(StringBuilder tornadoVMBytecodeList, final int objectIndex, final int contextIndex, final long offset, final int eventList, final long sizeBatch,
+    private List<Integer> executeStreamIn(StringBuilder tornadoVMBytecodeList, int objectIndex, int contextIndex, long offset, int eventList, long sizeBatch,
             final int[] waitList) {
         final TornadoAcceleratorDevice device = contexts.get(contextIndex);
         final Object object = objects.get(objectIndex);
@@ -572,8 +572,6 @@ public class TornadoVM extends TornadoLogger {
         int lastEvent;
         try {
             if (useDependencies) {
-                //List<Integer> xvents = executeBarrier(tornadoVMBytecodeList, eventList, waitList, null);
-                //lastEvent = installedCode.launchWithoutDependencies(stack, bufferAtomics, metadata, batchThreads);
                 lastEvent = installedCode.launchWithDependencies(stack, bufferAtomics, metadata, batchThreads, waitList);
             } else {
                 lastEvent = installedCode.launchWithoutDependencies(stack, bufferAtomics, metadata, batchThreads);

@@ -25,6 +25,9 @@
  */
 package uk.ac.manchester.tornado.drivers.opencl.mm;
 
+import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
+
 import jdk.vm.ci.meta.JavaKind;
 import uk.ac.manchester.tornado.drivers.opencl.OCLDeviceContext;
 
@@ -50,12 +53,19 @@ public class OCLFloatArrayWrapper extends OCLArrayWrapper<float[]> {
 
     @Override
     protected int enqueueReadArrayData(long bufferId, long offset, long bytes, float[] value, long hostOffset, int[] waitEvents) {
-        return deviceContext.enqueueReadBuffer(bufferId, offset, bytes, value, hostOffset, waitEvents);
+        ByteBuffer offHeapBuffer = deviceContext.newDirectByteBuffer(bytes);
+        return deviceContext.enqueueReadBuffer(bufferId, offset, bytes, offHeapBuffer, waitEvents, true, buffer -> {
+            FloatBuffer onHeapBuffer = FloatBuffer.wrap(value, div(hostOffset, Float.BYTES), div(bytes, Float.BYTES));
+            onHeapBuffer.put(offHeapBuffer.asFloatBuffer());
+        });
     }
 
     @Override
     protected int enqueueWriteArrayData(long bufferId, long offset, long bytes, float[] value, long hostOffset, int[] waitEvents) {
-        return deviceContext.enqueueWriteBuffer(bufferId, offset, bytes, value, hostOffset, waitEvents);
+        FloatBuffer onHeapBuffer = FloatBuffer.wrap(value, div(hostOffset, Float.BYTES), div(bytes, Float.BYTES));
+        ByteBuffer offHeapBuffer = deviceContext.newDirectByteBuffer(bytes);
+        offHeapBuffer.asFloatBuffer().put(onHeapBuffer);
+        return deviceContext.enqueueWriteBuffer(bufferId, offset, bytes, offHeapBuffer, waitEvents, true);
     }
 
 }

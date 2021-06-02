@@ -47,10 +47,10 @@ JNIEXPORT void JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLKernel_cl
 
 /*
  * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLKernel
- * Method:    clSetKernelArg
+ * Method:    clSetKernelArgArray
  * Signature: (JIJ[B)V
  */
-JNIEXPORT void JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLKernel_clSetKernelArg
+JNIEXPORT void JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLKernel_clSetKernelArgArray
 (JNIEnv *env, jclass clazz, jlong kernel_id, jint index, jlong size, jbyteArray array) {
     jbyte *value = static_cast<jbyte *>((array == NULL) ? NULL : env->GetPrimitiveArrayCritical(array, 0));
     cl_int status = clSetKernelArg((cl_kernel) kernel_id, (cl_uint) index, (size_t) size, (void*) value);
@@ -58,6 +58,18 @@ JNIEXPORT void JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLKernel_cl
     if (value != NULL) {
         env->ReleasePrimitiveArrayCritical(array, value, 0);
     }
+}
+
+/*
+ * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLKernel
+ * Method:    clSetKernelArgBuffer
+ * Signature: (JIJLjava/nio/ByteBuffer;)V
+ */
+JNIEXPORT void JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLKernel_clSetKernelArgBuffer
+(JNIEnv *env, jclass clazz, jlong kernel_id, jint index, jlong size, jobject buffer) {
+    void *value = buffer == NULL ? NULL : env->GetDirectBufferAddress(buffer);
+    cl_int status = clSetKernelArg((cl_kernel) kernel_id, (cl_uint) index, (size_t) size, value);
+    LOG_OCL_AND_VALIDATE("clSetKernelArg", status);
 }
 
 /*

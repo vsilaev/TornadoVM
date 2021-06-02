@@ -42,12 +42,16 @@ public class PrimitiveSerialiser {
     }
 
     public static final void put(ByteBuffer buffer, Object value, int alignment) {
-        if (value instanceof Integer) {
+        if (value instanceof Byte) {
+            buffer.put((byte)value);
+        } else if (value instanceof Character) {
+            buffer.putChar((char)value);
+        } else if (value instanceof Short) {
+            buffer.putShort((short) value);
+        } else if (value instanceof Integer) {
             buffer.putInt((int) value);
         } else if (value instanceof Long) {
             buffer.putLong((long) value);
-        } else if (value instanceof Short) {
-            buffer.putShort((short) value);
         } else if (value instanceof Float) {
             buffer.putFloat((float) value);
         } else if (value instanceof Double) {

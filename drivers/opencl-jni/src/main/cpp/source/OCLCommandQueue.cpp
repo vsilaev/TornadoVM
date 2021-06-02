@@ -40,45 +40,6 @@
 #include "utils.h"
 #include "ocl_log.h"
 
-struct read_callback_data {
-    jobject target;
-    void *buffer;
-    jlong capacity;
-    cl_event onCopied;
-};
-
-void invokeReadCallback(JNIEnv *env, jobject target, void *buffer, jlong capacity) {
-    jobject directBuffer = NULL;
-    if (buffer != NULL) {
-        directBuffer = env->NewDirectByteBuffer(buffer, capacity);  
-    } 
-    env->CallVoidMethod(target, JM_JAVA_UTIL_CONSUMER_ACCEPT, directBuffer);
-}
-
-void CL_CALLBACK pushHostData(cl_event event, cl_int eventStatus, void *user_data) {
-    cl_event onCopied;
-    JNI_EVENT_HANDLER(env, event, {
-        read_callback_data *payload  = static_cast<read_callback_data *>(user_data);
-        onCopied = payload->onCopied;
-
-        if (env != NULL) {
-            if (eventStatus == CL_COMPLETE) {
-                invokeReadCallback(env, payload->target, payload->buffer, payload->capacity);
-            } else {
-                free(payload->buffer);
-                invokeReadCallback(env, payload->target, NULL, -1);
-            }
-            env->DeleteGlobalRef(payload->target);
-        } else {
-            free(payload->buffer);
-        }
-        free(payload);
-    });
-    // Now fire the event visible to host 
-    // and used as a true marker/barrier/waitList
-    clSetUserEventStatus(onCopied, eventStatus);
-}
-
 void CL_CALLBACK releaseHostObject(cl_event event, cl_int eventStatus, void *user_data) {
     JNI_EVENT_HANDLER(env, event, {
         if (env != NULL) {
@@ -102,22 +63,6 @@ void retainAndReleaseOnEvent(JNIEnv *env, jobject target, cl_event event) {
         env->DeleteGlobalRef(globalRef); 
     }
 } 
-
-cl_event createCustomEvent(cl_command_queue commandQueue) {
-    cl_int status;
-    cl_context ctx;
-
-    status = clGetCommandQueueInfo(commandQueue, CL_QUEUE_CONTEXT, sizeof(cl_context), &ctx, NULL);
-    LOG_OCL_AND_VALIDATE("clGetCommandQueueInfo", status);
-
-    if (status == CL_SUCCESS) {
-        cl_event event = clCreateUserEvent(ctx, &status); 
-        LOG_OCL_AND_VALIDATE("clGetCommandQueueInfo", status);
-        return event;
-    } else {
-        return (cl_event)(jlong)status;
-    }
-}
 
 /*
  * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue
@@ -397,18 +342,6 @@ JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLCommandQ
     }
 
     if (status == CL_SUCCESS) {
-    	/*
-    	clWaitForEvents(1, &event);
-       	jint *xbuffer = static_cast<jint*>(buffer);
-       	xbuffer[0] = 0;
-       	xbuffer[1] = 0;
-       	xbuffer[2] = 0;
-    	clEnqueueReadBuffer((cl_command_queue) commandQueue, (cl_mem) devicePtr, CL_TRUE, // enqueue as blocking
-    	                                        (size_t) deviceOffset, (size_t) numBytes, buffer,
-    	                                        0, NULL, &event);
-
-       	std::cout << "---COPY-BACK::: " << xbuffer[0] << ", " << xbuffer[1] << ", " << xbuffer[2] << std::endl;
-    	*/
     	if (!blocking) {
             retainAndReleaseOnEvent(env, directBuffer, event);
     	}
@@ -547,16 +480,15 @@ jlong transferFromDeviceToHost(JNIEnv *env, jclass javaClass,
 /*
  * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue
  * Method:    readBufferFromDevice
- * Signature: (JJZJJLjava/nio/ByteBuffer;[J[J)J
+ * Signature: (JJZJJLjava/nio/ByteBuffer;[J)J
  */
 JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue_readBufferFromDevice
         (JNIEnv *env, jclass clazz, jlong commandQueue, jlong devicePtr, jboolean blocking,
-         jlong offset, jlong numBytes, jobject callback, jlongArray javaArrayEvents, jlongArray javaArrayProfilerEvents) {
+         jlong offset, jlong numBytes, jobject directBuffer, jlongArray javaArrayEvents) {
 
     cl_bool blocking_read = blocking ? CL_TRUE : CL_FALSE;
 
-    void *buffer = malloc(numBytes);
-    memset(buffer, 0, (size_t) numBytes); 
+    void *buffer = env->GetDirectBufferAddress(directBuffer);
 
     jlong *eventsArray = static_cast<jlong *>((javaArrayEvents != NULL) ? env->GetPrimitiveArrayCritical(javaArrayEvents, NULL) : NULL);
     jlong *events = (javaArrayEvents != NULL) ? &eventsArray[1] : NULL;
@@ -584,37 +516,10 @@ JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLCommandQ
     }
 
     if (status == CL_SUCCESS) { 
-    	if (NULL != javaArrayProfilerEvents && env->GetArrayLength(javaArrayProfilerEvents) > 0) {
-    		jlong elements[] = { (jlong)event };
-    		env->SetLongArrayRegion( javaArrayProfilerEvents, 0, 1, elements );
+    	if (!blocking) {
+            retainAndReleaseOnEvent(env, directBuffer, event);
     	}
-        if (blocking) {
-            invokeReadCallback(env, callback, buffer, numBytes);
-            return (jlong)event; 
-        } else {
-        	read_callback_data *payload = (read_callback_data*)(malloc(sizeof(read_callback_data)));
-            payload->target = env->NewGlobalRef(callback);
-            payload->buffer = buffer;
-            payload->capacity = numBytes;
-            payload->onCopied = createCustomEvent((cl_command_queue) commandQueue);
-
-            cl_int status1 = clRetainEvent(event); 
-            LOG_OCL_AND_VALIDATE("clRetainEvent", status1);
-            cl_int notifyStatus = status1;
-            if (status1 == CL_SUCCESS) {
-                cl_int status2 = clSetEventCallback(event, CL_COMPLETE, &pushHostData, payload);  
-                LOG_OCL_AND_VALIDATE("clSetEventCallback", status2);
-                notifyStatus = status2;
-            }
-            if (notifyStatus != CL_SUCCESS) {
-                env->DeleteGlobalRef(payload->target);
-                //free(buffer);
-                free(payload);   
-                return (jlong)notifyStatus;
-            } else {
-                return (jlong)payload->onCopied;
-            }
-        }
+        return (jlong)event;
     } else {
         return (jlong)status;
     }

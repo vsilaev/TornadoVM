@@ -48,25 +48,19 @@ public class OCLKernel extends TornadoLogger {
 
     native static void clReleaseKernel(long kernelId) throws OCLException;
 
-    native static void clSetKernelArg(long kernelId, int index, long size, byte[] buffer) throws OCLException;
-
-    native static void clSetKernelArgRef(long kernelId, int index, long buffer) throws OCLException;
+    native static void clSetKernelArgArray(long kernelId, int index, long size, byte[] buffer) throws OCLException;
+    native static void clSetKernelArgBuffer(long kernelId, int index, long size, ByteBuffer buffer) throws OCLException;
 
     native static void clGetKernelInfo(long kernelId, int info, byte[] buffer) throws OCLException;
     native static ByteBuffer clGetKernelInfo(long kernelId, int info) throws OCLException;
 
     public void setArg(int index, ByteBuffer buffer) {
         try {
-            clSetKernelArg(oclKernelID, index, buffer.position(), buffer.array());
-        } catch (OCLException e) {
-            error(e.getMessage());
-        }
-    }
-
-    public void setArgRef(int index, long devicePtr) {
-        System.out.println("Calling the new function");
-        try {
-            clSetKernelArgRef(oclKernelID, index, devicePtr);
+            if (buffer.hasArray()) {
+                clSetKernelArgArray(oclKernelID, index, buffer.position(), buffer.array());
+            } else {
+                clSetKernelArgBuffer(oclKernelID, index, buffer.position(), buffer);
+            }
         } catch (OCLException e) {
             error(e.getMessage());
         }
@@ -74,7 +68,7 @@ public class OCLKernel extends TornadoLogger {
 
     public void setArgUnused(int index) {
         try {
-            clSetKernelArg(oclKernelID, index, 8, null);
+            clSetKernelArgArray(oclKernelID, index, 8, null);
         } catch (OCLException e) {
             error(e.getMessage());
         }
@@ -90,7 +84,7 @@ public class OCLKernel extends TornadoLogger {
         long maxSize = deviceContext.getDevice().getDeviceLocalMemorySize();
         guarantee(size <= maxSize, "local allocation is too large for device");
         try {
-            clSetKernelArg(oclKernelID, index, size, null);
+            clSetKernelArgArray(oclKernelID, index, size, null);
         } catch (OCLException e) {
             error(e.getMessage());
         }

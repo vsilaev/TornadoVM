@@ -61,10 +61,6 @@ class OCLEventsWrapper {
     }
 
     protected int registerEvent(long oclEventID, int descriptorId, long tag, OCLCommandQueue queue) {
-        return registerEvent(oclEventID, oclEventID, descriptorId, tag, queue);
-    }
-    
-    protected int registerEvent(long oclEventID, long oclProfilerEventID, int descriptorId, long tag, OCLCommandQueue queue) {
         if (retain.get(eventIndex)) {
             findNextEventSlot();
         }
@@ -86,7 +82,7 @@ class OCLEventsWrapper {
             //events[currentEvent].waitForEvents();
             events[currentEvent].release();
         }
-        events[currentEvent] = new OCLEvent(queue, oclEventID, oclProfilerEventID, descriptorId, tag);
+        events[currentEvent] = new OCLEvent(queue, oclEventID, descriptorId, tag);
 
         findNextEventSlot();
         return currentEvent;
@@ -102,7 +98,7 @@ class OCLEventsWrapper {
         guarantee(eventIndex != -1, "event window is full (retained=%d, capacity=%d)", retain.cardinality(), EVENT_WINDOW);
     }
 
-    protected long[] serialiseEvents(int[] dependencies, OCLCommandQueue queue) {
+    protected long[] serializeEvents(int[] dependencies, OCLCommandQueue queue) {
         boolean outOfOrderQueue = (queue.getProperties() & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE) == 1;
         if (dependencies == null || dependencies.length == 0 || !outOfOrderQueue) {
             return null;

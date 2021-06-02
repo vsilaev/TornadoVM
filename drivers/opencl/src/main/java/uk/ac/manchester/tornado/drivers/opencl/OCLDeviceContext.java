@@ -27,29 +27,17 @@
  */
 package uk.ac.manchester.tornado.drivers.opencl;
 
-import static uk.ac.manchester.tornado.drivers.opencl.OCLCommandQueue.EMPTY_EVENT;
-import static uk.ac.manchester.tornado.drivers.opencl.OCLEvent.DEFAULT_TAG;
-import static uk.ac.manchester.tornado.drivers.opencl.OCLEvent.DESC_PARALLEL_KERNEL;
-import static uk.ac.manchester.tornado.drivers.opencl.OCLEvent.DESC_READ_BYTE;
-import static uk.ac.manchester.tornado.drivers.opencl.OCLEvent.DESC_READ_DOUBLE;
-import static uk.ac.manchester.tornado.drivers.opencl.OCLEvent.DESC_READ_FLOAT;
-import static uk.ac.manchester.tornado.drivers.opencl.OCLEvent.DESC_READ_INT;
-import static uk.ac.manchester.tornado.drivers.opencl.OCLEvent.DESC_READ_LONG;
-import static uk.ac.manchester.tornado.drivers.opencl.OCLEvent.DESC_READ_SHORT;
-import static uk.ac.manchester.tornado.drivers.opencl.OCLEvent.DESC_SYNC_BARRIER;
-import static uk.ac.manchester.tornado.drivers.opencl.OCLEvent.DESC_SYNC_MARKER;
-import static uk.ac.manchester.tornado.drivers.opencl.OCLEvent.DESC_WRITE_BYTE;
-import static uk.ac.manchester.tornado.drivers.opencl.OCLEvent.DESC_WRITE_DOUBLE;
-import static uk.ac.manchester.tornado.drivers.opencl.OCLEvent.DESC_WRITE_FLOAT;
-import static uk.ac.manchester.tornado.drivers.opencl.OCLEvent.DESC_WRITE_INT;
-import static uk.ac.manchester.tornado.drivers.opencl.OCLEvent.DESC_WRITE_LONG;
-import static uk.ac.manchester.tornado.drivers.opencl.OCLEvent.DESC_WRITE_SHORT;
-import static uk.ac.manchester.tornado.runtime.common.Tornado.USE_SYNC_FLUSH;
-import static uk.ac.manchester.tornado.runtime.common.Tornado.getProperty;
-
+import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.CharBuffer;
+import java.nio.DoubleBuffer;
+import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
+import java.nio.LongBuffer;
+import java.nio.ShortBuffer;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Consumer;
 
 import uk.ac.manchester.tornado.api.common.Event;
 import uk.ac.manchester.tornado.api.common.SchedulableTask;
@@ -68,9 +56,8 @@ import uk.ac.manchester.tornado.runtime.common.TornadoLogger;
 import uk.ac.manchester.tornado.runtime.tasks.meta.TaskMetaData;
 
 public class OCLDeviceContext extends TornadoLogger implements Initialisable, OCLDeviceContextInterface {
-
-    private static final long BUMP_BUFFER_SIZE = Long.decode(getProperty("tornado.opencl.bump.size", "0x100000"));
-    private static final String[] BUMP_DEVICES = parseDevices(getProperty("tornado.opencl.bump.devices", "Iris Pro"));
+    private static final long BUMP_BUFFER_SIZE = Long.decode(Tornado.getProperty("tornado.opencl.bump.size", "0x100000"));
+    private static final String[] BUMP_DEVICES = parseDevices(Tornado.getProperty("tornado.opencl.bump.devices", "Iris Pro"));
 
     private final OCLTargetDevice device;
     private final OCLCommandQueue queue;
@@ -122,6 +109,11 @@ public class OCLDeviceContext extends TornadoLogger implements Initialisable, OC
             useRelativeAddresses = Tornado.OPENCL_USE_RELATIVE_ADDRESSES;
         }
     }
+    
+    public ByteBuffer newDirectByteBuffer(long bytesCount) {
+        // Device byte order is used here, not default OpenCL byte order
+        return OCLContext.allocateNativeMemory((int)bytesCount).order(device.getByteOrder());
+    }
 
     private static String[] parseDevices(String str) {
         return str.split(";");
@@ -156,7 +148,7 @@ public class OCLDeviceContext extends TornadoLogger implements Initialisable, OC
     }
 
     public void sync() {
-        if (USE_SYNC_FLUSH) {
+        if (Tornado.USE_SYNC_FLUSH) {
             queue.flush();
         }
         queue.finish();
@@ -169,7 +161,7 @@ public class OCLDeviceContext extends TornadoLogger implements Initialisable, OC
             handler.handle(TornadoExecutionStatus.COMPLETE, null);
             return;
         }
-        int eventId = eventsWrapper.registerEvent(oclEvent, DESC_SYNC_MARKER, DEFAULT_TAG, queue);
+        int eventId = eventsWrapper.registerEvent(oclEvent, OCLEvent.DESC_SYNC_MARKER, OCLEvent.DEFAULT_TAG, queue);
         OCLEvent event = eventsWrapper.getOCLEvent(eventId);
         event.waitOn(handler);
         queue.flush(); 
@@ -181,12 +173,12 @@ public class OCLDeviceContext extends TornadoLogger implements Initialisable, OC
 
     public int enqueueBarrier() {
         long oclEvent = queue.enqueueBarrier();
-        return eventsWrapper.registerEvent(oclEvent, DESC_SYNC_BARRIER, DEFAULT_TAG, queue);
+        return eventsWrapper.registerEvent(oclEvent, OCLEvent.DESC_SYNC_BARRIER, OCLEvent.DEFAULT_TAG, queue);
     }
 
     public int enqueueMarker() {
         long oclEvent = queue.enqueueMarker();
-        return eventsWrapper.registerEvent(oclEvent, DESC_SYNC_MARKER, DEFAULT_TAG, queue);
+        return eventsWrapper.registerEvent(oclEvent, OCLEvent.DESC_SYNC_MARKER, OCLEvent.DEFAULT_TAG, queue);
     }
 
     public OCLProgram createProgramWithSource(byte[] source, long[] lengths) {
@@ -199,214 +191,375 @@ public class OCLDeviceContext extends TornadoLogger implements Initialisable, OC
 
     public int enqueueNDRangeKernel(OCLKernel kernel, int dim, long[] globalWorkOffset, long[] globalWorkSize, long[] localWorkSize, int[] waitEvents) {
         return eventsWrapper.registerEvent(
-            queue.enqueueNDRangeKernel(kernel, dim, globalWorkOffset, globalWorkSize, localWorkSize, eventsWrapper.serialiseEvents(waitEvents, queue)),
-            DESC_PARALLEL_KERNEL, kernel.getOclKernelID(), queue);
+            queue.enqueueNDRangeKernel(kernel, dim, globalWorkOffset, globalWorkSize, localWorkSize, eventsWrapper.serializeEvents(waitEvents, queue)),
+            OCLEvent.DESC_PARALLEL_KERNEL, kernel.getOclKernelID(), queue);
     }
 
     public ByteOrder getByteOrder() {
         return device.isLittleEndian() ? ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN;
     }
 
+    
+    private void onIntermediateEvent(int eventID, TornadoExecutionHandler handler) {
+        OCLEvent event = (OCLEvent)resolveEvent(eventID);
+        event.waitOn(handler, false);
+    }
+    
     /*
      * Asynchronous writes to device
      */
-    public int enqueueWriteBuffer(long bufferId, long offset, long bytes, byte[] array, long hostOffset, int[] waitEvents) {
-        return eventsWrapper.registerEvent(
-            queue.enqueueWrite(bufferId, OpenCLBlocking.FALSE, offset, bytes, array, hostOffset, eventsWrapper.serialiseEvents(waitEvents, queue)),
-            DESC_WRITE_BYTE, offset, queue);
-    }
-
-    public int enqueueWriteBuffer(long bufferId, long offset, long bytes, char[] array, long hostOffset, int[] waitEvents) {
-        return eventsWrapper.registerEvent(
-            queue.enqueueWrite(bufferId, OpenCLBlocking.FALSE, offset, bytes, array, hostOffset, eventsWrapper.serialiseEvents(waitEvents, queue)),
-            DESC_WRITE_BYTE, offset, queue);
-    }
-    
-    public int enqueueWriteBuffer(long bufferId, long offset, long bytes, short[] array, long hostOffset, int[] waitEvents) {
-        return eventsWrapper.registerEvent(
-            queue.enqueueWrite(bufferId, OpenCLBlocking.FALSE, offset, bytes, array, hostOffset, eventsWrapper.serialiseEvents(waitEvents, queue)),
-            DESC_WRITE_SHORT, offset, queue);
-    }
-
-    public int enqueueWriteBuffer(long bufferId, long offset, long bytes, int[] array, long hostOffset, int[] waitEvents) {
-        return eventsWrapper.registerEvent(
-            queue.enqueueWrite(bufferId, OpenCLBlocking.FALSE, offset, bytes, array, hostOffset, eventsWrapper.serialiseEvents(waitEvents, queue)),
-            DESC_WRITE_INT, offset, queue);
-    }
-
-    public int enqueueWriteBuffer(long bufferId, long offset, long bytes, long[] array, long hostOffset, int[] waitEvents) {
-        return eventsWrapper.registerEvent(
-            queue.enqueueWrite(bufferId, OpenCLBlocking.FALSE, offset, bytes, array, hostOffset, eventsWrapper.serialiseEvents(waitEvents, queue)),
-            DESC_WRITE_LONG, offset, queue);
-    }
-
-    public int enqueueWriteBuffer(long bufferId, long offset, long bytes, float[] array, long hostOffset, int[] waitEvents) {
-        return eventsWrapper.registerEvent(
-            queue.enqueueWrite(bufferId, OpenCLBlocking.FALSE, offset, bytes, array, hostOffset, eventsWrapper.serialiseEvents(waitEvents, queue)),
-            DESC_WRITE_FLOAT, offset, queue);
-    }
-
-    public int enqueueWriteBuffer(long bufferId, long offset, long bytes, double[] array, long hostOffset, int[] waitEvents) {
-        return eventsWrapper.registerEvent(
-            queue.enqueueWrite(bufferId, OpenCLBlocking.FALSE, offset, bytes, array, hostOffset, eventsWrapper.serialiseEvents(waitEvents, queue)),
-            DESC_WRITE_DOUBLE, offset, queue);
+    public int enqueueWriteBuffer(long bufferId, long offset, long bytes, ByteBuffer buffer, int[] waitEvents, boolean autoRelease) {
+        ByteBuffer actualBuffer;
+        if (buffer.isDirect()) {
+            actualBuffer = buffer;
+        } else {
+            actualBuffer = newDirectByteBuffer(buffer.capacity());
+            buffer.rewind();
+            actualBuffer.put(buffer);
+        }
+        int eventID = eventsWrapper.registerEvent(
+            queue.enqueueWrite(bufferId, OpenCLBlocking.FALSE, offset, bytes, actualBuffer, eventsWrapper.serializeEvents(waitEvents, queue)),
+            OCLEvent.DESC_WRITE_BYTE, offset, queue);
+        if (eventID > 0 && (actualBuffer != buffer || autoRelease)) {
+            onIntermediateEvent(eventID, (status, error) -> {
+                if (actualBuffer != buffer) {
+                    OCLContext.releaseNativeMemory(actualBuffer);
+                } else if (buffer.isDirect() && autoRelease) {
+                    OCLContext.releaseNativeMemory(buffer);
+                }
+            });
+        } else {
+            // Clean-up on failure
+            if (actualBuffer != buffer) {
+                OCLContext.releaseNativeMemory(actualBuffer);
+            } else if (buffer.isDirect() && autoRelease) {
+                OCLContext.releaseNativeMemory(buffer);
+            }
+        }
+        return eventID;
     }
 
     /*
      * ASync reads from device
      *
      */
-    public int enqueueReadBuffer(long bufferId, long offset, long bytes, byte[] array, long hostOffset, int[] waitEvents) {
-        long[] profilerEvent = new long[1];
-        return eventsWrapper.registerEvent(
-            queue.enqueueRead(bufferId, OpenCLBlocking.FALSE, offset, bytes, array, hostOffset, eventsWrapper.serialiseEvents(waitEvents, queue), profilerEvent),
-            profilerEvent[0], DESC_READ_BYTE, offset, queue);
+    public int enqueueReadBuffer(long bufferId, long offset, long bytes, ByteBuffer buffer, int[] waitEvents, boolean autoRelease, Consumer<ByteBuffer> callback) {
+        queue.aquireAsyncTransferLock();
+        ByteBuffer actualBuffer;
+        if (buffer.isDirect()) {
+            actualBuffer = buffer;
+        } else {
+            actualBuffer = newDirectByteBuffer(buffer.capacity());
+            buffer.rewind();
+            actualBuffer.put(buffer);
+        }
+        int eventID = eventsWrapper.registerEvent(
+            queue.enqueueRead(bufferId, OpenCLBlocking.FALSE, offset, bytes, actualBuffer, eventsWrapper.serializeEvents(waitEvents, queue)),
+            OCLEvent.DESC_READ_BYTE, offset, queue);
+        if (eventID > 0) {
+            onIntermediateEvent(eventID, (status, error) -> {
+                try {
+                    if (null != callback) {
+                        callback.accept(actualBuffer);
+                    }
+                } finally {
+                    if (actualBuffer != buffer) {
+                        OCLContext.releaseNativeMemory(actualBuffer);
+                    } else if (buffer.isDirect() && autoRelease) {
+                        OCLContext.releaseNativeMemory(buffer);
+                    }
+                    queue.releaseAsyncTransferLock();
+                }
+            });
+        } else {
+            // Clean-up on failure
+            if (actualBuffer != buffer) {
+                OCLContext.releaseNativeMemory(actualBuffer);
+            } else if (buffer.isDirect() && autoRelease) {
+                OCLContext.releaseNativeMemory(buffer);
+            }
+            queue.releaseAsyncTransferLock();            
+        }
+        return eventID;
     }
-
-    public int enqueueReadBuffer(long bufferId, long offset, long bytes, char[] array, long hostOffset, int[] waitEvents) {
-        long[] profilerEvent = new long[1];
-        return eventsWrapper.registerEvent(
-            queue.enqueueRead(bufferId, OpenCLBlocking.FALSE, offset, bytes, array, hostOffset, eventsWrapper.serialiseEvents(waitEvents, queue), profilerEvent),
-            profilerEvent[0], DESC_READ_BYTE, offset, queue);
-    }
-    
-    public int enqueueReadBuffer(long bufferId, long offset, long bytes, short[] array, long hostOffset, int[] waitEvents) {
-        long[] profilerEvent = new long[1];
-        return eventsWrapper.registerEvent(
-            queue.enqueueRead(bufferId, OpenCLBlocking.FALSE, offset, bytes, array, hostOffset, eventsWrapper.serialiseEvents(waitEvents, queue), profilerEvent),
-            profilerEvent[0], DESC_READ_SHORT, offset, queue);
-    }    
-
-    public int enqueueReadBuffer(long bufferId, long offset, long bytes, int[] array, long hostOffset, int[] waitEvents) {
-        long[] profilerEvent = new long[1];
-        return eventsWrapper.registerEvent(
-            queue.enqueueRead(bufferId, OpenCLBlocking.FALSE, offset, bytes, array, hostOffset, eventsWrapper.serialiseEvents(waitEvents, queue), profilerEvent),
-            profilerEvent[0], DESC_READ_INT, offset, queue);
-    }
-
-    public int enqueueReadBuffer(long bufferId, long offset, long bytes, long[] array, long hostOffset, int[] waitEvents) {
-        long[] profilerEvent = new long[1];
-        return eventsWrapper.registerEvent(
-            queue.enqueueRead(bufferId, OpenCLBlocking.FALSE, offset, bytes, array, hostOffset, eventsWrapper.serialiseEvents(waitEvents, queue), profilerEvent),
-            profilerEvent[0], DESC_READ_LONG, offset, queue);
-    }
-
-    public int enqueueReadBuffer(long bufferId, long offset, long bytes, float[] array, long hostOffset, int[] waitEvents) {
-        long[] profilerEvent = new long[1];
-        return eventsWrapper.registerEvent(
-            queue.enqueueRead(bufferId, OpenCLBlocking.FALSE, offset, bytes, array, hostOffset, eventsWrapper.serialiseEvents(waitEvents, queue), profilerEvent),
-            profilerEvent[0], DESC_READ_FLOAT, offset, queue);
-    }
-
-    public int enqueueReadBuffer(long bufferId, long offset, long bytes, double[] array, long hostOffset, int[] waitEvents) {
-        long[] profilerEvent = new long[1];
-        return eventsWrapper.registerEvent(
-            queue.enqueueRead(bufferId, OpenCLBlocking.FALSE, offset, bytes, array, hostOffset, eventsWrapper.serialiseEvents(waitEvents, queue), profilerEvent),
-            profilerEvent[0], DESC_READ_DOUBLE, offset, queue);
-    }
-
 
     /*
      * Synchronous writes to device
      */
-    public void writeBuffer(long bufferId, long offset, long bytes, byte[] array, long hostOffset, int[] waitEvents) {
-        eventsWrapper.registerEvent(
-            queue.enqueueWrite(bufferId, OpenCLBlocking.TRUE, offset, bytes, array, hostOffset, eventsWrapper.serialiseEvents(waitEvents, queue)),
-            DESC_WRITE_BYTE, offset, queue);
+    public int writeBuffer(long bufferId, long offset, long bytes, ByteBuffer array, int[] waitEvents) {
+        long eventVal = queue.enqueueWrite(bufferId, OpenCLBlocking.TRUE, offset, bytes, array, eventsWrapper.serializeEvents(waitEvents, queue));
+        return eventsWrapper.registerEvent(eventVal, OCLEvent.DESC_WRITE_BYTE, offset, queue);
+    }
+    
+    public int writeBuffer(long bufferId, long offset, long bytes, byte[] array, long hostOffset, int[] waitEvents) {
+        long eventVal;
+        if (device.isLittleEndian()) {
+            eventVal = queue.write(bufferId, offset, bytes, array, hostOffset, eventsWrapper.serializeEvents(waitEvents, queue));
+        } else {
+            ByteBuffer onHeapBuffer = ByteBuffer.wrap(array, div(hostOffset, Byte.BYTES), div(bytes, Byte.BYTES));
+            ByteBuffer offHeapBuffer = newDirectByteBuffer(bytes);
+            offHeapBuffer.put(onHeapBuffer);
+            try {
+                eventVal = queue.enqueueWrite(bufferId, OpenCLBlocking.TRUE, offset, bytes, offHeapBuffer, eventsWrapper.serializeEvents(waitEvents, queue));
+            } finally {
+                OCLContext.releaseNativeMemory(offHeapBuffer);
+            }
+        }
+        return eventsWrapper.registerEvent(eventVal, OCLEvent.DESC_WRITE_BYTE, offset, queue);
     }
 
-    public void writeBuffer(long bufferId, long offset, long bytes, char[] array, long hostOffset, int[] waitEvents) {
-        eventsWrapper.registerEvent(
-            queue.enqueueWrite(bufferId, OpenCLBlocking.TRUE, offset, bytes, array, hostOffset, eventsWrapper.serialiseEvents(waitEvents, queue)),
-            DESC_WRITE_BYTE, offset, queue);
+    public int writeBuffer(long bufferId, long offset, long bytes, char[] array, long hostOffset, int[] waitEvents) {
+        long eventVal;
+        if (device.isLittleEndian()) {
+            eventVal = queue.write(bufferId, offset, bytes, array, hostOffset, eventsWrapper.serializeEvents(waitEvents, queue));
+        } else {
+            CharBuffer onHeapBuffer = CharBuffer.wrap(array, div(hostOffset, Character.BYTES), div(bytes, Character.BYTES));
+            ByteBuffer offHeapBuffer = newDirectByteBuffer(bytes);
+            offHeapBuffer.asCharBuffer().put(onHeapBuffer);
+            try {
+                eventVal = queue.enqueueWrite(bufferId, OpenCLBlocking.TRUE, offset, bytes, offHeapBuffer, eventsWrapper.serializeEvents(waitEvents, queue));
+            } finally {
+                OCLContext.releaseNativeMemory(offHeapBuffer);
+            }
+        }
+        return eventsWrapper.registerEvent(eventVal, OCLEvent.DESC_WRITE_CHAR, offset, queue);
     }
 
-    public void writeBuffer(long bufferId, long offset, long bytes, short[] array, long hostOffset, int[] waitEvents) {
-        eventsWrapper.registerEvent(
-            queue.enqueueWrite(bufferId, OpenCLBlocking.TRUE, offset, bytes, array, hostOffset, eventsWrapper.serialiseEvents(waitEvents, queue)),
-            DESC_WRITE_SHORT, offset, queue);
+    public int writeBuffer(long bufferId, long offset, long bytes, short[] array, long hostOffset, int[] waitEvents) {
+        long eventVal;
+        if (device.isLittleEndian()) {
+            eventVal = queue.write(bufferId, offset, bytes, array, hostOffset, eventsWrapper.serializeEvents(waitEvents, queue));
+        } else {
+            ShortBuffer onHeapBuffer = ShortBuffer.wrap(array, div(hostOffset, Short.BYTES), div(bytes, Short.BYTES));
+            ByteBuffer offHeapBuffer = newDirectByteBuffer(bytes);
+            offHeapBuffer.asShortBuffer().put(onHeapBuffer);
+            try {
+                eventVal = queue.enqueueWrite(bufferId, OpenCLBlocking.TRUE, offset, bytes, offHeapBuffer, eventsWrapper.serializeEvents(waitEvents, queue));
+            } finally {
+                OCLContext.releaseNativeMemory(offHeapBuffer);
+            }
+        }
+        return eventsWrapper.registerEvent(eventVal, OCLEvent.DESC_WRITE_SHORT, offset, queue);        
     }    
 
-    public void writeBuffer(long bufferId, long offset, long bytes, int[] array, long hostOffset, int[] waitEvents) {
-        eventsWrapper.registerEvent(
-            queue.enqueueWrite(bufferId, OpenCLBlocking.TRUE, offset, bytes, array, hostOffset, eventsWrapper.serialiseEvents(waitEvents, queue)),
-            DESC_WRITE_INT, offset, queue);
+    public int writeBuffer(long bufferId, long offset, long bytes, int[] array, long hostOffset, int[] waitEvents) {
+        long eventVal;
+        if (device.isLittleEndian()) {
+            eventVal = queue.write(bufferId, offset, bytes, array, hostOffset, eventsWrapper.serializeEvents(waitEvents, queue));
+        } else {
+            IntBuffer onHeapBuffer = IntBuffer.wrap(array, div(hostOffset, Integer.BYTES), div(bytes, Integer.BYTES));
+            ByteBuffer offHeapBuffer = newDirectByteBuffer(bytes);
+            offHeapBuffer.asIntBuffer().put(onHeapBuffer);
+            try {
+                eventVal = queue.enqueueWrite(bufferId, OpenCLBlocking.TRUE, offset, bytes, offHeapBuffer, eventsWrapper.serializeEvents(waitEvents, queue));
+            } finally {
+                OCLContext.releaseNativeMemory(offHeapBuffer);
+            }
+        }
+        return eventsWrapper.registerEvent(eventVal, OCLEvent.DESC_WRITE_INT, offset, queue);            
     }
 
-    public void writeBuffer(long bufferId, long offset, long bytes, long[] array, long hostOffset, int[] waitEvents) {
-        eventsWrapper.registerEvent(
-            queue.enqueueWrite(bufferId, OpenCLBlocking.TRUE, offset, bytes, array, hostOffset, eventsWrapper.serialiseEvents(waitEvents, queue)),
-            DESC_WRITE_LONG, offset, queue);
+    public int writeBuffer(long bufferId, long offset, long bytes, long[] array, long hostOffset, int[] waitEvents) {
+        long eventVal;
+        if (device.isLittleEndian()) {
+            eventVal = queue.write(bufferId, offset, bytes, array, hostOffset, eventsWrapper.serializeEvents(waitEvents, queue));
+        } else {
+            LongBuffer onHeapBuffer = LongBuffer.wrap(array, div(hostOffset, Long.BYTES), div(bytes, Long.BYTES));
+            ByteBuffer offHeapBuffer = newDirectByteBuffer(bytes);
+            offHeapBuffer.asLongBuffer().put(onHeapBuffer);
+            try {
+                eventVal = queue.enqueueWrite(bufferId, OpenCLBlocking.TRUE, offset, bytes, offHeapBuffer, eventsWrapper.serializeEvents(waitEvents, queue));
+            } finally {
+                OCLContext.releaseNativeMemory(offHeapBuffer);
+            }
+        }
+        return eventsWrapper.registerEvent(eventVal, OCLEvent.DESC_WRITE_LONG, offset, queue);              
     }
 
-    public void writeBuffer(long bufferId, long offset, long bytes, float[] array, long hostOffset, int[] waitEvents) {
-        eventsWrapper.registerEvent(
-            queue.enqueueWrite(bufferId, OpenCLBlocking.TRUE, offset, bytes, array, hostOffset, eventsWrapper.serialiseEvents(waitEvents, queue)),
-            DESC_WRITE_FLOAT, offset, queue);
+    public int writeBuffer(long bufferId, long offset, long bytes, float[] array, long hostOffset, int[] waitEvents) {
+        long eventVal;
+        if (device.isLittleEndian()) {
+            eventVal = queue.write(bufferId, offset, bytes, array, hostOffset, eventsWrapper.serializeEvents(waitEvents, queue));
+        } else {
+            FloatBuffer onHeapBuffer = FloatBuffer.wrap(array, div(hostOffset, Float.BYTES), div(bytes, Float.BYTES));
+            ByteBuffer offHeapBuffer = newDirectByteBuffer(bytes);
+            offHeapBuffer.asFloatBuffer().put(onHeapBuffer);
+            try {
+                eventVal = queue.enqueueWrite(bufferId, OpenCLBlocking.TRUE, offset, bytes, offHeapBuffer, eventsWrapper.serializeEvents(waitEvents, queue));
+            } finally {
+                OCLContext.releaseNativeMemory(offHeapBuffer);
+            }
+        }
+        return eventsWrapper.registerEvent(eventVal, OCLEvent.DESC_WRITE_FLOAT, offset, queue);   
     }
 
-    public void writeBuffer(long bufferId, long offset, long bytes, double[] array, long hostOffset, int[] waitEvents) {
-        eventsWrapper.registerEvent(
-            queue.enqueueWrite(bufferId, OpenCLBlocking.TRUE, offset, bytes, array, hostOffset, eventsWrapper.serialiseEvents(waitEvents, queue)),
-            DESC_WRITE_DOUBLE, offset, queue);
+    public int writeBuffer(long bufferId, long offset, long bytes, double[] array, long hostOffset, int[] waitEvents) {
+        long eventVal;
+        if (device.isLittleEndian()) {
+            eventVal = queue.write(bufferId, offset, bytes, array, hostOffset, eventsWrapper.serializeEvents(waitEvents, queue));
+        } else {
+            DoubleBuffer onHeapBuffer = DoubleBuffer.wrap(array, div(hostOffset, Double.BYTES), div(bytes, Double.BYTES));
+            ByteBuffer offHeapBuffer = newDirectByteBuffer(bytes);
+            offHeapBuffer.asDoubleBuffer().put(onHeapBuffer);
+            try {
+                eventVal = queue.enqueueWrite(bufferId, OpenCLBlocking.TRUE, offset, bytes, offHeapBuffer, eventsWrapper.serializeEvents(waitEvents, queue));
+            } finally {
+                OCLContext.releaseNativeMemory(offHeapBuffer);
+            }
+        }
+        return eventsWrapper.registerEvent(eventVal, OCLEvent.DESC_WRITE_DOUBLE, offset, queue);   
     }
 
     /*
      * Synchronous reads from device
      */
+    public int readBuffer(long bufferId, long offset, long bytes, ByteBuffer array, int[] waitEvents) {
+        long eventVal = queue.enqueueRead(bufferId, OpenCLBlocking.TRUE, offset, bytes, array, eventsWrapper.serializeEvents(waitEvents, queue));
+        return eventsWrapper.registerEvent(eventVal, OCLEvent.DESC_READ_BYTE, offset, queue);
+    }
+    
     public int readBuffer(long bufferId, long offset, long bytes, byte[] array, long hostOffset, int[] waitEvents) {
-        return eventsWrapper.registerEvent(
-            queue.enqueueRead(bufferId, OpenCLBlocking.TRUE, offset, bytes, array, hostOffset, eventsWrapper.serialiseEvents(waitEvents, queue), null),
-            DESC_READ_BYTE, offset, queue);
+        long eventVal;
+        if (device.isLittleEndian()) {
+            eventVal = queue.read(bufferId, offset, bytes, array, hostOffset, eventsWrapper.serializeEvents(waitEvents, queue));
+        } else {
+            ByteBuffer offHeapBuffer = newDirectByteBuffer(bytes);
+            try {
+                eventVal = queue.enqueueRead(bufferId, OpenCLBlocking.TRUE, offset, bytes, offHeapBuffer, eventsWrapper.serializeEvents(waitEvents, queue));
+                if (eventVal > 0) {
+                    ByteBuffer onHeapBuffer = ByteBuffer.wrap(array, div(hostOffset, Byte.BYTES), div(bytes, Byte.BYTES));
+                    onHeapBuffer.put(offHeapBuffer);
+                }
+            } finally {
+                OCLContext.releaseNativeMemory(offHeapBuffer);
+            }
+        }
+        return eventsWrapper.registerEvent(eventVal, OCLEvent.DESC_READ_BYTE, offset, queue);
     }
 
     public int readBuffer(long bufferId, long offset, long bytes, char[] array, long hostOffset, int[] waitEvents) {
-        return eventsWrapper.registerEvent(
-            queue.enqueueRead(bufferId, OpenCLBlocking.TRUE, offset, bytes, array, hostOffset, eventsWrapper.serialiseEvents(waitEvents, queue), null),
-            DESC_READ_BYTE, offset, queue);
+        long eventVal;
+        if (device.isLittleEndian()) {
+            eventVal = queue.read(bufferId, offset, bytes, array, hostOffset, eventsWrapper.serializeEvents(waitEvents, queue));
+        } else {
+            ByteBuffer offHeapBuffer = newDirectByteBuffer(bytes);
+            try {
+                eventVal = queue.enqueueRead(bufferId, OpenCLBlocking.TRUE, offset, bytes, offHeapBuffer, eventsWrapper.serializeEvents(waitEvents, queue));
+                if (eventVal > 0) {
+                    CharBuffer onHeapBuffer = CharBuffer.wrap(array, div(hostOffset, Character.BYTES), div(bytes, Character.BYTES));
+                    onHeapBuffer.put(offHeapBuffer.asCharBuffer());
+                }
+            } finally {
+                OCLContext.releaseNativeMemory(offHeapBuffer);
+            }
+        }
+        return eventsWrapper.registerEvent(eventVal, OCLEvent.DESC_READ_CHAR, offset, queue);        
     }
-    
 
     public int readBuffer(long bufferId, long offset, long bytes, short[] array, long hostOffset, int[] waitEvents) {
-        return eventsWrapper.registerEvent(
-            queue.enqueueRead(bufferId, OpenCLBlocking.TRUE, offset, bytes, array, hostOffset, eventsWrapper.serialiseEvents(waitEvents, queue), null),
-            DESC_READ_SHORT, offset, queue);
+        long eventVal;
+        if (device.isLittleEndian()) {
+            eventVal = queue.read(bufferId, offset, bytes, array, hostOffset, eventsWrapper.serializeEvents(waitEvents, queue));
+        } else {
+            ByteBuffer offHeapBuffer = newDirectByteBuffer(bytes);
+            try {
+                eventVal = queue.enqueueRead(bufferId, OpenCLBlocking.TRUE, offset, bytes, offHeapBuffer, eventsWrapper.serializeEvents(waitEvents, queue));
+                if (eventVal > 0) {
+                    ShortBuffer onHeapBuffer = ShortBuffer.wrap(array, div(hostOffset, Short.BYTES), div(bytes, Short.BYTES));
+                    onHeapBuffer.put(offHeapBuffer.asShortBuffer());
+                }
+            } finally {
+                OCLContext.releaseNativeMemory(offHeapBuffer);
+            }
+        }
+        return eventsWrapper.registerEvent(eventVal, OCLEvent.DESC_READ_SHORT, offset, queue);            
     }    
 
     public int readBuffer(long bufferId, long offset, long bytes, int[] array, long hostOffset, int[] waitEvents) {
-        return eventsWrapper.registerEvent(
-            queue.enqueueRead(bufferId, OpenCLBlocking.TRUE, offset, bytes, array, hostOffset, eventsWrapper.serialiseEvents(waitEvents, queue), null),
-            DESC_READ_INT, offset, queue);
+        long eventVal;
+        if (device.isLittleEndian()) {
+            eventVal = queue.read(bufferId, offset, bytes, array, hostOffset, eventsWrapper.serializeEvents(waitEvents, queue));
+        } else {
+            ByteBuffer offHeapBuffer = newDirectByteBuffer(bytes);
+            try {
+                eventVal = queue.enqueueRead(bufferId, OpenCLBlocking.TRUE, offset, bytes, offHeapBuffer, eventsWrapper.serializeEvents(waitEvents, queue));
+                if (eventVal > 0) {
+                    IntBuffer onHeapBuffer = IntBuffer.wrap(array, div(hostOffset, Integer.BYTES), div(bytes, Integer.BYTES));
+                    onHeapBuffer.put(offHeapBuffer.asIntBuffer());
+                }
+            } finally {
+                OCLContext.releaseNativeMemory(offHeapBuffer);
+            }
+        }
+        return eventsWrapper.registerEvent(eventVal, OCLEvent.DESC_READ_INT, offset, queue);          
     }
 
     public int readBuffer(long bufferId, long offset, long bytes, long[] array, long hostOffset, int[] waitEvents) {
-        return eventsWrapper.registerEvent(
-            queue.enqueueRead(bufferId, OpenCLBlocking.TRUE, offset, bytes, array, hostOffset, eventsWrapper.serialiseEvents(waitEvents, queue), null),
-            DESC_READ_LONG, offset, queue);
+        long eventVal;
+        if (device.isLittleEndian()) {
+            eventVal = queue.read(bufferId, offset, bytes, array, hostOffset, eventsWrapper.serializeEvents(waitEvents, queue));
+        } else {
+            ByteBuffer offHeapBuffer = newDirectByteBuffer(bytes);
+            try {
+                eventVal = queue.enqueueRead(bufferId, OpenCLBlocking.TRUE, offset, bytes, offHeapBuffer, eventsWrapper.serializeEvents(waitEvents, queue));
+                if (eventVal > 0) {
+                    LongBuffer onHeapBuffer = LongBuffer.wrap(array, div(hostOffset, Long.BYTES), div(bytes, Long.BYTES));
+                    onHeapBuffer.put(offHeapBuffer.asLongBuffer());
+                }
+            } finally {
+                OCLContext.releaseNativeMemory(offHeapBuffer);
+            }
+        }
+        return eventsWrapper.registerEvent(eventVal, OCLEvent.DESC_READ_LONG, offset, queue);         
     }
 
     public int readBuffer(long bufferId, long offset, long bytes, float[] array, long hostOffset, int[] waitEvents) {
-        return eventsWrapper.registerEvent(
-            queue.enqueueRead(bufferId, OpenCLBlocking.TRUE, offset, bytes, array, hostOffset, eventsWrapper.serialiseEvents(waitEvents, queue), null),
-            DESC_READ_FLOAT, offset, queue);
+        long eventVal;
+        if (device.isLittleEndian()) {
+            eventVal = queue.read(bufferId, offset, bytes, array, hostOffset, eventsWrapper.serializeEvents(waitEvents, queue));
+        } else {
+            ByteBuffer offHeapBuffer = newDirectByteBuffer(bytes);
+            try {
+                eventVal = queue.enqueueRead(bufferId, OpenCLBlocking.TRUE, offset, bytes, offHeapBuffer, eventsWrapper.serializeEvents(waitEvents, queue));
+                if (eventVal > 0) {
+                    FloatBuffer onHeapBuffer = FloatBuffer.wrap(array, div(hostOffset, Float.BYTES), div(bytes, Float.BYTES));
+                    onHeapBuffer.put(offHeapBuffer.asFloatBuffer());
+                }
+            } finally {
+                OCLContext.releaseNativeMemory(offHeapBuffer);
+            }
+        }
+        return eventsWrapper.registerEvent(eventVal, OCLEvent.DESC_READ_FLOAT, offset, queue);          
     }
 
     public int readBuffer(long bufferId, long offset, long bytes, double[] array, long hostOffset, int[] waitEvents) {
-        return eventsWrapper.registerEvent(
-            queue.enqueueRead(bufferId, OpenCLBlocking.TRUE, offset, bytes, array, hostOffset, eventsWrapper.serialiseEvents(waitEvents, queue), null),
-            DESC_READ_DOUBLE, offset, queue);
+        long eventVal;
+        if (device.isLittleEndian()) {
+            eventVal = queue.read(bufferId, offset, bytes, array, hostOffset, eventsWrapper.serializeEvents(waitEvents, queue));
+        } else {
+            ByteBuffer offHeapBuffer = newDirectByteBuffer(bytes);
+            try {
+                eventVal = queue.enqueueRead(bufferId, OpenCLBlocking.TRUE, offset, bytes, offHeapBuffer, eventsWrapper.serializeEvents(waitEvents, queue));
+                if (eventVal > 0) {
+                    DoubleBuffer onHeapBuffer = DoubleBuffer.wrap(array, div(hostOffset, Double.BYTES), div(bytes, Double.BYTES));
+                    onHeapBuffer.put(offHeapBuffer.asDoubleBuffer());
+                }
+            } finally {
+                OCLContext.releaseNativeMemory(offHeapBuffer);
+            }
+        }
+        return eventsWrapper.registerEvent(eventVal, OCLEvent.DESC_READ_DOUBLE, offset, queue);         
 
     }
 
-
     public int enqueueBarrier(int[] events) {
-        long oclEvent = queue.enqueueBarrier(eventsWrapper.serialiseEvents(events, queue));
-        return oclEvent <= 0 ? -1 : eventsWrapper.registerEvent(oclEvent, DESC_SYNC_BARRIER, DEFAULT_TAG, queue);
+        long oclEvent = queue.enqueueBarrier(eventsWrapper.serializeEvents(events, queue));
+        return oclEvent <= 0 ? -1 : eventsWrapper.registerEvent(oclEvent, OCLEvent.DESC_SYNC_BARRIER, OCLEvent.DEFAULT_TAG, queue);
     }
 
     public int enqueueMarker(int[] events) {
-        long oclEvent = queue.enqueueMarker(eventsWrapper.serialiseEvents(events, queue));
-        return oclEvent <= 0 ? -1 : eventsWrapper.registerEvent(oclEvent, DESC_SYNC_MARKER, DEFAULT_TAG, queue);
+        long oclEvent = queue.enqueueMarker(eventsWrapper.serializeEvents(events, queue));
+        return oclEvent <= 0 ? -1 : eventsWrapper.registerEvent(oclEvent, OCLEvent.DESC_SYNC_MARKER, OCLEvent.DEFAULT_TAG, queue);
     }
 
     @Override
@@ -497,7 +650,7 @@ public class OCLDeviceContext extends TornadoLogger implements Initialisable, OC
 
     public Event resolveEvent(int event) {
         if (event == -1) {
-            return EMPTY_EVENT;
+            return OCLCommandQueue.EMPTY_EVENT;
         }
         return eventsWrapper.getOCLEvent(event);
     }
@@ -556,5 +709,10 @@ public class OCLDeviceContext extends TornadoLogger implements Initialisable, OC
 
     public OCLCodeCache getCodeCache() {
         return this.codeCache;
+    }
+    
+    private static int div(long a, int b) {
+        long result = a / b;
+        return (int)result;
     }
 }

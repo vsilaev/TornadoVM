@@ -123,18 +123,20 @@ public class OCLObjectWrapper implements ObjectBuffer {
 
             ObjectBuffer wrappedField = null;
             if (type.isArray()) {
-                if (type == int[].class) {
+                if (type == byte[].class) {
+                    wrappedField = new OCLByteArrayWrapper(device, isFinal, batchSize);
+                } else if (type == char[].class) {
+                    wrappedField = new OCLCharArrayWrapper(device, isFinal, batchSize);
+                } else if (type == short[].class) {
+                    wrappedField = new OCLShortArrayWrapper(device, isFinal, batchSize);
+                } else if (type == int[].class) {
                     wrappedField = new OCLIntArrayWrapper(device, isFinal, batchSize);
+                } else if (type == long[].class) {
+                    wrappedField = new OCLLongArrayWrapper(device, isFinal, batchSize);
                 } else if (type == float[].class) {
                     wrappedField = new OCLFloatArrayWrapper(device, isFinal, batchSize);
                 } else if (type == double[].class) {
                     wrappedField = new OCLDoubleArrayWrapper(device, isFinal, batchSize);
-                } else if (type == long[].class) {
-                    wrappedField = new OCLLongArrayWrapper(device, isFinal, batchSize);
-                } else if (type == short[].class) {
-                    wrappedField = new OCLShortArrayWrapper(device, isFinal, batchSize);
-                } else if (type == byte[].class) {
-                    wrappedField = new OCLByteArrayWrapper(device, isFinal, batchSize);
                 } else {
                     warn("cannot wrap field: array type=%s", type.getName());
                 }
@@ -179,7 +181,7 @@ public class OCLObjectWrapper implements ObjectBuffer {
         }
 
         if (buffer == null) {
-            buffer = ByteBuffer.allocate((int) bytesToAllocate);
+            buffer = ByteBuffer.allocateDirect((int) bytesToAllocate);
             buffer.order(deviceContext.getByteOrder());
         }
 
@@ -239,14 +241,16 @@ public class OCLObjectWrapper implements ObjectBuffer {
         Class<?> fieldType = field.getType();
         if (fieldType.isPrimitive()) {
             try {
-                if (fieldType == int.class) {
+                if (fieldType == byte.class) {
+                    field.set(obj, buffer.get());
+                } else if (fieldType == char.class) {
+                    field.set(obj, buffer.getChar());
+                } else if (fieldType == short.class) {
+                    field.setShort(obj, buffer.getShort());
+                } else  if (fieldType == int.class) {
                     field.setInt(obj, buffer.getInt());
                 } else if (fieldType == long.class) {
                     field.setLong(obj, buffer.getLong());
-                } else if (fieldType == short.class) {
-                    field.setShort(obj, buffer.getShort());
-                } else if (fieldType == byte.class) {
-                    field.set(obj, buffer.get());
                 } else if (fieldType == float.class) {
                     field.setFloat(obj, buffer.getFloat());
                 } else if (fieldType == double.class) {
@@ -332,7 +336,7 @@ public class OCLObjectWrapper implements ObjectBuffer {
             if (!valid) {
                 serialise(object);
                 // XXX: Offset 0
-                deviceContext.writeBuffer(toBuffer(), bufferOffset, bytesToAllocate, buffer.array(), 0, null);
+                deviceContext.writeBuffer(toBuffer(), bufferOffset, bytesToAllocate, sliceOfBuffer(buffer, 0), null);
             }
             for (int i = 0; i < fields.length; i++) {
                 if (wrappedFields[i] != null) {
@@ -357,7 +361,7 @@ public class OCLObjectWrapper implements ObjectBuffer {
             event = fieldBuffer.read(object, events, useDeps);
         } else {
             buffer.position(buffer.capacity());
-            event = deviceContext.readBuffer(toBuffer(), bufferOffset, bytesToAllocate, buffer.array(), hostOffset, (useDeps) ? events : null);
+            event = deviceContext.readBuffer(toBuffer(), bufferOffset, bytesToAllocate, sliceOfBuffer(buffer, hostOffset), (useDeps) ? events : null);
             for (int i = 0; i < fields.length; i++) {
                 if (wrappedFields[i] != null) {
                     wrappedFields[i].read(object);
@@ -418,6 +422,16 @@ public class OCLObjectWrapper implements ObjectBuffer {
         }
     }
 
+    private static ByteBuffer sliceOfBuffer(ByteBuffer buffer, long hostOffset) {
+        if (hostOffset == 0) {
+            return buffer;
+        } else {
+            buffer.position((int)hostOffset);
+            ByteBuffer slicedBuffer = buffer.slice();
+            return slicedBuffer;
+        }
+    }
+    
     @Override
     public int enqueueRead(Object reference, long hostOffset, int[] events, boolean useDeps) {
         final int returnEvent;
@@ -437,11 +451,14 @@ public class OCLObjectWrapper implements ObjectBuffer {
             }
 
             if (!isFinal) {
-                internalEvents[index] = deviceContext.enqueueReadBuffer(toBuffer(), bufferOffset, bytesToAllocate, buffer.array(), hostOffset, (useDeps) ? events : null);
+                internalEvents[index++] = deviceContext.enqueueReadBuffer(
+                    toBuffer(), bufferOffset, bytesToAllocate, sliceOfBuffer(buffer, hostOffset), (useDeps) ? events : null, false, 
+                    __ -> deserialise(reference)
+                );
                 index++;
 
                 // TODO this needs to run asynchronously
-                deserialise(reference);
+                
             }
 
             switch (index) {
@@ -476,7 +493,7 @@ public class OCLObjectWrapper implements ObjectBuffer {
             // TODO this needs to run asynchronously
             if (!valid || (valid && !isFinal)) {
                 serialise(ref);
-                eventList.add(deviceContext.enqueueWriteBuffer(toBuffer(), bufferOffset, bytesToAllocate, buffer.array(), hostOffset, (useDeps) ? events : null));
+                eventList.add(deviceContext.enqueueWriteBuffer(toBuffer(), bufferOffset, bytesToAllocate, sliceOfBuffer(buffer, hostOffset), (useDeps) ? events : null, false));
                 valid = true;
             }
             for (final FieldBuffer field : wrappedFields) {

@@ -378,4 +378,8 @@ public abstract class OCLArrayWrapper<T> implements ObjectBuffer {
 
     abstract protected void writeArrayData(long bufferId, long offset, long bytes, T value, long hostOffset, int[] waitEvents);
 
+    protected static int div(long a, int b) {
+        long result = a / b;
+        return (int)result;
+    }
 }

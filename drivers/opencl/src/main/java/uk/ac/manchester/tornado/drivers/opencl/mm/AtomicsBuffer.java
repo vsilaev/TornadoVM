@@ -25,7 +25,9 @@
  */
 package uk.ac.manchester.tornado.drivers.opencl.mm;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import uk.ac.manchester.tornado.api.exceptions.TornadoMemoryException;
@@ -83,16 +85,20 @@ public class AtomicsBuffer implements ObjectBuffer {
 
     @Override
     public int enqueueRead(Object reference, long hostOffset, int[] events, boolean useDeps) {
-        return deviceContext.readBuffer(deviceContext.getMemoryManager().toAtomicAddress(), OFFSET, 4 * atomicsList.length, atomicsList, 0, events);
+        long size = Integer.BYTES *  atomicsList.length;
+        return deviceContext.readBuffer(deviceContext.getMemoryManager().toAtomicAddress(), OFFSET, size, atomicsList, 0, events);
     }
 
     @Override
     public List<Integer> enqueueWrite(Object reference, long batchSize, long hostOffset, int[] events, boolean useDeps) {
         // Non-blocking write
         if (atomicsList.length == 0) {
-            return null;
+            return Collections.emptyList();
         }
-        return new ArrayList<>(deviceContext.enqueueWriteBuffer(deviceContext.getMemoryManager().toAtomicAddress(), OFFSET, 4 * atomicsList.length, atomicsList, 0, events));
+        long size = Integer.BYTES *  atomicsList.length;
+        ByteBuffer buffer = deviceContext.newDirectByteBuffer(size);
+        buffer.asIntBuffer().put(atomicsList);
+        return new ArrayList<>(deviceContext.enqueueWriteBuffer(deviceContext.getMemoryManager().toAtomicAddress(), OFFSET, size, buffer, events, true));
     }
 
     @Override

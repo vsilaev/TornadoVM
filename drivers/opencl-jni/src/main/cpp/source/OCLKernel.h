@@ -39,12 +39,20 @@ JNIEXPORT void JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLKernel_cl
 
 /*
  * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLKernel
- * Method:    clSetKernelArg
+ * Method:    clSetKernelArgArray
  * Signature: (JIJ[B)V
  */
-JNIEXPORT void JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLKernel_clSetKernelArg
+JNIEXPORT void JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLKernel_clSetKernelArgArray
         (JNIEnv *, jclass, jlong, jint, jlong, jbyteArray);
 
+
+/*
+ * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLKernel
+ * Method:    clSetKernelArgBuffer
+ * Signature: (JIJLjava/nio/ByteBuffer;)V
+ */
+JNIEXPORT void JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLKernel_clSetKernelArgBuffer
+        (JNIEnv *, jclass, jlong, jint, jlong, jobject);
 
 /*
  * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLKernel

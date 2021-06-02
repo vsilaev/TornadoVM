@@ -35,6 +35,14 @@
 #include "OCLContext.h"
 #include "ocl_log.h"
 #include "global_vars.h"
+
+#if _WIN32
+#define posix_memalign(p, a, s) (((*(p)) = _aligned_malloc((s), (a))), *(p) ?0 :errno)
+#define posix_memalign_free _aligned_free
+#else
+#define posix_memalign_free free
+#endif
+
 /*
  * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLContext
  * Method:    clReleaseContext
@@ -78,49 +86,31 @@ JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLContext_
 
 /*
  * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLContext
- * Method:    allocateOffHeapMemory
- * Signature: (J)JJ
+ * Method:    allocateNativeMemory
+ * Signature: (JJ)Ljava/nio/ByteBuffer;
  */
-JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLContext_allocateOffHeapMemory
+JNIEXPORT jobject JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLContext_allocateNativeMemory
 (JNIEnv *env, jclass clazz, jlong size, jlong alignment) {
     void *ptr;
-#if _WIN32
-    ptr = _aligned_malloc((size_t) alignment, (size_t) size);
-    if (ptr == 0) {
-        printf("OpenCL off-heap memory allocation (aligned_malloc) failed.\n");
-    }
-#else
     int rc = posix_memalign(&ptr, (size_t) alignment, (size_t) size);
     if (rc != 0) {
         printf("OpenCL off-heap memory allocation (posix_memalign) failed. Error value: %d.\n", rc);
+        return NULL;
+    } else {
+        memset(ptr, 0, (size_t) size);
+        return env->NewDirectByteBuffer(ptr, size);
     }
-#endif
-    memset(ptr, 0, (size_t) size);
-    size_t i = 0;
-    for (; i < (size_t) size / 4; i++) {
-        ((int *) ptr)[i] = i;
-    }
-    return (jlong) ptr;
 }
 
 /*
  * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLContext
- * Method:    freeOffHeapMemory
- * Signature: (J)J
+ * Method:    freeNativeMemory
+ * Signature: (Ljava/nio/ByteBuffer;)V
  */
-JNIEXPORT void JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLContext_freeOffHeapMemory
-(JNIEnv *env, jclass clazz, jlong address) {
-    free((void *) address);
-}
-
-/*
- * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLContext
- * Method:    asByteBuffer
- * Signature: (J)Ljava/nio/ByteBuffer;
- */
-JNIEXPORT jobject JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLContext_asByteBuffer
-(JNIEnv *env, jclass clazz, jlong address, jlong capacity) {
-    return env->NewDirectByteBuffer((void *) address, capacity);
+JNIEXPORT void JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLContext_freeNativeMemory
+(JNIEnv *env, jclass clazz, jobject buffer) {
+	void *address = env->GetDirectBufferAddress(buffer);
+	posix_memalign_free(address);
 }
 
 /*

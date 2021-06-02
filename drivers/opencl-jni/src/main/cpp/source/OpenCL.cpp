@@ -70,9 +70,6 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved) {
     } \
 } while (0)
 
-    GET_CLASS_METHOD(JCL_JAVA_UTIL_CONSUMER, "java/util/function/Consumer", 
-                     JM_JAVA_UTIL_CONSUMER_ACCEPT, "accept", "(Ljava/lang/Object;)V");
-
     GET_CLASS_METHOD(JCL_UK_AC_MANCHESTER_TORNADO_DRIVERS_OPENCL_OCLEVENT_CALLBACK, "uk/ac/manchester/tornado/drivers/opencl/OCLEvent$Callback", 
                      JM_UK_AC_MANCHESTER_TORNADO_DRIVERS_OPENCL_OCLEVENT_CALLBACK_EXECUTE, "execute", "(JI)V");
 
@@ -86,9 +83,6 @@ void JNI_OnUnload(JavaVM *vm, void *reserved) {
     JNIEnv *env;
     int jniStatus = jvm->GetEnv((void **)&env, JNI_VERSION_1_2);
     if (env != NULL) {
-        if (JCL_JAVA_UTIL_CONSUMER != NULL) {
-            env->DeleteGlobalRef(JCL_JAVA_UTIL_CONSUMER);
-        }
         if (JCL_UK_AC_MANCHESTER_TORNADO_DRIVERS_OPENCL_OCLEVENT_CALLBACK != NULL) {
             env->DeleteGlobalRef(JCL_UK_AC_MANCHESTER_TORNADO_DRIVERS_OPENCL_OCLEVENT_CALLBACK);
         }

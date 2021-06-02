@@ -88,17 +88,15 @@ public class OCLContext extends TornadoLogger implements OCLExecutionEnvironment
         this.allocatedRegions = new ArrayList<>();
     }
 
+    private native static ByteBuffer allocateNativeMemory(long size, long alignment);
+
+    private native static void freeNativeMemory(ByteBuffer memory);
+    
     native static void clReleaseContext(long id) throws OCLException;
 
     native static void clGetContextInfo(long id, int info, byte[] buffer) throws OCLException;
 
     native static long clCreateCommandQueue(long contextId, long deviceId, long properties) throws OCLException;
-
-    native static long allocateOffHeapMemory(long size, long alignment);
-
-    native static void freeOffHeapMemory(long address);
-
-    native static ByteBuffer asByteBuffer(long address, long size);
 
     // creates an empty buffer on the device
     native static OCLBufferResult createBuffer(long contextId, long flags, long size, long hostPointer) throws OCLException;
@@ -134,7 +132,7 @@ public class OCLContext extends TornadoLogger implements OCLExecutionEnvironment
             info("platform: version=%s (%s) on %s", platformVersion, platform.getVersion(), device.getDeviceName());
             info("device  : version=%s (%s) on %s", deviceVersion, device.getVersion(), device.getDeviceName());
 
-            queues[index] = new OCLCommandQueue(queueId, properties, deviceVersion, device.getByteOrder());
+            queues[index] = new OCLCommandQueue(queueId, properties, deviceVersion);
         } catch (OCLException e) {
             error(e.getMessage());
         }
@@ -248,28 +246,21 @@ public class OCLContext extends TornadoLogger implements OCLExecutionEnvironment
         return deviceContext;
     }
 
-    /**
-     * Allocates off-heap memory.
-     *
-     * @param bytes
-     *            to be allocated.
-     * @param alignment
-     *            alignment
-     *
-     * @return base address
-     */
-    public long allocate(long bytes, long alignment) {
-        final long address = allocateOffHeapMemory(bytes, alignment);
-        if (address == 0) {
-            throw new TornadoInternalError("Unable to allocate off-heap memory");
+    public static ByteBuffer allocateNativeMemory(int size) {
+        long ALIGNMENT = 64;
+        long mod = size % ALIGNMENT;
+        long alignedSize = mod != 0 ? size + ALIGNMENT - mod : size; 
+        ByteBuffer result = allocateNativeMemory(size, 64);
+        if (null == result) {
+            throw new TornadoInternalError("Unable to allocate native memory of size " + size + "(" + alignedSize + ")");
         }
-        return address;
+        result.order(OpenCL.BYTE_ORDER)
+              .limit(size);
+        return result;
     }
-
-    public ByteBuffer toByteBuffer(long address, long bytes) {
-        final ByteBuffer buffer = asByteBuffer(address, bytes);
-        buffer.order(OpenCL.BYTE_ORDER);
-        return buffer;
+    
+    public static void releaseNativeMemory(ByteBuffer buffer) {
+        freeNativeMemory(buffer);
     }
 
     public long createBuffer(long flags, long bytes) {

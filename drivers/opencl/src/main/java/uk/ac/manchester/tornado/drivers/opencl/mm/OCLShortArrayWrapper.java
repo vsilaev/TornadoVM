@@ -25,6 +25,9 @@
  */
 package uk.ac.manchester.tornado.drivers.opencl.mm;
 
+import java.nio.ByteBuffer;
+import java.nio.ShortBuffer;
+
 import jdk.vm.ci.meta.JavaKind;
 import uk.ac.manchester.tornado.drivers.opencl.OCLDeviceContext;
 
@@ -50,12 +53,19 @@ public class OCLShortArrayWrapper extends OCLArrayWrapper<short[]> {
 
     @Override
     protected int enqueueReadArrayData(long bufferId, long offset, long bytes, short[] value, long hostOffset, int[] waitEvents) {
-        return deviceContext.enqueueReadBuffer(bufferId, offset, bytes, value, hostOffset, waitEvents);
+        ByteBuffer offHeapBuffer = deviceContext.newDirectByteBuffer(bytes);
+        return deviceContext.enqueueReadBuffer(bufferId, offset, bytes, offHeapBuffer, waitEvents, true, buffer -> {
+            ShortBuffer onHeapBuffer = ShortBuffer.wrap(value, div(hostOffset, Short.BYTES), div(bytes, Short.BYTES));
+            onHeapBuffer.put(buffer.asShortBuffer());
+        });
     }
 
     @Override
     protected int enqueueWriteArrayData(long bufferId, long offset, long bytes, short[] value, long hostOffset, int[] waitEvents) {
-        return deviceContext.enqueueWriteBuffer(bufferId, offset, bytes, value, hostOffset, waitEvents);
+        ShortBuffer onHeapBuffer = ShortBuffer.wrap(value, div(hostOffset, Short.BYTES), div(bytes, Short.BYTES));
+        ByteBuffer offHeapBuffer = deviceContext.newDirectByteBuffer(bytes);
+        offHeapBuffer.asShortBuffer().put(onHeapBuffer);        
+        return deviceContext.enqueueWriteBuffer(bufferId, offset, bytes, offHeapBuffer, waitEvents, true);
     }
 
 }

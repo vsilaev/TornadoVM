@@ -55,27 +55,19 @@ JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLContext_
 
 /*
  * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLContext
- * Method:    allocateOffHeapMemory
- * Signature: (JJ)J
- */
-JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLContext_allocateOffHeapMemory
-        (JNIEnv *, jclass, jlong, jlong);
-
-/*
- * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLContext
- * Method:    freeOffHeapMemory
- * Signature: (J)V
- */
-JNIEXPORT void JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLContext_freeOffHeapMemory
-        (JNIEnv *, jclass, jlong);
-
-/*
- * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLContext
- * Method:    asByteBuffer
+ * Method:    allocateNativeMemory
  * Signature: (JJ)Ljava/nio/ByteBuffer;
  */
-JNIEXPORT jobject JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLContext_asByteBuffer
-        (JNIEnv *, jclass, jlong, jlong);
+JNIEXPORT jobject JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLContext_allocateNativeMemory
+(JNIEnv *env, jclass clazz, jlong size, jlong alignment);
+
+/*
+ * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLContext
+ * Method:    freeNativeMemory
+ * Signature: (Ljava/nio/ByteBuffer;)V
+ */
+JNIEXPORT void JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLContext_freeNativeMemory
+(JNIEnv *env, jclass clazz, jobject buffer);
 
 /*
  * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLContext

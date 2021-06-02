@@ -36,8 +36,6 @@ import uk.ac.manchester.tornado.runtime.common.Tornado;
  * userspace object.
  */
 public class OCLByteBuffer {
-
-    private static final int BYTES_PER_INTEGER = 4;
     protected ByteBuffer buffer;
     protected long bytes;
 
@@ -53,7 +51,7 @@ public class OCLByteBuffer {
         this(device);
         this.offset = offset;
         this.bytes = numBytes;
-        buffer = ByteBuffer.allocate((int) numBytes);
+        buffer = ByteBuffer.allocateDirect((int) numBytes);
         buffer.order(deviceContext.getByteOrder());
     }
 
@@ -66,11 +64,7 @@ public class OCLByteBuffer {
     }
 
     public void read(final int[] events) {
-        deviceContext.readBuffer(toBuffer(), offset, bytes, buffer.array(), 0, events);
-    }
-
-    public int read(long fromBuffer, final int[] toArray) {
-        return deviceContext.readBuffer(fromBuffer, 0, toArray.length * 4, toArray, 0, null);
+        deviceContext.readBuffer(toBuffer(), offset, bytes, buffer, events);
     }
 
     public int enqueueRead() {
@@ -78,7 +72,7 @@ public class OCLByteBuffer {
     }
 
     public int enqueueRead(final int[] events) {
-        return deviceContext.enqueueReadBuffer(toBuffer(), offset, bytes, buffer.array(), 0, events);
+        return deviceContext.enqueueReadBuffer(toBuffer(), offset, bytes, buffer, events, false, null);
     }
 
     public void write() {
@@ -87,7 +81,7 @@ public class OCLByteBuffer {
 
     public void write(final int[] events) {
         // XXX: offset 0
-        deviceContext.writeBuffer(toBuffer(), offset, bytes, buffer.array(), 0, events);
+        deviceContext.writeBuffer(toBuffer(), offset, bytes, buffer, events);
     }
 
     public int enqueueWrite() {
@@ -96,26 +90,7 @@ public class OCLByteBuffer {
 
     public int enqueueWrite(final int[] events) {
         // XXX: offset 0
-        return deviceContext.enqueueWriteBuffer(toBuffer(), offset, bytes, buffer.array(), 0, events);
-    }
-
-    /**
-     * Write from a specific buffer space.
-     * 
-     * @param fromBuffer
-     *            buffer to enqueue
-     * @param array
-     *            integer array to copy to the device.
-     * @param events
-     *            list of events
-     * @return event status
-     */
-    public int enqueueWrite(long fromBuffer, final int[] array, final int offset, final int[] events) {
-        return deviceContext.enqueueWriteBuffer(fromBuffer, offset, BYTES_PER_INTEGER * array.length, array, 0, events);
-    }
-
-    public int enqueueRead(long fromBuffer, final int[] array, final int offset, final int[] events) {
-        return deviceContext.enqueueReadBuffer(fromBuffer, offset, BYTES_PER_INTEGER * array.length, array, 0, events);
+        return deviceContext.enqueueWriteBuffer(toBuffer(), offset, bytes, buffer, events, false);
     }
 
     public void dump() {
@@ -310,9 +285,9 @@ public class OCLByteBuffer {
         return deviceContext.getMemoryManager().toRelativeDeviceAddress(offset);
     }
 
-    public Object value() {
-        return buffer.array();
-    }
+//    public Object value() {
+//        return buffer.array();
+//    }
 
     public void zeroMemory() {
         Tornado.warn("zero memory unimplemented");

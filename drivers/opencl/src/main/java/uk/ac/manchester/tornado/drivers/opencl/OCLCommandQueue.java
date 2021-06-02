@@ -31,15 +31,8 @@ import static uk.ac.manchester.tornado.drivers.opencl.enums.OCLCommandQueueInfo.
 import static uk.ac.manchester.tornado.runtime.common.Tornado.MARKER_USE_BARRIER;
 
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.CharBuffer;
-import java.nio.DoubleBuffer;
-import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
-import java.nio.LongBuffer;
-import java.nio.ShortBuffer;
+
 import java.util.concurrent.Semaphore;
-import java.util.function.Consumer;
 
 import uk.ac.manchester.tornado.api.common.Event;
 import uk.ac.manchester.tornado.drivers.opencl.exceptions.OCLException;
@@ -51,23 +44,16 @@ public class OCLCommandQueue extends TornadoLogger {
 
     protected static final Event EMPTY_EVENT = new EmptyEvent();
     private static final int ALL_TRANSFERS = 65535;
-
+    
     private final long commandQueue;
     private final long properties;
     private final int openclVersion;
-    private final ByteOrder byteOrder;
     private final Semaphore transfersSemaphore = new Semaphore(ALL_TRANSFERS);
 
-    public OCLCommandQueue(long id, long properties, int version, ByteOrder byteOrder) {
+    public OCLCommandQueue(long id, long properties, int version) {
         this.commandQueue = id;
         this.properties = properties;
         this.openclVersion = version;
-        this.byteOrder = byteOrder;
-    }
-    
-    private ByteBuffer newDirectByteBuffer(long bytesCount) {
-        // Device byte order is used here, not default OpenCL byte order
-        return ByteBuffer.allocateDirect((int)bytesCount).order(byteOrder);
     }
 
     native static void clReleaseCommandQueue(long queueId) throws OCLException;
@@ -99,7 +85,7 @@ public class OCLCommandQueue extends TornadoLogger {
 
     native static long writeBufferToDevice(long queueId, long deviceBufferPtr, boolean blocking, long deviceBufferOffset, long bytesCount, ByteBuffer buffer, long[] events) throws OCLException;
     
-    native static long readBufferFromDevice(long queueId, long deviceBufferPtr, boolean blocking, long deviceBufferOffset, long bytesCount, Consumer<ByteBuffer> callback, long[] events, long[] profilerEvent) throws OCLException;
+    native static long readBufferFromDevice(long queueId, long deviceBufferPtr, boolean blocking, long deviceBufferOffset, long bytesCount, ByteBuffer buffer, long[] events) throws OCLException;
 
     native static long writeArrayToDevice(long queueId, byte[] buffer, long hostOffset, boolean blocking, long offset, long bytes, long ptr, long[] events) throws OCLException;
 
@@ -220,245 +206,161 @@ public class OCLCommandQueue extends TornadoLogger {
         return -1;
     }
 
-    public long enqueueWrite(long deviceBufferPtr, boolean blocking, long deviceBufferOffset, long bytesCount, byte[] hostArray, long hostOffsetBytes, long[] waitEvents) {
+    public long write(long deviceBufferPtr, long deviceBufferOffset, long bytesCount, byte[] hostArray, long hostOffsetBytes, long[] waitEvents) {
         try {
-            if (blocking) {
-                return writeArrayToDevice(commandQueue, hostArray, hostOffsetBytes, true, deviceBufferOffset, bytesCount, deviceBufferPtr, waitEvents);
-            }
-            ByteBuffer onHeapBuffer = ByteBuffer.wrap(hostArray, div(hostOffsetBytes, Byte.BYTES), div(bytesCount, Byte.BYTES));
-            ByteBuffer offHeapBuffer = newDirectByteBuffer(bytesCount);
-            offHeapBuffer.put(onHeapBuffer);
-            return writeBufferToDevice(commandQueue, deviceBufferPtr, blocking, deviceBufferOffset, bytesCount, offHeapBuffer, waitEvents);
+            return writeArrayToDevice(commandQueue, hostArray, hostOffsetBytes, true, deviceBufferOffset, bytesCount, deviceBufferPtr, waitEvents);
         } catch (OCLException ex) {
             error(ex.getMessage());
             return -1;
         }
     }
 
-    public long enqueueWrite(long deviceBufferPtr, boolean blocking, long deviceBufferOffset, long bytesCount, char[] hostArray, long hostOffsetBytes, long[] waitEvents) {
+    public long write(long deviceBufferPtr, long deviceBufferOffset, long bytesCount, char[] hostArray, long hostOffsetBytes, long[] waitEvents) {
         try {
-            if (blocking) {
-                return writeArrayToDevice(commandQueue, hostArray, hostOffsetBytes, true, deviceBufferOffset, bytesCount, deviceBufferPtr, waitEvents);
-            }
-            CharBuffer onHeapBuffer = CharBuffer.wrap(hostArray, div(hostOffsetBytes, Character.BYTES), div(bytesCount, Character.BYTES));
-            ByteBuffer offHeapBuffer = newDirectByteBuffer(bytesCount);
-            offHeapBuffer.asCharBuffer().put(onHeapBuffer);
-            return writeBufferToDevice(commandQueue, deviceBufferPtr, blocking, deviceBufferOffset, bytesCount, offHeapBuffer, waitEvents);
+            return writeArrayToDevice(commandQueue, hostArray, hostOffsetBytes, true, deviceBufferOffset, bytesCount, deviceBufferPtr, waitEvents);
         } catch (OCLException ex) {
             error(ex.getMessage());
             return -1;
         }
     }
 
-    public long enqueueWrite(long deviceBufferPtr, boolean blocking, long deviceBufferOffset, long bytesCount, short[] hostArray, long hostOffsetBytes, long[] waitEvents) {
+    public long write(long deviceBufferPtr, long deviceBufferOffset, long bytesCount, short[] hostArray, long hostOffsetBytes, long[] waitEvents) {
         try {
-            if (blocking) {
-                return writeArrayToDevice(commandQueue, hostArray, hostOffsetBytes, true, deviceBufferOffset, bytesCount, deviceBufferPtr, waitEvents);
-            }
-            ShortBuffer onHeapBuffer = ShortBuffer.wrap(hostArray, div(hostOffsetBytes, Short.BYTES), div(bytesCount, Short.BYTES));
-            ByteBuffer offHeapBuffer = newDirectByteBuffer(bytesCount);
-            offHeapBuffer.asShortBuffer().put(onHeapBuffer);
-            return writeBufferToDevice(commandQueue, deviceBufferPtr, blocking, deviceBufferOffset, bytesCount, offHeapBuffer, waitEvents);
+            return writeArrayToDevice(commandQueue, hostArray, hostOffsetBytes, true, deviceBufferOffset, bytesCount, deviceBufferPtr, waitEvents);
         } catch (OCLException ex) {
             error(ex.getMessage());
             return -1;
         }
     }
 
-    public long enqueueWrite(long deviceBufferPtr, boolean blocking, long deviceBufferOffset, long bytesCount, int[] hostArray, long hostOffsetBytes, long[] waitEvents) {
+    public long write(long deviceBufferPtr, long deviceBufferOffset, long bytesCount, int[] hostArray, long hostOffsetBytes, long[] waitEvents) {
         try {
-            if (blocking) {
-                return writeArrayToDevice(commandQueue, hostArray, hostOffsetBytes, true, deviceBufferOffset, bytesCount, deviceBufferPtr, waitEvents);
-            }
-            IntBuffer onHeapBuffer = IntBuffer.wrap(hostArray, div(hostOffsetBytes, Integer.BYTES), div(bytesCount, Integer.BYTES));
-            ByteBuffer offHeapBuffer = newDirectByteBuffer(bytesCount);
-            offHeapBuffer.asIntBuffer().put(onHeapBuffer);
-            return writeBufferToDevice(commandQueue, deviceBufferPtr, blocking, deviceBufferOffset, bytesCount, offHeapBuffer, waitEvents);
+            return writeArrayToDevice(commandQueue, hostArray, hostOffsetBytes, true, deviceBufferOffset, bytesCount, deviceBufferPtr, waitEvents);
         } catch (OCLException ex) {
             error(ex.getMessage());
             return -1;
         }
     }
 
-    public long enqueueWrite(long deviceBufferPtr, boolean blocking, long deviceBufferOffset, long bytesCount, long[] hostArray, long hostOffsetBytes, long[] waitEvents) {
+    public long write(long deviceBufferPtr, long deviceBufferOffset, long bytesCount, long[] hostArray, long hostOffsetBytes, long[] waitEvents) {
         try {
-            if (blocking) {
-                return writeArrayToDevice(commandQueue, hostArray, hostOffsetBytes, true, deviceBufferOffset, bytesCount, deviceBufferPtr, waitEvents);
-            }
-            LongBuffer onHeapBuffer = LongBuffer.wrap(hostArray, div(hostOffsetBytes, Long.BYTES), div(bytesCount, Long.BYTES));
-            ByteBuffer offHeapBuffer = newDirectByteBuffer(bytesCount);
-            offHeapBuffer.asLongBuffer().put(onHeapBuffer);
-            return writeBufferToDevice(commandQueue, deviceBufferPtr, blocking, deviceBufferOffset, bytesCount, offHeapBuffer, waitEvents);
+            return writeArrayToDevice(commandQueue, hostArray, hostOffsetBytes, true, deviceBufferOffset, bytesCount, deviceBufferPtr, waitEvents);
         } catch (OCLException ex) {
             error(ex.getMessage());
             return -1;
         }
     }
 
-    public long enqueueWrite(long deviceBufferPtr, boolean blocking, long deviceBufferOffset, long bytesCount, float[] hostArray, long hostOffsetBytes, long[] waitEvents) {
+    public long write(long deviceBufferPtr, long deviceBufferOffset, long bytesCount, float[] hostArray, long hostOffsetBytes, long[] waitEvents) {
         try {
-            if (blocking) {
-                return writeArrayToDevice(commandQueue, hostArray, hostOffsetBytes, true, deviceBufferOffset, bytesCount, deviceBufferPtr, waitEvents);
-            }
-            FloatBuffer onHeapBuffer = FloatBuffer.wrap(hostArray, div(hostOffsetBytes, Float.BYTES), div(bytesCount, Float.BYTES));
-            ByteBuffer offHeapBuffer = newDirectByteBuffer(bytesCount);
-            offHeapBuffer.asFloatBuffer().put(onHeapBuffer);
-            return writeBufferToDevice(commandQueue, deviceBufferPtr, blocking, deviceBufferOffset, bytesCount, offHeapBuffer, waitEvents);
+            return writeArrayToDevice(commandQueue, hostArray, hostOffsetBytes, true, deviceBufferOffset, bytesCount, deviceBufferPtr, waitEvents);
         } catch (OCLException ex) {
             error(ex.getMessage());
             return -1;
         }
     }
 
-    public long enqueueWrite(long deviceBufferPtr, boolean blocking, long deviceBufferOffset, long bytesCount, double[] hostArray, long hostOffsetBytes, long[] waitEvents) {
+    public long write(long deviceBufferPtr, long deviceBufferOffset, long bytesCount, double[] hostArray, long hostOffsetBytes, long[] waitEvents) {
         try {
-            if (blocking) {
-                return writeArrayToDevice(commandQueue, hostArray, hostOffsetBytes, true, deviceBufferOffset, bytesCount, deviceBufferPtr, waitEvents);
-            }
-            DoubleBuffer onHeapBuffer = DoubleBuffer.wrap(hostArray, div(hostOffsetBytes, Double.BYTES), div(bytesCount, Double.BYTES));
-            ByteBuffer offHeapBuffer = newDirectByteBuffer(bytesCount);
-            offHeapBuffer.asDoubleBuffer().put(onHeapBuffer);
-            return writeBufferToDevice(commandQueue, deviceBufferPtr, blocking, deviceBufferOffset, bytesCount, offHeapBuffer, waitEvents);
+            return writeArrayToDevice(commandQueue, hostArray, hostOffsetBytes, true, deviceBufferOffset, bytesCount, deviceBufferPtr, waitEvents);
         } catch (OCLException ex) {
             error(ex.getMessage());
             return -1;
         }
     }
 
-    public long enqueueRead(long deviceBufferPtr, boolean blocking, long deviceBufferOffset, long bytesCount, byte[] hostArray, long hostOffsetBytes, long[] waitEvents, long[] profilerEvent) {
+    public long read(long deviceBufferPtr, long deviceBufferOffset, long bytesCount, byte[] hostArray, long hostOffsetBytes, long[] waitEvents) {
         guarantee(hostArray != null, "array is null");
         try {
-            if (blocking) {
-                return readArrayFromDevice(commandQueue, hostArray, hostOffsetBytes, true, deviceBufferOffset, bytesCount, deviceBufferPtr, waitEvents);
-            }
-            ByteBuffer onHeapBuffer = ByteBuffer.wrap(hostArray, div(hostOffsetBytes, Byte.BYTES), div(bytesCount, Byte.BYTES));
-            beginRead(); 
-            return readBufferFromDevice(
-                commandQueue, deviceBufferPtr, blocking, deviceBufferOffset, bytesCount, 
-                finishRead(onHeapBuffer::put), 
-                waitEvents, profilerEvent
-            );
+            return readArrayFromDevice(commandQueue, hostArray, hostOffsetBytes, true, deviceBufferOffset, bytesCount, deviceBufferPtr, waitEvents);
         } catch (OCLException e) {
             error(e.getMessage());
             return -1;
         }
     }
 
-    public long enqueueRead(long deviceBufferPtr, boolean blocking, long deviceBufferOffset, long bytesCount, char[] hostArray, long hostOffsetBytes, long[] waitEvents, long[] profilerEvent) {
+    public long read(long deviceBufferPtr, long deviceBufferOffset, long bytesCount, char[] hostArray, long hostOffsetBytes, long[] waitEvents) {
         guarantee(hostArray != null, "array is null");
         try {
-            if (blocking) {
-                return readArrayFromDevice(commandQueue, hostArray, hostOffsetBytes, true, deviceBufferOffset, bytesCount, deviceBufferPtr, waitEvents);
-            }
-            CharBuffer onHeapBuffer = CharBuffer.wrap(hostArray, div(hostOffsetBytes, Character.BYTES), div(bytesCount, Character.BYTES));
-            beginRead();
-            return readBufferFromDevice(
-                commandQueue, deviceBufferPtr, blocking, deviceBufferOffset, bytesCount, 
-                finishRead(offHeapBuffer -> onHeapBuffer.put(offHeapBuffer.asCharBuffer())), 
-                waitEvents, profilerEvent
-            );
+            return readArrayFromDevice(commandQueue, hostArray, hostOffsetBytes, true, deviceBufferOffset, bytesCount, deviceBufferPtr, waitEvents);
         } catch (OCLException e) {
             error(e.getMessage());
             return -1;
         }
     }
 
-    public long enqueueRead(long deviceBufferPtr, boolean blocking, long deviceBufferOffset, long bytesCount, short[] hostArray, long hostOffsetBytes, long[] waitEvents, long[] profilerEvent) {
+    public long read(long deviceBufferPtr, long deviceBufferOffset, long bytesCount, short[] hostArray, long hostOffsetBytes, long[] waitEvents) {
         guarantee(hostArray != null, "array is null");
         try {
-            if (blocking) {
-                return readArrayFromDevice(commandQueue, hostArray, hostOffsetBytes, true, deviceBufferOffset, bytesCount, deviceBufferPtr, waitEvents);
-            }
-            ShortBuffer onHeapBuffer = ShortBuffer.wrap(hostArray, div(hostOffsetBytes, Short.BYTES), div(bytesCount, Short.BYTES));
-            beginRead();
-            return readBufferFromDevice(
-                commandQueue, deviceBufferPtr, blocking, deviceBufferOffset, bytesCount, 
-                finishRead(offHeapBuffer -> onHeapBuffer.put(offHeapBuffer.asShortBuffer())), 
-                waitEvents, profilerEvent
-            );
+            return readArrayFromDevice(commandQueue, hostArray, hostOffsetBytes, true, deviceBufferOffset, bytesCount, deviceBufferPtr, waitEvents);
         } catch (OCLException e) {
             error(e.getMessage());
             return -1;
         }
     }
 
-    public long enqueueRead(long deviceBufferPtr, boolean blocking, long deviceBufferOffset, long bytesCount, int[] hostArray, long hostOffsetBytes, long[] waitEvents, long[] profilerEvent) {
+    public long read(long deviceBufferPtr, long deviceBufferOffset, long bytesCount, int[] hostArray, long hostOffsetBytes, long[] waitEvents) {
         guarantee(hostArray != null, "array is null");
         try {
-            if (blocking) {
-                return readArrayFromDevice(commandQueue, hostArray, hostOffsetBytes, true, deviceBufferOffset, bytesCount, deviceBufferPtr, waitEvents);
-            }
-            IntBuffer onHeapBuffer = IntBuffer.wrap(hostArray, div(hostOffsetBytes, Integer.BYTES), div(bytesCount, Integer.BYTES));
-            beginRead();            
-            return readBufferFromDevice(
-                commandQueue, deviceBufferPtr, blocking, deviceBufferOffset, bytesCount, 
-                finishRead(offHeapBuffer -> onHeapBuffer.put(offHeapBuffer.asIntBuffer())), 
-                waitEvents, profilerEvent
-            );
+            return readArrayFromDevice(commandQueue, hostArray, hostOffsetBytes, true, deviceBufferOffset, bytesCount, deviceBufferPtr, waitEvents);
         } catch (OCLException e) {
             error(e.getMessage());
             return -1;
         }
     }
 
-    public long enqueueRead(long deviceBufferPtr, boolean blocking, long deviceBufferOffset, long bytesCount, long[] hostArray, long hostOffsetBytes, long[] waitEvents, long[] profilerEvent) {
+    public long read(long deviceBufferPtr, long deviceBufferOffset, long bytesCount, long[] hostArray, long hostOffsetBytes, long[] waitEvents) {
         guarantee(hostArray != null, "array is null");
         try {
-            if (blocking) {
-                return readArrayFromDevice(commandQueue, hostArray, hostOffsetBytes, true, deviceBufferOffset, bytesCount, deviceBufferPtr, waitEvents);
-            }
-            LongBuffer onHeapBuffer = LongBuffer.wrap(hostArray, div(hostOffsetBytes, Long.BYTES), div(bytesCount, Long.BYTES));
-            beginRead();
-            return readBufferFromDevice(
-                commandQueue, deviceBufferPtr, blocking, deviceBufferOffset, bytesCount, 
-                finishRead(offHeapBuffer -> onHeapBuffer.put(offHeapBuffer.asLongBuffer())), 
-                waitEvents, profilerEvent
-            );
+            return readArrayFromDevice(commandQueue, hostArray, hostOffsetBytes, true, deviceBufferOffset, bytesCount, deviceBufferPtr, waitEvents);
         } catch (OCLException e) {
             error(e.getMessage());
             return -1;
         }
     }
 
-    public long enqueueRead(long deviceBufferPtr, boolean blocking, long deviceBufferOffset, long bytesCount, float[] hostArray, long hostOffsetBytes, long[] waitEvents, long[] profilerEvent) {
+    public long read(long deviceBufferPtr, long deviceBufferOffset, long bytesCount, float[] hostArray, long hostOffsetBytes, long[] waitEvents) {
         guarantee(hostArray != null, "array is null");
         try {
-            if (blocking) {
-                return readArrayFromDevice(commandQueue, hostArray, hostOffsetBytes, true, deviceBufferOffset, bytesCount, deviceBufferPtr, waitEvents);
-            }
-            FloatBuffer onHeapBuffer = FloatBuffer.wrap(hostArray, div(hostOffsetBytes, Float.BYTES), div(bytesCount, Float.BYTES));
-            beginRead();
-            return readBufferFromDevice(
-                commandQueue, deviceBufferPtr, blocking, deviceBufferOffset, bytesCount, 
-                finishRead(offHeapBuffer -> onHeapBuffer.put(offHeapBuffer.asFloatBuffer())), 
-                waitEvents, profilerEvent
-            );
+            return readArrayFromDevice(commandQueue, hostArray, hostOffsetBytes, true, deviceBufferOffset, bytesCount, deviceBufferPtr, waitEvents);
         } catch (OCLException e) {
             error(e.getMessage());
             return -1;
         }
     }
 
-    public long enqueueRead(long deviceBufferPtr, boolean blocking, long deviceBufferOffset, long bytesCount, double[] hostArray, long hostOffsetBytes, long[] waitEvents, long[] profilerEvent) {
+    public long read(long deviceBufferPtr, long deviceBufferOffset, long bytesCount, double[] hostArray, long hostOffsetBytes, long[] waitEvents) {
         guarantee(hostArray != null, "array is null");
         try {
-            if (blocking) {
-                return readArrayFromDevice(commandQueue, hostArray, hostOffsetBytes, true, deviceBufferOffset, bytesCount, deviceBufferPtr, waitEvents);
-            }
-            DoubleBuffer onHeapBuffer = DoubleBuffer.wrap(hostArray, div(hostOffsetBytes, Double.BYTES), div(bytesCount, Double.BYTES));
-            beginRead();
-            return readBufferFromDevice(
-                commandQueue, deviceBufferPtr, blocking, deviceBufferOffset, bytesCount, 
-                finishRead(offHeapBuffer -> onHeapBuffer.put(offHeapBuffer.asDoubleBuffer())), 
-                waitEvents, profilerEvent
-            );
+            return readArrayFromDevice(commandQueue, hostArray, hostOffsetBytes, true, deviceBufferOffset, bytesCount, deviceBufferPtr, waitEvents);
+        } catch (OCLException e) {
+            error(e.getMessage());
+            return -1;
+        }
+    }
+    
+    public long enqueueWrite(long deviceBufferPtr, boolean blocking, long deviceBufferOffset, long bytesCount, ByteBuffer hostBuffer, long[] waitEvents) {
+        guarantee(hostBuffer != null, "buffer is null");
+        try {
+            return writeBufferToDevice(commandQueue, deviceBufferPtr, blocking, deviceBufferOffset, bytesCount, hostBuffer, waitEvents);
+        } catch (OCLException ex) {
+            error(ex.getMessage());
+            return -1;
+        }
+    }
+
+    
+    public long enqueueRead(long deviceBufferPtr, boolean blocking, long deviceBufferOffset, long bytesCount, ByteBuffer hostBuffer, long[] waitEvents) {
+        guarantee(hostBuffer != null, "buffer is null");
+        try {
+            return readBufferFromDevice(commandQueue, deviceBufferPtr, blocking, deviceBufferOffset, bytesCount, hostBuffer, waitEvents);
         } catch (OCLException e) {
             error(e.getMessage());
             return -1;
         }
     }
 
-    private void beginRead() {
+    void aquireAsyncTransferLock() {
         try {
             transfersSemaphore.acquire();
         } catch (InterruptedException e) {
@@ -467,18 +369,8 @@ public class OCLCommandQueue extends TornadoLogger {
         }
     }
     
-    private Consumer<ByteBuffer> finishRead(Consumer<ByteBuffer> original) {
-        return offHeapBuffer -> {
-            try {
-                if (null != offHeapBuffer) {
-                    original.accept(offHeapBuffer.order(byteOrder));
-                } else {
-                    throw new RuntimeException("Error reading data from device");
-                }
-            } finally {
-                transfersSemaphore.release();
-            }
-        };
+    void releaseAsyncTransferLock() {
+        transfersSemaphore.release();
     }
     
     void awaitTransfers() {
