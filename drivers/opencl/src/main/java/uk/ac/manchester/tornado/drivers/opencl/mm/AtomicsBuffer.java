@@ -67,6 +67,10 @@ public class AtomicsBuffer implements ObjectBuffer {
     public long toRelativeAddress() {
         throw new TornadoRuntimeException("Not implemented");
     }
+    
+    private long toAtomicAddress() {
+        return deviceContext.getMemoryManager().toAtomicAddress();
+    }
 
     @Override
     public void read(Object reference) {
@@ -86,7 +90,7 @@ public class AtomicsBuffer implements ObjectBuffer {
     @Override
     public int enqueueRead(Object reference, long hostOffset, int[] events, boolean useDeps) {
         long size = Integer.BYTES *  atomicsList.length;
-        return deviceContext.readBuffer(deviceContext.getMemoryManager().toAtomicAddress(), OFFSET, size, atomicsList, 0, events);
+        return deviceContext.readBuffer(toAtomicAddress(), OFFSET, size, atomicsList, 0, events);
     }
 
     @Override
@@ -98,7 +102,7 @@ public class AtomicsBuffer implements ObjectBuffer {
         long size = Integer.BYTES *  atomicsList.length;
         ByteBuffer buffer = deviceContext.newDirectByteBuffer(size);
         buffer.asIntBuffer().put(atomicsList);
-        return new ArrayList<>(deviceContext.enqueueWriteBuffer(deviceContext.getMemoryManager().toAtomicAddress(), OFFSET, size, buffer, events, true));
+        return new ArrayList<>(deviceContext.enqueueWriteBuffer(toAtomicAddress(), OFFSET, size, buffer, events, true));
     }
 
     @Override
