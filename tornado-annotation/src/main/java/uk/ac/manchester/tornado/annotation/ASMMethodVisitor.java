@@ -17,13 +17,14 @@
  */
 package uk.ac.manchester.tornado.annotation;
 
+import java.util.List;
+
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.TypePath;
-import uk.ac.manchester.tornado.runtime.common.ParallelAnnotationProvider;
 
-import java.util.List;
+import uk.ac.manchester.tornado.runtime.common.ParallelAnnotationProvider;
 
 public class ASMMethodVisitor extends MethodVisitor {
 
