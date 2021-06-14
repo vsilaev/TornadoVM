@@ -66,7 +66,7 @@ import org.graalvm.compiler.phases.util.Providers;
 
 import jdk.vm.ci.meta.ResolvedJavaMethod;
 import uk.ac.manchester.tornado.api.AbstractTaskGraph;
-import uk.ac.manchester.tornado.api.GridTask;
+import uk.ac.manchester.tornado.api.GridScheduler;
 import uk.ac.manchester.tornado.api.Policy;
 import uk.ac.manchester.tornado.api.TaskSchedule;
 import uk.ac.manchester.tornado.api.TornadoDriver;
@@ -181,7 +181,7 @@ public class TornadoTaskSchedule implements AbstractTaskGraph {
     private TornadoProfiler timeProfiler;
     private boolean updateData;
     private boolean isFinished;
-    private GridTask gridTask;
+    private GridScheduler gridScheduler;
 
     private static String RESET = "\u001B[0m";
     private static String RED = "\u001B[31m";
@@ -254,7 +254,7 @@ public class TornadoTaskSchedule implements AbstractTaskGraph {
                 }
             }
         }
-        if (this.gridTask == null) {
+        if (this.gridScheduler == null) {
             triggerRecompile();
         }
     }
@@ -503,7 +503,7 @@ public class TornadoTaskSchedule implements AbstractTaskGraph {
         } else if (result != null && !isLastDeviceListEmpty() && !(compareDevices(executionContext.getLastDevices(), meta().getLogicDevice()))) {
             return COMPILE_AND_UPDATE;
         } else if (updateData) {
-            if (gridTask == null) {
+            if (gridScheduler == null) {
                 return COMPILE_ONLY;
             }
             /* TornadoVM should not recompile if there is a worker grid for each task. Otherwise, there is a combination of the
@@ -511,7 +511,7 @@ public class TornadoTaskSchedule implements AbstractTaskGraph {
                TODO This check will no longer be needed once we pass the loop bounds via the call stack instead of constant folding.
             */
             for (TaskPackage taskPackage : taskPackages) {
-                if (!gridTask.contains(taskScheduleName, taskPackage.getId())) {
+                if (!gridScheduler.contains(taskScheduleName, taskPackage.getId())) {
                     return COMPILE_ONLY;
                 }
             }
@@ -533,7 +533,7 @@ public class TornadoTaskSchedule implements AbstractTaskGraph {
            object. The same TornadoVM object will be used for different grid task objects, if the 
            TornadoTaskSchedule::compile method is not called in different runs of the same TaskSchedule.
         */
-        vm.setGridTask(gridTask);
+        vm.setGridScheduler(gridScheduler);
 
         if (updateData) {
             executionContext.newStack(true);
@@ -942,8 +942,8 @@ public class TornadoTaskSchedule implements AbstractTaskGraph {
     }
 
     @Override
-    public AbstractTaskGraph schedule(GridTask gridTask) {
-        this.gridTask = gridTask;
+    public AbstractTaskGraph schedule(GridScheduler gridScheduler) {
+        this.gridScheduler = gridScheduler;
         return schedule();
     }
 

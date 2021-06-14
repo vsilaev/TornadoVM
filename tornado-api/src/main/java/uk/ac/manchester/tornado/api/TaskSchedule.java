@@ -267,18 +267,18 @@ public class TaskSchedule implements TornadoAPI, ProfileInterface {
     }
 
     @Override
-    public void execute(GridTask gridTask) {
-        taskScheduleImpl.schedule(gridTask).waitOn();
+    public void execute(GridScheduler gridScheduler) {
+        taskScheduleImpl.schedule(gridScheduler).waitOn();
     }
 
     @Override
-    public CompletableFuture<TornadoAPI> executeAsync(GridTask gridTask) {
-        return selfFuture(taskScheduleImpl.schedule(gridTask).waitAsyncOn());
+    public CompletableFuture<TornadoAPI> executeAsync(GridScheduler gridScheduler) {
+        return selfFuture(taskScheduleImpl.schedule(gridScheduler).waitAsyncOn());
     }
 
     @Override
-    public CompletableFuture<TornadoAPI> executeAsync(GridTask gridTask, Executor executor) {
-        return selfFuture(taskScheduleImpl.schedule(gridTask).waitAsyncOn(executor));
+    public CompletableFuture<TornadoAPI> executeAsync(GridScheduler gridScheduler, Executor executor) {
+        return selfFuture(taskScheduleImpl.schedule(gridScheduler).waitAsyncOn(executor));
     }
 
     @Override

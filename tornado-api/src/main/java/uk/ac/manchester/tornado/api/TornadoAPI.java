@@ -610,11 +610,11 @@ public interface TornadoAPI {
 
     CompletableFuture<TornadoAPI> executeAsync(Executor executor);
 
-    void execute(GridTask gridTask);
+    void execute(GridScheduler gridScheduler);
 
-    CompletableFuture<TornadoAPI> executeAsync(GridTask gridTask);
+    CompletableFuture<TornadoAPI> executeAsync(GridScheduler gridScheduler);
 
-    CompletableFuture<TornadoAPI> executeAsync(GridTask gridTask, Executor executor);
+    CompletableFuture<TornadoAPI> executeAsync(GridScheduler gridScheduler, Executor executor);
 
     /**
      * Run with dynamic reconfiguration with an input policy

@@ -36,7 +36,7 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 import jdk.vm.ci.meta.ResolvedJavaMethod;
-import uk.ac.manchester.tornado.api.GridTask;
+import uk.ac.manchester.tornado.api.GridScheduler;
 import uk.ac.manchester.tornado.api.WorkerGrid;
 import uk.ac.manchester.tornado.api.common.TornadoDevice;
 import uk.ac.manchester.tornado.api.common.TornadoEvents;
@@ -60,7 +60,7 @@ public abstract class AbstractMetaData implements TaskMetaDataInterface {
     private final HashSet<String> openCLBuiltOptions = new HashSet<>(Arrays.asList("-cl-single-precision-constant", "-cl-denorms-are-zero", "-cl-opt-disable", "-cl-strict-aliasing", "-cl-mad-enable",
             "-cl-no-signed-zeros", "-cl-unsafe-math-optimizations", "-cl-finite-math-only", "-cl-fast-relaxed-math", "-w", "-cl-std=CL2.0"));
     private TornadoProfiler profiler;
-    private GridTask gridTask;
+    private GridScheduler gridScheduler;
     private long[] ptxBlockDim;
     private long[] ptxGridDim;
 
@@ -482,16 +482,16 @@ public abstract class AbstractMetaData implements TaskMetaDataInterface {
         openclUseDriverScheduling = use;
     }
 
-    public void setGridTask(GridTask gridTask) {
-        this.gridTask = gridTask;
+    public void setGridScheduler(GridScheduler gridScheduler) {
+        this.gridScheduler = gridScheduler;
     }
 
     public boolean isWorkerGridAvailable() {
-        return (gridTask != null && gridTask.get(getId()) != null);
+        return (gridScheduler != null && gridScheduler.get(getId()) != null);
     }
 
     public WorkerGrid getWorkerGrid(String taskName) {
-        return gridTask.get(taskName);
+        return gridScheduler.get(taskName);
     }
 
     public long[] getPTXBlockDim() {
