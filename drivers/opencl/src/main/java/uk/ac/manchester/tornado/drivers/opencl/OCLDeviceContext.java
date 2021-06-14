@@ -621,6 +621,11 @@ public class OCLDeviceContext extends TornadoLogger implements Initialisable, OC
     }
 
     @Override
+    public boolean isPlatformXilinxFPGA() {
+        return getPlatformContext().getPlatform().getName().toLowerCase().contains("xilinx");
+    }
+
+    @Override
     public boolean useRelativeAddresses() {
         if (isPlatformFPGA() && !Tornado.OPENCL_USE_RELATIVE_ADDRESSES && printOnce) {
             System.out.println("Warning: -Dtornado.opencl.userelative was set to False. TornadoVM changed it to True because it is required for FPGA execution.");
