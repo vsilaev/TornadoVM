@@ -27,10 +27,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 
+import org.graalvm.compiler.core.common.cfg.Loop;
 import org.graalvm.compiler.graph.Node;
+import org.graalvm.compiler.graph.NodeMap;
 import org.graalvm.compiler.graph.iterators.NodeIterable;
+import org.graalvm.compiler.nodes.BeginNode;
 import org.graalvm.compiler.nodes.EndNode;
 import org.graalvm.compiler.nodes.IfNode;
 import org.graalvm.compiler.nodes.LoopBeginNode;
@@ -39,6 +43,7 @@ import org.graalvm.compiler.nodes.LoopExitNode;
 import org.graalvm.compiler.nodes.MergeNode;
 import org.graalvm.compiler.nodes.ReturnNode;
 import org.graalvm.compiler.nodes.StartNode;
+import org.graalvm.compiler.nodes.StructuredGraph;
 import org.graalvm.compiler.nodes.cfg.Block;
 import org.graalvm.compiler.nodes.cfg.ControlFlowGraph;
 import org.graalvm.compiler.nodes.extended.IntegerSwitchNode;
@@ -52,12 +57,13 @@ public class OCLBlockVisitor implements ControlFlowGraph.RecursiveVisitor<Block>
     OCLCompilationResultBuilder openclBuilder;
     OCLAssembler asm;
     Set<Block> merges;
-    Set<Block> closedLoops;
+    Map<Block, Integer> closedLoops;
     Set<Block> switches;
     Set<Node> switchClosed;
     HashMap<Block, Integer> pending;
     private int loopCount;
     private int loopEnds;
+    Set<Block> rmvEndBracket;
 
     public OCLBlockVisitor(OCLCompilationResultBuilder resBuilder) {
         this.openclBuilder = resBuilder;
@@ -65,8 +71,9 @@ public class OCLBlockVisitor implements ControlFlowGraph.RecursiveVisitor<Block>
         merges = new HashSet<>();
         switches = new HashSet<>();
         switchClosed = new HashSet<>();
-        closedLoops = new HashSet<>();
+        closedLoops = new HashMap<>();
         pending = new HashMap<>();
+        rmvEndBracket = new HashSet<>();
     }
 
     private void emitBeginBlockForElseStatement(Block dom, Block block) {
@@ -78,6 +85,36 @@ public class OCLBlockVisitor implements ControlFlowGraph.RecursiveVisitor<Block>
         }
         asm.beginScope();
         asm.eolOn();
+    }
+
+    // Update a list of basic blocks to close. We add a block into the rvmEndBracket
+    // list if the current block starts with a lookExitNode and the false successor
+    // of the dominator points to the loopExitNode followed by an end-node.
+    private void updateListEndBracketsForLoopExitNodes(Block block) {
+        Block dom = block.getDominator();
+        if (dom != null) {
+            if (dom.getPredecessorCount() == 2) { // Dom is merge block on enter
+                boolean mergeA = false;
+                boolean mergeB = false;
+                Block[] predecessors = dom.getPredecessors();
+                for (Block p : predecessors) {
+                    // Node Pi closes Loop
+                    if ((p.getBeginNode() instanceof LoopExitNode) && (p.getEndNode() instanceof LoopEndNode) && (block.getBeginNode() instanceof LoopExitNode)) {
+                        mergeA = true;
+                    }
+                    // Node Pi+1 close the if statement
+                    if ((p.getBeginNode() instanceof BeginNode) && (p.getEndNode() instanceof EndNode) && (block.getEndNode() instanceof EndNode)) {
+                        mergeB = true;
+                    }
+                    // falseSuccessor's endScope is redundant, can be removed.
+                    if (mergeA && mergeB) {
+                        if (((IfNode) dom.getEndNode()).falseSuccessor().equals(block.getBeginNode()) && (((IfNode) dom.getEndNode()).falseSuccessor().next().equals(block.getEndNode()))
+                                && block.getBeginNode() instanceof LoopExitNode)
+                            rmvEndBracket.add(block);
+                    }
+                }
+            }
+        }
     }
 
     private void emitBeginBlockForSwitchStatements(Block dom, Block beginBlockNode) {
@@ -222,17 +259,21 @@ public class OCLBlockVisitor implements ControlFlowGraph.RecursiveVisitor<Block>
         }
     }
 
-    private boolean wasBlockAlreadyClosed(Block b) {
-        Block[] successors = b.getSuccessors();
-        for (Block s : successors) {
-            if (closedLoops.contains(s)) {
-                return true;
-            }
+    private boolean wasBlockAlreadyClosed(Block block) {
+        Block dominator = block.getDominator();
+        if (dominator.getLoop() != null) {
+            int closeCount = closedLoops.getOrDefault(dominator.getLoop().getHeader(), 0);
+            return closeCount == dominator.getLoop().getLoopExits().size();
         }
         return false;
     }
 
-    private void closeScope(Block block) {
+    private void incrementClosedLoops(Block loopBeginBlock) {
+        int closedLoopCount = closedLoops.getOrDefault(loopBeginBlock, 0);
+        closedLoops.put(loopBeginBlock, closedLoopCount + 1);
+    }
+
+    private void closeScope(Block block, Block loopBeginBlock) {
         if (block.getBeginNode() instanceof LoopExitNode) {
             if (!(block.getDominator().getDominator() != null && block.getDominator().getDominator().getBeginNode() instanceof MergeNode)) {
                 /*
@@ -240,41 +281,71 @@ public class OCLBlockVisitor implements ControlFlowGraph.RecursiveVisitor<Block>
                  * such case, the merge will generate the correct close scope.
                  */
                 asm.endScope(block.toString());
-                closedLoops.add(block);
+                incrementClosedLoops(loopBeginBlock);
             }
         } else {
             asm.endScope(block.toString());
-            closedLoops.add(block);
+            incrementClosedLoops(loopBeginBlock);
         }
     }
 
-    private boolean isBlockInABreak(Block block, Block pdom) {
-        return (pdom.getEndNode() instanceof ReturnNode && //
-                block.getBeginNode() instanceof LoopExitNode && //
-                block.getEndNode() instanceof EndNode && //
-                block.getDominator() != null && //
-                block.getDominator().getEndNode() instanceof IfNode && //
-                block.getDominator().getBeginNode() instanceof LoopBeginNode);
+    private boolean isComplexLoopCondition(Block block) {
+        Loop<Block> loop = block.getLoop();
+        LoopExitNode exitNode = block.getBeginNode() instanceof LoopExitNode ? (LoopExitNode) block.getBeginNode() : null;
+
+        if (loop != null || exitNode != null) {
+            StructuredGraph graph = block.getBeginNode().graph();
+
+            Block loopHeaderBlock = exitNode != null ? graph.getLastSchedule().getNodeToBlockMap().get(exitNode.loopBegin()) : loop.getHeader();
+            for (Block loopSucc : loopHeaderBlock.getSuccessors()) {
+                if (loopSucc.getEndNode() instanceof IfNode) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean isBlockInABreak(Block block) {
+        if (block.getBeginNode() instanceof LoopExitNode) {
+            LoopExitNode loopExitNode = (LoopExitNode) block.getBeginNode();
+            LoopBeginNode loopBeginNode = loopExitNode.loopBegin();
+            Block loopBeginBlock = loopBeginNode.graph().getLastSchedule().getNodeToBlockMap().get(loopBeginNode);
+            for (Block pred : block.getPredecessors()) {
+                if (pred == loopBeginBlock) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
     }
 
     @Override
     public void exit(Block block, Block value) {
         if (block.isLoopEnd()) {
+            LoopEndNode loopEndNode = (LoopEndNode) block.getEndNode();
+            LoopBeginNode loopBeginNode = loopEndNode.loopBegin();
+            Block loopBeginBlock = loopBeginNode.graph().getLastSchedule().getNodeToBlockMap().get(loopBeginNode);
+
             // Temporary fix to remove the end scope of the most outer loop
             // without changing the loop schematics in IR level.
             loopEnds++;
             if (openclBuilder.shouldRemoveLoop()) {
                 if (loopCount - loopEnds > 0) {
                     asm.endScope(block.toString());
-                    closedLoops.add(block);
+                    incrementClosedLoops(loopBeginBlock);
                 }
             } else {
-                closeScope(block);
+                closeScope(block, loopBeginBlock);
             }
         }
 
         if (block.getPostdominator() != null) {
             Block pdom = block.getPostdominator();
+
+            updateListEndBracketsForLoopExitNodes(block);
+
             if (!merges.contains(pdom) && isMergeBlock(pdom) && !switches.contains(block)) {
                 // Check also if the current and next blocks are not merges block with more than
                 // 2 predecessors. In that case, we do not generate end scope.
@@ -282,8 +353,10 @@ public class OCLBlockVisitor implements ControlFlowGraph.RecursiveVisitor<Block>
                 if (!(pdom.getBeginNode() instanceof MergeNode && merges.contains(block) && block.getPredecessorCount() > 2)) {
                     // We need to check that none of the blocks reachable from dominators has been
                     // already closed.
-                    if (!wasBlockAlreadyClosed(block.getDominator()) && !isBlockInABreak(block, pdom)) {
-                        asm.endScope(block.toString());
+                    if (!wasBlockAlreadyClosed(block) && !(!isComplexLoopCondition(block) && isBlockInABreak(block))) {
+                        if (!(rmvEndBracket.contains(block))) {
+                            asm.endScope(block.toString());
+                        }
                     }
                 }
             } else if (!merges.contains(pdom) && isMergeBlock(pdom) && switches.contains(block) && isSwitchBlock(block.getDominator())) {
@@ -294,6 +367,12 @@ public class OCLBlockVisitor implements ControlFlowGraph.RecursiveVisitor<Block>
         } else {
             closeBranchBlock(block);
         }
+
+        /*
+         * It generates instructions that are relocated from within the for-loop to after the for-loop.
+         * https://github.com/beehive-lab/TornadoVM/pull/129
+         */
+        openclBuilder.emitRelocatedInstructions(block);
     }
 
     private void closeIfBlock(Block block, Block dom) {
@@ -303,8 +382,11 @@ public class OCLBlockVisitor implements ControlFlowGraph.RecursiveVisitor<Block>
             // true branch, until the false branch has been closed.
             boolean isLoopEnd = block.getEndNode() instanceof LoopEndNode;
             boolean isTrueBranch = ifNode.trueSuccessor() == block.getBeginNode();
-            if (!(isTrueBranch & isLoopEnd)) {
+            if (!(isTrueBranch && isLoopEnd)) {
                 asm.endScope(block.toString());
+                if (block.getLoop() != null) {
+                    incrementClosedLoops(block.getLoop().getHeader());
+                }
             }
         }
     }
@@ -344,8 +426,21 @@ public class OCLBlockVisitor implements ControlFlowGraph.RecursiveVisitor<Block>
     private boolean isNestedIfNode(Block block) {
         final Block dom = block.getDominator();
         boolean isMerge = block.getBeginNode() instanceof MergeNode;
+
+        boolean sameDominator = isMerge;
+        if (isMerge) {
+            MergeNode mergeNode = (MergeNode) block.getBeginNode();
+            NodeMap<Block> nodeToBlockMap = mergeNode.graph().getLastSchedule().getNodeToBlockMap();
+            for (EndNode predecessor : mergeNode.cfgPredecessors()) {
+                if (nodeToBlockMap.get(predecessor).getDominator() != dom) {
+                    sameDominator = false;
+                    break;
+                }
+            }
+        }
+
         boolean isReturn = block.getEndNode() instanceof ReturnNode;
-        return dom != null && isMerge && isReturn && !dom.isLoopHeader() && isIfBlock(dom);
+        return dom != null && isMerge && sameDominator && isReturn && !dom.isLoopHeader() && isIfBlock(dom);
     }
 
     private boolean isIfBlockNode(Block block) {
@@ -371,7 +466,9 @@ public class OCLBlockVisitor implements ControlFlowGraph.RecursiveVisitor<Block>
                 dom.getBeginNode() instanceof LoopBeginNode && // The dominator is a loop node
                 dom.getEndNode() instanceof IfNode && //
                 block.getBeginNode() instanceof LoopExitNode && // The current block exits the block with a return
-                block.getEndNode() instanceof ReturnNode;
+                block.getEndNode() instanceof ReturnNode && //
+                !(dom.getFirstSuccessor().getEndNode() instanceof LoopEndNode && //
+                        dom.getFirstSuccessor().getBeginNode() instanceof BeginNode);
     }
 
     private void closeBranchBlock(Block block) {
