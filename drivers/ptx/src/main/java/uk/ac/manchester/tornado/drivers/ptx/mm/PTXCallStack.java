@@ -23,17 +23,17 @@
  */
 package uk.ac.manchester.tornado.drivers.ptx.mm;
 
-import uk.ac.manchester.tornado.drivers.ptx.PTXDeviceContext;
-import uk.ac.manchester.tornado.runtime.common.CallStack;
-import uk.ac.manchester.tornado.runtime.common.DeviceObjectState;
-
-import java.nio.ByteBuffer;
-import java.util.HashMap;
-
 import static uk.ac.manchester.tornado.api.exceptions.TornadoInternalError.shouldNotReachHere;
 import static uk.ac.manchester.tornado.runtime.common.RuntimeUtilities.isBoxedPrimitive;
 import static uk.ac.manchester.tornado.runtime.common.Tornado.DEBUG;
 import static uk.ac.manchester.tornado.runtime.common.Tornado.debug;
+
+import java.nio.ByteBuffer;
+import java.util.HashMap;
+
+import uk.ac.manchester.tornado.drivers.ptx.PTXDeviceContext;
+import uk.ac.manchester.tornado.runtime.common.CallStack;
+import uk.ac.manchester.tornado.runtime.common.DeviceObjectState;
 
 public class PTXCallStack extends PTXByteBuffer implements CallStack {
 

@@ -19,14 +19,14 @@ package uk.ac.manchester.tornado.benchmarks.dotimage;
 
 import static uk.ac.manchester.tornado.benchmarks.GraphicsKernels.dotImage;
 
+import java.util.Random;
+import java.util.stream.IntStream;
+
 import uk.ac.manchester.tornado.api.collections.types.Float3;
 import uk.ac.manchester.tornado.api.collections.types.ImageFloat;
 import uk.ac.manchester.tornado.api.collections.types.ImageFloat3;
 import uk.ac.manchester.tornado.api.common.TornadoDevice;
 import uk.ac.manchester.tornado.benchmarks.BenchmarkDriver;
-
-import java.util.Random;
-import java.util.stream.IntStream;
 
 public class DotJava extends BenchmarkDriver {
 

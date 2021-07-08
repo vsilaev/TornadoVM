@@ -17,6 +17,13 @@
  */
 package uk.ac.manchester.tornado.benchmarks.stencil;
 
+import static uk.ac.manchester.tornado.benchmarks.stencil.Stencil.copy;
+import static uk.ac.manchester.tornado.benchmarks.stencil.Stencil.stencil3d;
+
+import java.util.Arrays;
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
+
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -34,14 +41,8 @@ import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
+
 import uk.ac.manchester.tornado.api.TaskSchedule;
-
-import java.util.Arrays;
-import java.util.Random;
-import java.util.concurrent.TimeUnit;
-
-import static uk.ac.manchester.tornado.benchmarks.stencil.Stencil.copy;
-import static uk.ac.manchester.tornado.benchmarks.stencil.Stencil.stencil3d;
 
 public class JMHStencil {
     @State(Scope.Thread)

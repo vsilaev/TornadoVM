@@ -46,11 +46,11 @@ package uk.ac.manchester.tornado.api.profiler;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.OutputStreamWriter;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.EnumSet;
 
-public class JSonWriter<T extends JSonWriter> {
+public class JSonWriter<T extends JSonWriter<T>> {
     private StringBuilder sb;
     private int scope = 0;
     private boolean compactMode = false;
@@ -83,50 +83,50 @@ public class JSonWriter<T extends JSonWriter> {
 
     protected T incScope() {
         scope++;
-        return (T) this;
+        return self();
     }
 
     protected T decScope() {
         scope--;
-        return (T) this;
+        return self();
     }
 
     protected T state(State newState) {
         currentState = newState;
-        return (T) this;
+        return self();
     }
 
     protected T append(String s) {
         sb.append(s);
-        return (T) this;
+        return self();
     }
 
     protected T append(StringBuilder sb) {
         return (T) append(sb.toString());
     }
 
-    protected T append(JSonWriter json) {
+    protected T append(JSonWriter<?> json) {
         return (T) append(json.toString());
     }
 
     protected T append(long value) {
         append(Long.toString(value));
-        return (T) this;
+        return self();
     }
 
     protected T append(int value) {
         append(Integer.toString(value));
-        return (T) this;
+        return self();
     }
 
     protected T append(float value) {
         append(Float.toString(value));
-        return (T) this;
+        return self();
     }
 
     protected T append(double value) {
         append(Double.toString(value));
-        return (T) this;
+        return self();
     }
 
     protected T quote(String value) {
@@ -207,12 +207,12 @@ public class JSonWriter<T extends JSonWriter> {
 
     protected T compact() {
         compactMode = true;
-        return (T) this;
+        return self();
     }
 
     protected T nonCompact() {
         compactMode = false;
-        return (T) this;
+        return self();
     }
 
     protected T newline() {
@@ -220,21 +220,21 @@ public class JSonWriter<T extends JSonWriter> {
         for (int i = 0; i < scope; i++) {
             append(" ");
         }
-        return (T) this;
+        return self();
     }
 
     protected T newlineIfNeeded() {
         if (compactMode == false && currentState.needsNewLine()) {
             newline();
         }
-        return (T) this;
+        return self();
     }
 
     protected T commaIfNeeded() {
         if (currentState.needsComma()) {
             append(",").state(State.AFTER_COMMA).newlineIfNeeded();
         }
-        return (T) this;
+        return self();
     }
 
     protected T key(String k) {
@@ -242,7 +242,7 @@ public class JSonWriter<T extends JSonWriter> {
     }
 
     T kv(String k, String value) {
-        return value != null ? (T) key(k).quote(value).state(State.AFTER_VALUE) : (T) this;
+        return value != null ? (T) key(k).quote(value).state(State.AFTER_VALUE) : self();
     }
 
     T kv(String k, long value) {
@@ -301,5 +301,10 @@ public class JSonWriter<T extends JSonWriter> {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+    
+    @SuppressWarnings("unchecked")
+    private T self() {
+        return (T)this;
     }
 }

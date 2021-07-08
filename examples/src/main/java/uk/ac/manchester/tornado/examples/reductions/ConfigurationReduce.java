@@ -17,10 +17,6 @@
  */
 package uk.ac.manchester.tornado.examples.reductions;
 
-import uk.ac.manchester.tornado.api.TornadoDriver;
-import uk.ac.manchester.tornado.api.enums.TornadoDeviceType;
-import uk.ac.manchester.tornado.api.runtime.TornadoRuntime;
-
 public class ConfigurationReduce {
 
     public static final int MAX_ITERATIONS = 101;

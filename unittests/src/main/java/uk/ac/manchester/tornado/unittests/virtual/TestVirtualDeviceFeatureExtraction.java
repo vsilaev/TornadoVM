@@ -17,20 +17,21 @@
  */
 package uk.ac.manchester.tornado.unittests.virtual;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Test;
-import uk.ac.manchester.tornado.api.TaskSchedule;
-import uk.ac.manchester.tornado.api.annotations.Parallel;
-import uk.ac.manchester.tornado.api.annotations.Reduce;
-import uk.ac.manchester.tornado.api.enums.TornadoVMBackend;
-import uk.ac.manchester.tornado.unittests.common.TornadoTestBase;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.stream.IntStream;
+
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Test;
+
+import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.annotations.Parallel;
+import uk.ac.manchester.tornado.api.annotations.Reduce;
+import uk.ac.manchester.tornado.api.enums.TornadoVMBackend;
+import uk.ac.manchester.tornado.unittests.common.TornadoTestBase;
 
 public class TestVirtualDeviceFeatureExtraction extends TornadoTestBase {
 

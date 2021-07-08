@@ -38,7 +38,6 @@
  */
 package uk.ac.manchester.tornado.api.collections.types;
 
-import static java.lang.String.format;
 import static java.nio.FloatBuffer.wrap;
 import static uk.ac.manchester.tornado.api.collections.types.Float2.add;
 import static uk.ac.manchester.tornado.api.collections.types.Float2.loadFromArray;
@@ -46,6 +45,7 @@ import static uk.ac.manchester.tornado.api.collections.types.Float2.loadFromArra
 import java.nio.FloatBuffer;
 
 public class VectorFloat2 implements PrimitiveStorage<FloatBuffer> {
+    private static final long serialVersionUID = 1L;    
 
     /**
      * backing array

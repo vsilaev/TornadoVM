@@ -21,7 +21,6 @@
  */
 package uk.ac.manchester.tornado.drivers.ptx.graal.lir;
 
-import jdk.vm.ci.meta.JavaKind;
 import org.graalvm.compiler.core.common.LIRKind;
 import org.graalvm.compiler.core.common.type.Stamp;
 import org.graalvm.compiler.graph.NodeClass;
@@ -33,6 +32,8 @@ import org.graalvm.compiler.nodes.memory.LIRLowerableAccess;
 import org.graalvm.compiler.nodes.memory.address.AddressNode;
 import org.graalvm.compiler.nodes.spi.NodeLIRBuilderTool;
 import org.graalvm.word.LocationIdentity;
+
+import jdk.vm.ci.meta.JavaKind;
 import uk.ac.manchester.tornado.drivers.ptx.graal.PTXStamp;
 import uk.ac.manchester.tornado.runtime.graal.phases.MarkOCLWriteNode;
 

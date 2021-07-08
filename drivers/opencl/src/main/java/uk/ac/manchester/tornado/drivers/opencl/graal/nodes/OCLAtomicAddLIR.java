@@ -25,7 +25,6 @@ package uk.ac.manchester.tornado.drivers.opencl.graal.nodes;
 
 import org.graalvm.compiler.core.common.LIRKind;
 import org.graalvm.compiler.core.common.type.Stamp;
-import org.graalvm.compiler.graph.Node.Input;
 import org.graalvm.compiler.graph.NodeClass;
 import org.graalvm.compiler.lir.Variable;
 import org.graalvm.compiler.nodeinfo.NodeInfo;

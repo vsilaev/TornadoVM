@@ -31,7 +31,6 @@ import static uk.ac.manchester.tornado.drivers.opencl.enums.OCLCommandQueueInfo.
 import static uk.ac.manchester.tornado.runtime.common.Tornado.MARKER_USE_BARRIER;
 
 import java.nio.ByteBuffer;
-
 import java.util.concurrent.Semaphore;
 
 import uk.ac.manchester.tornado.api.common.Event;

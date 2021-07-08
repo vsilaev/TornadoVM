@@ -24,8 +24,7 @@
 
 package uk.ac.manchester.tornado.drivers.opencl.virtual;
 
-import uk.ac.manchester.tornado.api.exceptions.TornadoInternalError;
-import uk.ac.manchester.tornado.drivers.opencl.enums.OCLDeviceType;
+import static uk.ac.manchester.tornado.runtime.common.TornadoOptions.VIRTUAL_DEVICE_FILE;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -36,7 +35,8 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static uk.ac.manchester.tornado.runtime.common.TornadoOptions.VIRTUAL_DEVICE_FILE;
+import uk.ac.manchester.tornado.api.exceptions.TornadoInternalError;
+import uk.ac.manchester.tornado.drivers.opencl.enums.OCLDeviceType;
 
 public class VirtualJSONParser {
 

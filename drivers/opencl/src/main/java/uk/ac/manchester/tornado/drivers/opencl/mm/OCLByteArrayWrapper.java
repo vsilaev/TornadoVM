@@ -28,7 +28,6 @@ package uk.ac.manchester.tornado.drivers.opencl.mm;
 import java.nio.ByteBuffer;
 
 import jdk.vm.ci.meta.JavaKind;
-
 import uk.ac.manchester.tornado.drivers.opencl.OCLDeviceContext;
 
 public class OCLByteArrayWrapper extends OCLArrayWrapper<byte[]> {

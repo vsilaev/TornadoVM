@@ -17,12 +17,13 @@
  */
 package uk.ac.manchester.tornado.unittests.tasks;
 
+import java.util.Random;
+
 import org.junit.Assert;
 import org.junit.Test;
+
 import uk.ac.manchester.tornado.api.TaskSchedule;
 import uk.ac.manchester.tornado.unittests.common.TornadoTestBase;
-
-import java.util.Random;
 
 /**
  * Tests TornadoVM compilation under different scenarios, when not performing inlining in the method passed to the task.

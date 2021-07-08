@@ -45,6 +45,7 @@ import java.nio.FloatBuffer;
 import java.util.Arrays;
 
 public class Matrix2DFloat4 implements PrimitiveStorage<FloatBuffer> {
+    private static final long serialVersionUID = 1L;
     /**
      * backing array
      */

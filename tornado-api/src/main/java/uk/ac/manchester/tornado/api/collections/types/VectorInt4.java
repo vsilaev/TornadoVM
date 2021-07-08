@@ -38,14 +38,14 @@
  */
 package uk.ac.manchester.tornado.api.collections.types;
 
-import static java.lang.String.format;
 import static uk.ac.manchester.tornado.api.collections.types.Int4.add;
 import static uk.ac.manchester.tornado.api.collections.types.Int4.loadFromArray;
 
 import java.nio.DoubleBuffer;
 
 public class VectorInt4 implements PrimitiveStorage<DoubleBuffer> {
-
+    private static final long serialVersionUID = 1L;
+    
     /**
      * backing array
      */

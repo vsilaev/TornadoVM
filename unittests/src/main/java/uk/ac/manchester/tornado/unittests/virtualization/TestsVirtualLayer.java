@@ -18,7 +18,9 @@
 
 package uk.ac.manchester.tornado.unittests.virtualization;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 
 import java.util.Arrays;
 import java.util.stream.IntStream;
@@ -237,6 +239,7 @@ public class TestsVirtualLayer extends TornadoTestBase {
      */
     @Test
     public void testVirtualLayer03() {
+        @SuppressWarnings("unused")
         TornadoDriver driver = getTornadoRuntime().getDriver(0);
 
         final int N = 128;
@@ -299,11 +302,13 @@ public class TestsVirtualLayer extends TornadoTestBase {
             //@formatter:on
 
             for (int deviceIndex = 0; deviceIndex < numDevices; deviceIndex++) {
+                // XXX: the set property should be optional.
+                /*
                 String propertyDevice = "s" + driverIndex + "." + taskName + ".device";
                 String value = driverIndex + ":" + deviceIndex;
+                Tornado.setProperty(propertyDevice, value);
+                */
 
-                // XXX: the set property should be optional.
-                // Tornado.setProperty(propertyDevice, value);
                 s0.setDevice(driver.getDevice(deviceIndex));
                 s0.execute();
             }

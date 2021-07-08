@@ -47,7 +47,8 @@ import uk.ac.manchester.tornado.api.collections.math.TornadoMath;
 import uk.ac.manchester.tornado.api.type.annotations.Payload;
 
 public final class Double6 implements PrimitiveStorage<DoubleBuffer> {
-
+    private static final long serialVersionUID = 1L;
+    
     public static final Class<Double6> TYPE = Double6.class;
 
     /**

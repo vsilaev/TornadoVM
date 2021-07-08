@@ -22,7 +22,8 @@
 
 package uk.ac.manchester.tornado.drivers.ptx.graal.compiler;
 
-import jdk.vm.ci.code.TargetDescription;
+import java.util.List;
+
 import org.graalvm.compiler.core.common.cfg.AbstractBlockBase;
 import org.graalvm.compiler.core.common.cfg.BlockMap;
 import org.graalvm.compiler.graph.Node;
@@ -35,7 +36,7 @@ import org.graalvm.compiler.nodes.StructuredGraph;
 import org.graalvm.compiler.nodes.cfg.Block;
 import org.graalvm.compiler.nodes.spi.NodeLIRBuilderTool;
 
-import java.util.List;
+import jdk.vm.ci.code.TargetDescription;
 
 public class PTXLIRGenerationPhase extends LIRPhase<PTXLIRGenerationPhase.LIRGenerationContext> {
     public static final class LIRGenerationContext {

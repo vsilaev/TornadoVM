@@ -18,7 +18,9 @@
 
 package uk.ac.manchester.tornado.examples.kernelcontext.compute;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Graphics;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
@@ -26,7 +28,7 @@ import java.io.File;
 import java.io.IOException;
 
 import javax.imageio.ImageIO;
-import javax.swing.*;
+import javax.swing.JFrame;
 
 import uk.ac.manchester.tornado.api.GridScheduler;
 import uk.ac.manchester.tornado.api.KernelContext;
@@ -119,7 +121,6 @@ public class BlackAndWhiteTransform {
         private void parallelComputation(Graphics g) {
             int w = image.getWidth();
             int s = image.getHeight();
-            int size = w * s;
 
             int[] imageRGB = new int[w * s];
 

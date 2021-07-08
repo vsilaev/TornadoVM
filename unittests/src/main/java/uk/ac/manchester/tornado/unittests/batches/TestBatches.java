@@ -18,17 +18,18 @@
 
 package uk.ac.manchester.tornado.unittests.batches;
 
-import org.junit.Test;
-import uk.ac.manchester.tornado.api.TaskSchedule;
-import uk.ac.manchester.tornado.api.annotations.Parallel;
-import uk.ac.manchester.tornado.unittests.common.TornadoTestBase;
-import uk.ac.manchester.tornado.unittests.tools.Exceptions.UnsupportedConfigurationException;
+import static org.junit.Assert.assertEquals;
+import static uk.ac.manchester.tornado.unittests.virtualization.TestsVirtualLayer.getTornadoRuntime;
 
 import java.util.Random;
 import java.util.stream.IntStream;
 
-import static org.junit.Assert.assertEquals;
-import static uk.ac.manchester.tornado.unittests.virtualization.TestsVirtualLayer.getTornadoRuntime;
+import org.junit.Test;
+
+import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.annotations.Parallel;
+import uk.ac.manchester.tornado.unittests.common.TornadoTestBase;
+import uk.ac.manchester.tornado.unittests.tools.Exceptions.UnsupportedConfigurationException;
 
 public class TestBatches extends TornadoTestBase {
 

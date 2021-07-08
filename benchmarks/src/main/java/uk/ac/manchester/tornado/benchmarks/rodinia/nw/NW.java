@@ -140,6 +140,7 @@ public class NW {
 
     public static void main(String[] args) {
         int idx,index;
+        @SuppressWarnings("unused")
         int input_itemsets[],output_itemsets[],referrence[];
 
         // the lengths of the two sequences should be able to divided by 16.

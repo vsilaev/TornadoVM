@@ -17,6 +17,9 @@
  */
 package uk.ac.manchester.tornado.benchmarks.renderTrack;
 
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
+
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -34,14 +37,12 @@ import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
+
 import uk.ac.manchester.tornado.api.TaskSchedule;
 import uk.ac.manchester.tornado.api.collections.types.Float3;
 import uk.ac.manchester.tornado.api.collections.types.ImageByte3;
 import uk.ac.manchester.tornado.api.collections.types.ImageFloat3;
 import uk.ac.manchester.tornado.benchmarks.ComputeKernels;
-
-import java.util.Random;
-import java.util.concurrent.TimeUnit;
 
 public class JMHRenderTrack {
     @State(Scope.Thread)
@@ -50,7 +51,6 @@ public class JMHRenderTrack {
         private int size = Integer.parseInt(System.getProperty("x", "8192"));
         private ImageFloat3 input;
         private ImageByte3 output;
-        private TaskSchedule s0;
 
         private TaskSchedule ts;
 

@@ -49,7 +49,8 @@ import uk.ac.manchester.tornado.api.type.annotations.Vector;
 
 @Vector
 public final class Double8 implements PrimitiveStorage<DoubleBuffer> {
-
+    private static final long serialVersionUID = 1L;
+    
     public static final Class<Double8> TYPE = Double8.class;
 
     /**

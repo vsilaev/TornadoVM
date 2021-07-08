@@ -17,6 +17,10 @@
  */
 package uk.ac.manchester.tornado.benchmarks.addImage;
 
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
+
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -34,15 +38,11 @@ import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
+
 import uk.ac.manchester.tornado.api.TaskSchedule;
 import uk.ac.manchester.tornado.api.collections.types.Float4;
 import uk.ac.manchester.tornado.api.collections.types.ImageFloat4;
 import uk.ac.manchester.tornado.benchmarks.GraphicsKernels;
-import uk.ac.manchester.tornado.benchmarks.dft.JMHDFT;
-
-import java.util.Random;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.IntStream;
 
 public class JMHAddImage {
 

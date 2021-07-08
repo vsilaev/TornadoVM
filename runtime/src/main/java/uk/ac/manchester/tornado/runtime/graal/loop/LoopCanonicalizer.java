@@ -25,7 +25,12 @@
  */
 package uk.ac.manchester.tornado.runtime.graal.loop;
 
-import org.graalvm.compiler.nodes.*;
+import org.graalvm.compiler.nodes.EndNode;
+import org.graalvm.compiler.nodes.LoopBeginNode;
+import org.graalvm.compiler.nodes.LoopEndNode;
+import org.graalvm.compiler.nodes.MergeNode;
+import org.graalvm.compiler.nodes.PhiNode;
+import org.graalvm.compiler.nodes.StructuredGraph;
 
 /**
  *

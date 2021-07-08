@@ -19,7 +19,10 @@
 package uk.ac.manchester.tornado.examples.bufet;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
 
 /**
  *
@@ -320,7 +323,7 @@ public class BufetBigIndex {
                 if (!genes.containsKey(token)) {
                     // Append the new gene to Genes' structure
                     int maxId = 0;
-                    for (Map.Entry Entry : genes.entrySet()) {
+                    for (Map.Entry<String, Integer> Entry : genes.entrySet()) {
                         int value = (int) Entry.getValue();
                         if (value > maxId) {
                             maxId = value;

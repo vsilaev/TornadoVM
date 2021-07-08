@@ -48,6 +48,7 @@ public class GetArrayNode extends FloatingNode implements LIRLowerable {
     @Input
     private ValueNode arrayNode;
 
+    @SuppressWarnings("unused")
     private JavaKind elementKind;
 
     public GetArrayNode(OCLKind oclKind, ValueNode array, JavaKind elementKind) {

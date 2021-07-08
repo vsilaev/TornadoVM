@@ -24,9 +24,9 @@
  */
 package uk.ac.manchester.tornado.drivers.ptx;
 
-import uk.ac.manchester.tornado.drivers.common.GridInfo;
-
 import java.util.Arrays;
+
+import uk.ac.manchester.tornado.drivers.common.GridInfo;
 
 public class PTXGridInfo implements GridInfo {
     public final PTXModule ptxModule;

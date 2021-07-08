@@ -101,7 +101,7 @@ public class PTXIntUnaryIntrinsicNode extends UnaryNode implements ArithmeticLIR
         PTXBuiltinTool gen = ((PTXArithmeticTool) lirGen).getGen().getPtxBuiltinTool();
         Value x = builder.operand(getValue());
         Value result;
-        ValueKind valueKind = null;
+        ValueKind<?> valueKind = null;
         switch (operation()) {
             case ABS:
                 result = gen.genIntAbs(x);

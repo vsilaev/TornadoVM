@@ -23,15 +23,6 @@
  */
 package uk.ac.manchester.tornado.drivers.ptx;
 
-import uk.ac.manchester.tornado.api.common.Event;
-import uk.ac.manchester.tornado.runtime.EmptyEvent;
-import uk.ac.manchester.tornado.runtime.common.TornadoLogger;
-import uk.ac.manchester.tornado.runtime.common.TornadoOptions;
-import uk.ac.manchester.tornado.runtime.tasks.meta.TaskMetaData;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-
 import static uk.ac.manchester.tornado.drivers.ptx.PTXEvent.DEFAULT_TAG;
 import static uk.ac.manchester.tornado.drivers.ptx.PTXEvent.DESC_PARALLEL_KERNEL;
 import static uk.ac.manchester.tornado.drivers.ptx.PTXEvent.DESC_READ_BYTE;
@@ -47,6 +38,15 @@ import static uk.ac.manchester.tornado.drivers.ptx.PTXEvent.DESC_WRITE_FLOAT;
 import static uk.ac.manchester.tornado.drivers.ptx.PTXEvent.DESC_WRITE_INT;
 import static uk.ac.manchester.tornado.drivers.ptx.PTXEvent.DESC_WRITE_LONG;
 import static uk.ac.manchester.tornado.drivers.ptx.PTXEvent.DESC_WRITE_SHORT;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+
+import uk.ac.manchester.tornado.api.common.Event;
+import uk.ac.manchester.tornado.runtime.EmptyEvent;
+import uk.ac.manchester.tornado.runtime.common.TornadoLogger;
+import uk.ac.manchester.tornado.runtime.common.TornadoOptions;
+import uk.ac.manchester.tornado.runtime.tasks.meta.TaskMetaData;
 
 public class PTXStream extends TornadoLogger {
 

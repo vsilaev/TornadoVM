@@ -21,12 +21,13 @@
  * */
 package uk.ac.manchester.tornado.drivers.ptx.graal.phases;
 
-import jdk.vm.ci.meta.DeoptimizationReason;
 import org.graalvm.compiler.graph.iterators.NodeIterable;
 import org.graalvm.compiler.nodes.GuardNode;
 import org.graalvm.compiler.nodes.StructuredGraph;
 import org.graalvm.compiler.nodes.java.AccessIndexedNode;
 import org.graalvm.compiler.phases.Phase;
+
+import jdk.vm.ci.meta.DeoptimizationReason;
 
 /**
  * After canonicalization, we might end up with a Guard of type Bounds Check

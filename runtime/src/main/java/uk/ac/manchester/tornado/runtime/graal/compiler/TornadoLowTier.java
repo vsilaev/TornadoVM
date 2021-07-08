@@ -23,8 +23,8 @@
  */
 package uk.ac.manchester.tornado.runtime.graal.compiler;
 
-import org.graalvm.compiler.phases.*;
-import org.graalvm.compiler.phases.tiers.*;
+import org.graalvm.compiler.phases.PhaseSuite;
+import org.graalvm.compiler.phases.tiers.LowTierContext;
 
 public abstract class TornadoLowTier extends PhaseSuite<LowTierContext> {
 

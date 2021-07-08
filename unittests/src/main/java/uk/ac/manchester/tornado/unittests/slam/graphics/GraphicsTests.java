@@ -20,17 +20,12 @@ package uk.ac.manchester.tornado.unittests.slam.graphics;
 
 import static org.junit.Assert.assertEquals;
 import static uk.ac.manchester.tornado.api.collections.graphics.GraphicsMath.rigidTransform;
-import static uk.ac.manchester.tornado.api.collections.math.TornadoMath.max;
 import static uk.ac.manchester.tornado.api.collections.math.TornadoMath.min;
 import static uk.ac.manchester.tornado.api.collections.math.TornadoMath.sqrt;
 import static uk.ac.manchester.tornado.api.collections.types.Float2.mult;
 import static uk.ac.manchester.tornado.api.collections.types.Float3.add;
-import static uk.ac.manchester.tornado.api.collections.types.Float3.div;
 import static uk.ac.manchester.tornado.api.collections.types.Float3.length;
 import static uk.ac.manchester.tornado.api.collections.types.Float3.normalise;
-import static uk.ac.manchester.tornado.api.collections.types.Float3.sub;
-import static uk.ac.manchester.tornado.api.collections.types.VolumeOps.grad;
-import static uk.ac.manchester.tornado.api.collections.types.VolumeOps.interp;
 
 import java.util.Random;
 import java.util.stream.IntStream;

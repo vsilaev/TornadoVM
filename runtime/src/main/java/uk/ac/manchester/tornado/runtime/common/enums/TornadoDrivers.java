@@ -39,6 +39,7 @@ public enum TornadoDrivers {
     OpenCL(OPENCL_BACKEND_PRIORITY, "implemented"); //
 
     private final int priority;
+    @SuppressWarnings("unused")
     private final String status;
 
     TornadoDrivers(int priority, String status) {

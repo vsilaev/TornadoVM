@@ -23,11 +23,11 @@
  */
 package uk.ac.manchester.tornado.drivers.ptx;
 
+import static uk.ac.manchester.tornado.runtime.common.TornadoOptions.DUMP_EVENTS;
+
 import uk.ac.manchester.tornado.api.exceptions.TornadoBailoutRuntimeException;
 import uk.ac.manchester.tornado.api.exceptions.TornadoInternalError;
 import uk.ac.manchester.tornado.runtime.common.TornadoLogger;
-
-import static uk.ac.manchester.tornado.runtime.common.TornadoOptions.DUMP_EVENTS;
 
 public class PTXContext extends TornadoLogger {
 

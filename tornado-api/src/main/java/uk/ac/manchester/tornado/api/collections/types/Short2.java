@@ -49,7 +49,8 @@ import uk.ac.manchester.tornado.api.type.annotations.Vector;
 
 @Vector
 public final class Short2 implements PrimitiveStorage<ShortBuffer> {
-
+    private static final long serialVersionUID = 1L;
+    
     public static final Class<Short2> TYPE = Short2.class;
 
     /**

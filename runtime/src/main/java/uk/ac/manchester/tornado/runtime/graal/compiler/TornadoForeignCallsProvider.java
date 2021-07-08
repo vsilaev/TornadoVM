@@ -33,7 +33,6 @@ import org.graalvm.compiler.core.common.spi.ForeignCallLinkage;
 import org.graalvm.compiler.core.common.spi.ForeignCallSignature;
 import org.graalvm.compiler.core.common.spi.ForeignCallsProvider;
 
-
 import jdk.vm.ci.meta.JavaKind;
 
 public class TornadoForeignCallsProvider implements ForeignCallsProvider {

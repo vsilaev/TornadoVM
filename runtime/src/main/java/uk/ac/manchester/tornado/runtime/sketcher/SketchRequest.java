@@ -25,12 +25,12 @@
  */
 package uk.ac.manchester.tornado.runtime.sketcher;
 
-import jdk.vm.ci.meta.ResolvedJavaMethod;
 import org.graalvm.compiler.phases.PhaseSuite;
 import org.graalvm.compiler.phases.tiers.HighTierContext;
 import org.graalvm.compiler.phases.util.Providers;
+
+import jdk.vm.ci.meta.ResolvedJavaMethod;
 import uk.ac.manchester.tornado.runtime.graal.compiler.TornadoSketchTier;
-import uk.ac.manchester.tornado.runtime.tasks.meta.TaskMetaData;
 
 public class SketchRequest {
 

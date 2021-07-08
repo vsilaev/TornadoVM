@@ -20,7 +20,6 @@ package uk.ac.manchester.tornado.examples.compute;
 import java.util.ArrayList;
 import java.util.Random;
 
-import uk.ac.manchester.tornado.api.Policy;
 import uk.ac.manchester.tornado.api.TaskSchedule;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.collections.types.Byte3;

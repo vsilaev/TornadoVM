@@ -45,7 +45,8 @@ import java.nio.FloatBuffer;
 import java.util.Arrays;
 
 public class ImageFloat3 implements PrimitiveStorage<FloatBuffer> {
-
+    private static final long serialVersionUID = 1L;
+    
     /**
      * backing array
      */

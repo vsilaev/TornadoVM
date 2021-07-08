@@ -47,7 +47,8 @@ import uk.ac.manchester.tornado.api.collections.math.TornadoMath;
 import uk.ac.manchester.tornado.api.type.annotations.Payload;
 
 public final class Float6 implements PrimitiveStorage<FloatBuffer> {
-
+    private static final long serialVersionUID = 1L;
+    
     public static final Class<Float6> TYPE = Float6.class;
 
     /**

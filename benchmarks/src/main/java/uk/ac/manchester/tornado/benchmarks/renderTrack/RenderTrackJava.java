@@ -17,14 +17,14 @@
  */
 package uk.ac.manchester.tornado.benchmarks.renderTrack;
 
+import java.util.Random;
+
 import uk.ac.manchester.tornado.api.collections.types.Float3;
 import uk.ac.manchester.tornado.api.collections.types.ImageByte3;
 import uk.ac.manchester.tornado.api.collections.types.ImageFloat3;
 import uk.ac.manchester.tornado.api.common.TornadoDevice;
 import uk.ac.manchester.tornado.benchmarks.BenchmarkDriver;
 import uk.ac.manchester.tornado.benchmarks.ComputeKernels;
-
-import java.util.Random;
 
 public class RenderTrackJava extends BenchmarkDriver {
 

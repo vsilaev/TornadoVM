@@ -26,6 +26,7 @@ package uk.ac.manchester.tornado.drivers.ptx.graal.nodes.vector;
 import org.graalvm.compiler.graph.NodeClass;
 import org.graalvm.compiler.nodeinfo.NodeInfo;
 import org.graalvm.compiler.nodes.ValueNode;
+
 import uk.ac.manchester.tornado.drivers.ptx.graal.lir.PTXKind;
 import uk.ac.manchester.tornado.runtime.graal.phases.MarkVectorLoad;
 

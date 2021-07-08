@@ -93,6 +93,8 @@ public abstract class TornadoTestBase {
             switch (backend) {
                 case PTX: throw new TornadoVMPTXNotSupported("Test not supported for the PTX backend");
                 case OpenCL: throw new TornadoVMOpenCLNotSupported("Test not supported for the OpenCL backend");
+                default:
+                    break;
             }
         }
     }

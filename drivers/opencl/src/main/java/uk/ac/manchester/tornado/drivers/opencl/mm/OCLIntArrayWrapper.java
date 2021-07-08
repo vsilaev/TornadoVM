@@ -29,7 +29,6 @@ import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 
 import jdk.vm.ci.meta.JavaKind;
-
 import uk.ac.manchester.tornado.drivers.opencl.OCLDeviceContext;
 
 public class OCLIntArrayWrapper extends OCLArrayWrapper<int[]> {

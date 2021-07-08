@@ -22,15 +22,16 @@
 
 package uk.ac.manchester.tornado.drivers.ptx.graal.compiler;
 
-import jdk.vm.ci.meta.ResolvedJavaMethod;
-import org.graalvm.compiler.code.CompilationResult;
-import uk.ac.manchester.tornado.drivers.ptx.graal.backend.PTXBackend;
+import static uk.ac.manchester.tornado.drivers.ptx.graal.PTXCodeUtil.getCodeWithAttachedPTXHeader;
+import static uk.ac.manchester.tornado.drivers.ptx.graal.PTXCodeUtil.prependToTargetCode;
 
 import java.util.HashSet;
 import java.util.Set;
 
-import static uk.ac.manchester.tornado.drivers.ptx.graal.PTXCodeUtil.prependToTargetCode;
-import static uk.ac.manchester.tornado.drivers.ptx.graal.PTXCodeUtil.getCodeWithAttachedPTXHeader;
+import org.graalvm.compiler.code.CompilationResult;
+
+import jdk.vm.ci.meta.ResolvedJavaMethod;
+import uk.ac.manchester.tornado.drivers.ptx.graal.backend.PTXBackend;
 
 public class PTXCompilationResult extends CompilationResult {
 

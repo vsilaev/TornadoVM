@@ -24,12 +24,12 @@
  */
 package uk.ac.manchester.tornado.drivers.opencl;
 
-import uk.ac.manchester.tornado.drivers.common.GridInfo;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
+import uk.ac.manchester.tornado.drivers.common.GridInfo;
 
 public class OCLGridInfo implements GridInfo {
     OCLDeviceContext deviceContext;

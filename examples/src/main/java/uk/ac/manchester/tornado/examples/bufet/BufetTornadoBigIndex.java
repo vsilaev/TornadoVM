@@ -18,15 +18,15 @@
 
 package uk.ac.manchester.tornado.examples.bufet;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
-import uk.ac.manchester.tornado.api.annotations.Parallel;
-import uk.ac.manchester.tornado.api.runtime.TornadoRuntime;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+
+import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.annotations.Parallel;
+import uk.ac.manchester.tornado.api.runtime.TornadoRuntime;
 
 /**
  * 
@@ -245,7 +245,7 @@ public class BufetTornadoBigIndex {
                 if (!genes.containsKey(token)) {
                     // Append the new gene to Genes' structure
                     int maxId = 0;
-                    for (Map.Entry Entry : genes.entrySet()) {
+                    for (Map.Entry<String, Integer> Entry : genes.entrySet()) {
                         int value = (int) Entry.getValue();
                         if (value > maxId) {
                             maxId = value;
@@ -260,14 +260,14 @@ public class BufetTornadoBigIndex {
         // Store the miRNA target group for the user-defined miRNA sequence
         System.out.println("Generate miRNA target group for the user-defined miRNA sequence (Phase A, and B).");
         int[] getMiRNAsretVal;
-        BufetBigIndex bI = new BufetBigIndex(); // Exploit methods from BufetBigIndex class
-        getMiRNAsretVal = bI.getMiRNAsPhaseA(args[4], args[1], interactions, goCatUniqueGenes);
+        // Exploit methods from BufetBigIndex class
+        getMiRNAsretVal = BufetBigIndex.getMiRNAsPhaseA(args[4], args[1], interactions, goCatUniqueGenes);
 
         HashMap<String, ArrayList<String>> checkGO;
-        checkGO = bI.getMiRNAsPhaseB(goCatUniqueGenes, goCategories, getMiRNAsretVal, true);
+        checkGO = BufetBigIndex.getMiRNAsPhaseB(goCatUniqueGenes, goCategories, getMiRNAsretVal, true);
 
         HashMap<String, ArrayList<String>> nocheckGO;
-        nocheckGO = bI.getMiRNAsPhaseB(goCatUniqueGenes, goCategories, getMiRNAsretVal, false);
+        nocheckGO = BufetBigIndex.getMiRNAsPhaseB(goCatUniqueGenes, goCategories, getMiRNAsretVal, false);
 
         // Cast Hash table to an array of byte values
         byte[] onlyGeneVector = new byte[genes_population * interactions.size()];

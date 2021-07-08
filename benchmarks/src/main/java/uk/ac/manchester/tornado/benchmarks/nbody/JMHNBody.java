@@ -17,6 +17,11 @@
  */
 package uk.ac.manchester.tornado.benchmarks.nbody;
 
+import static uk.ac.manchester.tornado.benchmarks.ComputeKernels.nBody;
+
+import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
+
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -34,13 +39,9 @@ import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
+
 import uk.ac.manchester.tornado.api.TaskSchedule;
 import uk.ac.manchester.tornado.benchmarks.ComputeKernels;
-
-import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
-
-import static uk.ac.manchester.tornado.benchmarks.ComputeKernels.nBody;
 
 public class JMHNBody {
     @State(Scope.Thread)

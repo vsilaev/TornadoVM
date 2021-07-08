@@ -42,9 +42,9 @@ import uk.ac.manchester.tornado.api.collections.math.TornadoMath;
 import uk.ac.manchester.tornado.drivers.ptx.builtins.PTXIntrinsics;
 import uk.ac.manchester.tornado.drivers.ptx.graal.nodes.PTXFPBinaryIntrinsicNode;
 import uk.ac.manchester.tornado.drivers.ptx.graal.nodes.PTXIntBinaryIntrinsicNode;
+import uk.ac.manchester.tornado.runtime.graal.nodes.StoreAtomicIndexedNode;
 import uk.ac.manchester.tornado.runtime.graal.nodes.TornadoReduceAddNode;
 import uk.ac.manchester.tornado.runtime.graal.nodes.TornadoReduceMulNode;
-import uk.ac.manchester.tornado.runtime.graal.nodes.StoreAtomicIndexedNode;
 
 /**
  * Tornado-Graal snippets for GPUs reductions using OpenCL semantics.
@@ -182,6 +182,7 @@ public class PTXGPUReduceSnippets implements Snippets {
         int localGroupSize = PTXIntrinsics.get_local_size(0);
         int groupID = PTXIntrinsics.get_group_id(0);
 
+        @SuppressWarnings("unused")
         int myID = localIdx + (localGroupSize * groupID);
         localArray[localIdx] = value;
         for (int stride = (localGroupSize / 2); stride > 0; stride /= 2) {
@@ -969,6 +970,7 @@ public class PTXGPUReduceSnippets implements Snippets {
 
         public void lower(StoreAtomicIndexedNode storeAtomicIndexed, ValueNode globalId, LoweringTool tool) {
 
+            @SuppressWarnings("unused")
             StructuredGraph graph = storeAtomicIndexed.graph();
             JavaKind elementKind = storeAtomicIndexed.elementKind();
             ValueNode value = storeAtomicIndexed.value();

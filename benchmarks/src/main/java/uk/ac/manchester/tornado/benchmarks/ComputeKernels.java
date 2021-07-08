@@ -17,8 +17,6 @@
  */
 package uk.ac.manchester.tornado.benchmarks;
 
-import org.apache.lucene.util.LongBitSet;
-
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.collections.math.TornadoMath;
 import uk.ac.manchester.tornado.api.collections.types.Byte3;

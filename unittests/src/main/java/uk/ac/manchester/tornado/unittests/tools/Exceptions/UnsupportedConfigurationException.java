@@ -24,6 +24,7 @@ package uk.ac.manchester.tornado.unittests.tools.Exceptions;
  * Created by Dmitry Alexandrov
  */
 public class UnsupportedConfigurationException extends RuntimeException {
+    private static final long serialVersionUID = 1L;
 
     public UnsupportedConfigurationException(String message) {
         super(message);

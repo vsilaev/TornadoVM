@@ -18,12 +18,13 @@
 
 package uk.ac.manchester.tornado.unittests.fails;
 
+import java.util.Arrays;
+
 import org.junit.Test;
+
 import uk.ac.manchester.tornado.api.TaskSchedule;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.exceptions.TornadoOutOfMemoryException;
-
-import java.util.Arrays;
 
 public class HeapFail {
 

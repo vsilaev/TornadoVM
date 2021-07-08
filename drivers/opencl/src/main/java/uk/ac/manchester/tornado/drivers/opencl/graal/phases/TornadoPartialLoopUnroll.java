@@ -68,6 +68,7 @@ public class TornadoPartialLoopUnroll extends BasePhase<MidTierContext> {
     private static void partialUnroll(StructuredGraph graph, MidTierContext context) {
         final LoopsData dataCounted = new TornadoLoopsData(graph);
 
+        @SuppressWarnings("unused")
         LoopPolicies loopPolicies = createLoopPolicies();
         CanonicalizerPhase canonicalizer = CanonicalizerPhase.create();
 

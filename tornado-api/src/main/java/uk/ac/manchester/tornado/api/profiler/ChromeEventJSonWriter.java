@@ -63,15 +63,15 @@ public class ChromeEventJSonWriter extends JSonWriter<ChromeEventJSonWriter> {
         });
     }
 
-    JSonWriter pidAndTid() {
+    ChromeEventJSonWriter pidAndTid() {
         return kv("pid", 0).kv("tid", Thread.currentThread().getId());
     }
 
-    JSonWriter common(String phase, String name, String category) {
+    ChromeEventJSonWriter common(String phase, String name, String category) {
         return kv("ph", phase).kv("name", name).kv("cat", category).pidAndTid();
     }
 
-    public JSonWriter x(String name, String category, long startNs, long endNs, ContentWriter cw) {
+    public ChromeEventJSonWriter x(String name, String category, long startNs, long endNs, ContentWriter cw) {
         return compact().object(() -> {
             common("X", name, category);
             ns("ts", startNs);
@@ -87,11 +87,11 @@ public class ChromeEventJSonWriter extends JSonWriter<ChromeEventJSonWriter> {
         });
     }
 
-    JSonWriter b(String name, String category, long startNs) {
+    ChromeEventJSonWriter b(String name, String category, long startNs) {
         return common("B", name, category).ns("ts", startNs);
     }
 
-    JSonWriter e(String name, long durationNs) {
+    ChromeEventJSonWriter e(String name, long durationNs) {
         return kv("ph", "E").kv("name", name).pidAndTid().ns("ts", durationNs);
     }
 

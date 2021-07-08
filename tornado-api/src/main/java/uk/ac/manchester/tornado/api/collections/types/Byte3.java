@@ -49,6 +49,7 @@ import uk.ac.manchester.tornado.api.type.annotations.Vector;
 
 @Vector
 public final class Byte3 implements PrimitiveStorage<ByteBuffer> {
+    private static final long serialVersionUID = 1L;
 
     private static final String numberFormat = "{ x=%-7d, y=%-7d, z=%-7d }";
 

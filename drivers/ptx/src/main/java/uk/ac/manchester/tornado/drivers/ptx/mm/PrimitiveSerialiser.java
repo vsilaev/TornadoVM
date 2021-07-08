@@ -23,9 +23,9 @@
  */
 package uk.ac.manchester.tornado.drivers.ptx.mm;
 
-import uk.ac.manchester.tornado.runtime.common.Tornado;
-
 import java.nio.ByteBuffer;
+
+import uk.ac.manchester.tornado.runtime.common.Tornado;
 
 public class PrimitiveSerialiser {
 

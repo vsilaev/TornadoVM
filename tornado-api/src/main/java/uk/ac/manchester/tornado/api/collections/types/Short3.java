@@ -49,7 +49,8 @@ import uk.ac.manchester.tornado.api.type.annotations.Vector;
 
 @Vector
 public final class Short3 implements PrimitiveStorage<ShortBuffer> {
-
+    private static final long serialVersionUID = 1L;
+    
     public static final Class<Short3> TYPE = Short3.class;
 
     private static final String numberFormat = "{ x=%-7d, y=%-7d, z=%-7d }";

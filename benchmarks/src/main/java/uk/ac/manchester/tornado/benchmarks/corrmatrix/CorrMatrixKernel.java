@@ -211,6 +211,7 @@ public class CorrMatrixKernel {
      * Returns the number of bits set in the long
      */
     @Deprecated
+    @SuppressWarnings("unused")
     private static int pop(long x) {
 
         /*

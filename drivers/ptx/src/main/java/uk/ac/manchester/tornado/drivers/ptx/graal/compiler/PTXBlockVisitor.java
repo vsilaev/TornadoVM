@@ -24,6 +24,7 @@ package uk.ac.manchester.tornado.drivers.ptx.graal.compiler;
 
 import org.graalvm.compiler.nodes.cfg.Block;
 import org.graalvm.compiler.nodes.cfg.ControlFlowGraph;
+
 import uk.ac.manchester.tornado.drivers.ptx.graal.asm.PTXAssembler;
 
 public class PTXBlockVisitor implements ControlFlowGraph.RecursiveVisitor<Block> {

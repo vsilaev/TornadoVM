@@ -41,10 +41,10 @@
  */
 package uk.ac.manchester.tornado.api.mm;
 
+import java.util.List;
+
 import uk.ac.manchester.tornado.api.exceptions.TornadoMemoryException;
 import uk.ac.manchester.tornado.api.exceptions.TornadoOutOfMemoryException;
-
-import java.util.List;
 
 public interface ObjectBuffer {
 

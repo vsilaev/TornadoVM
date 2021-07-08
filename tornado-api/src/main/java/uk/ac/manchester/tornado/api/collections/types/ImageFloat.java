@@ -47,7 +47,8 @@ import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.collections.math.TornadoMath;
 
 public class ImageFloat implements PrimitiveStorage<FloatBuffer> {
-
+    private static final long serialVersionUID = 1L;
+    
     /**
      * backing array
      */

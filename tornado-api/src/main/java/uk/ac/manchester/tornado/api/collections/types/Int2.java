@@ -49,7 +49,8 @@ import uk.ac.manchester.tornado.api.type.annotations.Vector;
 
 @Vector
 public final class Int2 implements PrimitiveStorage<IntBuffer> {
-
+    private static final long serialVersionUID = 1L;
+    
     public static final Class<Int2> TYPE = Int2.class;
 
     private static final String numberFormat = "{ x=%-7d, y=%-7d }";

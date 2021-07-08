@@ -27,6 +27,7 @@ import static uk.ac.manchester.tornado.api.exceptions.TornadoInternalError.unimp
 
 import org.graalvm.compiler.lir.gen.LIRGenerationResult;
 import org.graalvm.compiler.lir.phases.AllocationPhase;
+
 import jdk.vm.ci.code.TargetDescription;
 
 public class ControlFlowOptimization extends AllocationPhase {

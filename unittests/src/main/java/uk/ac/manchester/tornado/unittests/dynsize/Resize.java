@@ -18,17 +18,18 @@
 
 package uk.ac.manchester.tornado.unittests.dynsize;
 
+import static org.junit.Assert.assertEquals;
+
+import java.util.Arrays;
+import java.util.stream.IntStream;
+
 import org.junit.Test;
+
 import uk.ac.manchester.tornado.api.GridScheduler;
 import uk.ac.manchester.tornado.api.TaskSchedule;
 import uk.ac.manchester.tornado.api.WorkerGrid;
 import uk.ac.manchester.tornado.api.WorkerGrid1D;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
-
-import java.util.Arrays;
-import java.util.stream.IntStream;
-
-import static org.junit.Assert.assertEquals;
 
 public class Resize {
 

@@ -1,14 +1,14 @@
 package uk.ac.manchester.tornado.examples.matrices;
 
+import java.util.Arrays;
+import java.util.OptionalDouble;
+import java.util.stream.IntStream;
+
 import uk.ac.manchester.tornado.api.TaskSchedule;
 import uk.ac.manchester.tornado.api.TornadoDriver;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.common.TornadoDevice;
 import uk.ac.manchester.tornado.api.runtime.TornadoRuntime;
-
-import java.util.Arrays;
-import java.util.OptionalDouble;
-import java.util.stream.IntStream;
 
 public class MatrixMul1D {
 

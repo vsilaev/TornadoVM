@@ -17,6 +17,10 @@
  */
 package uk.ac.manchester.tornado.benchmarks.saxpy;
 
+import static uk.ac.manchester.tornado.benchmarks.LinearAlgebraArrays.saxpy;
+
+import java.util.concurrent.TimeUnit;
+
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -34,14 +38,9 @@ import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
+
 import uk.ac.manchester.tornado.api.TaskSchedule;
-import uk.ac.manchester.tornado.benchmarks.ComputeKernels;
 import uk.ac.manchester.tornado.benchmarks.LinearAlgebraArrays;
-import uk.ac.manchester.tornado.benchmarks.dft.JMHDFT;
-
-import java.util.concurrent.TimeUnit;
-
-import static uk.ac.manchester.tornado.benchmarks.LinearAlgebraArrays.saxpy;
 
 public class JMHSaxpy {
     @State(Scope.Thread)

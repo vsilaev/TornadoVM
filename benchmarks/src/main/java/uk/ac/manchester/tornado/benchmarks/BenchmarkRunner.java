@@ -20,7 +20,6 @@ package uk.ac.manchester.tornado.benchmarks;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 
 import uk.ac.manchester.tornado.api.TornadoDriver;
 import uk.ac.manchester.tornado.api.common.TornadoDevice;

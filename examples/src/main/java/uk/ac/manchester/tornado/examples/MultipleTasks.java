@@ -18,11 +18,11 @@
 
 package uk.ac.manchester.tornado.examples;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
-import uk.ac.manchester.tornado.api.annotations.Parallel;
-
 import java.util.Random;
 import java.util.stream.IntStream;
+
+import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.annotations.Parallel;
 
 public class MultipleTasks {
 

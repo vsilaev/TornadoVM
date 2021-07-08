@@ -29,7 +29,6 @@ import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
 
 import jdk.vm.ci.meta.JavaKind;
-
 import uk.ac.manchester.tornado.drivers.opencl.OCLDeviceContext;
 
 public class OCLLongArrayWrapper extends OCLArrayWrapper<long[]> {

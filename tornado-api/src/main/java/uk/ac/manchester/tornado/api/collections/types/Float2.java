@@ -49,7 +49,8 @@ import uk.ac.manchester.tornado.api.type.annotations.Vector;
 
 @Vector
 public final class Float2 implements PrimitiveStorage<FloatBuffer> {
-
+    private static final long serialVersionUID = 1L;
+    
     public static final Class<Float2> TYPE = Float2.class;
 
     /**

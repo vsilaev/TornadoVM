@@ -49,6 +49,7 @@ public class Kmean {
     private float rmse;
     private float delta;
 
+    @SuppressWarnings("unused")
     private final TaskSchedule graph;
 
     public final class IntResult {

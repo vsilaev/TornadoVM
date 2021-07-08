@@ -18,8 +18,6 @@
 
 package uk.ac.manchester.tornado.examples.fpga;
 
-import java.util.Random;
-
 import uk.ac.manchester.tornado.api.TaskSchedule;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 
@@ -54,8 +52,6 @@ public class SGEMMFPGA {
         dims = new int[1];
 
         dims[0] = size;
-
-        final Random random = new Random();
 
         for (int i = 0; i < m; i++) {
             a[i * (m + 1)] = 45;

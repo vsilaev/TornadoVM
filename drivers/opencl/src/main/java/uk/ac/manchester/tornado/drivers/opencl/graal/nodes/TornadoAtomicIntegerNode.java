@@ -48,6 +48,7 @@ public class TornadoAtomicIntegerNode extends FixedWithNextNode implements LIRLo
 
     public static final NodeClass<TornadoAtomicIntegerNode> TYPE = NodeClass.create(TornadoAtomicIntegerNode.class);
 
+    @SuppressWarnings("unused")
     private final OCLKind kind;
 
     private boolean ATOMIC_2_0 = false;
@@ -112,7 +113,7 @@ public class TornadoAtomicIntegerNode extends FixedWithNextNode implements LIRLo
         }
     }
 
-    private void updateGlobalAtomicTable(HashMap positions, int paramIndex, int size) {
+    private void updateGlobalAtomicTable(HashMap<Integer, Integer> positions, int paramIndex, int size) {
         positions.put(paramIndex, size);
         globalAtomicsParameters.put(this.graph().method(), positions);
     }
@@ -146,7 +147,7 @@ public class TornadoAtomicIntegerNode extends FixedWithNextNode implements LIRLo
             // execution.
             globalAtomics.put(this.graph().method(), al);
 
-            HashMap positions = globalAtomicsParameters.get(this.graph().method());
+            HashMap<Integer, Integer> positions = globalAtomicsParameters.get(this.graph().method());
             updateGlobalAtomicTable(positions, paramIndex, al.size() - 1);
         }
         atomicsByParameter = true;

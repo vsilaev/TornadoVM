@@ -17,6 +17,8 @@
  */
 package uk.ac.manchester.tornado.examples.compute;
 
+import java.util.Random;
+
 import uk.ac.manchester.tornado.api.GridScheduler;
 import uk.ac.manchester.tornado.api.TaskSchedule;
 import uk.ac.manchester.tornado.api.WorkerGrid;
@@ -24,8 +26,6 @@ import uk.ac.manchester.tornado.api.WorkerGrid2D;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.collections.types.Matrix2DFloat;
 import uk.ac.manchester.tornado.api.enums.TornadoDeviceType;
-
-import java.util.Random;
 
 public class MatrixMultiplication2D {
 

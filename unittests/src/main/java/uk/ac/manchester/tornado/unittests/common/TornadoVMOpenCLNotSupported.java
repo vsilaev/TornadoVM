@@ -19,6 +19,7 @@
 package uk.ac.manchester.tornado.unittests.common;
 
 public class TornadoVMOpenCLNotSupported extends RuntimeException {
+    private static final long serialVersionUID = 1L;
 
     public TornadoVMOpenCLNotSupported(String message) {
         super(message);

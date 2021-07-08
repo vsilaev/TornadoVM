@@ -45,7 +45,8 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 public class ImageByte3 implements PrimitiveStorage<ByteBuffer> {
-
+    private static final long serialVersionUID = 1L;
+    
     /**
      * backing array
      */

@@ -24,7 +24,6 @@ package uk.ac.manchester.tornado.drivers.ptx.graal.compiler;
 
 import static uk.ac.manchester.tornado.api.exceptions.TornadoInternalError.shouldNotReachHere;
 import static uk.ac.manchester.tornado.api.exceptions.TornadoInternalError.unimplemented;
-import static uk.ac.manchester.tornado.drivers.ptx.graal.lir.PTXLIRStmt.ExprStmt;
 import static uk.ac.manchester.tornado.runtime.graal.compiler.TornadoCodeGenerator.trace;
 
 import java.util.HashMap;
@@ -74,6 +73,7 @@ import uk.ac.manchester.tornado.drivers.ptx.graal.lir.PTXControlFlow;
 import uk.ac.manchester.tornado.drivers.ptx.graal.lir.PTXGenTool;
 import uk.ac.manchester.tornado.drivers.ptx.graal.lir.PTXKind;
 import uk.ac.manchester.tornado.drivers.ptx.graal.lir.PTXLIRStmt;
+import uk.ac.manchester.tornado.drivers.ptx.graal.lir.PTXLIRStmt.ExprStmt;
 import uk.ac.manchester.tornado.drivers.ptx.graal.lir.PTXNullary;
 import uk.ac.manchester.tornado.drivers.ptx.graal.lir.PTXTernary;
 import uk.ac.manchester.tornado.drivers.ptx.graal.lir.PTXUnary;

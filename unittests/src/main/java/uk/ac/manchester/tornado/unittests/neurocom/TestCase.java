@@ -18,6 +18,7 @@
 package uk.ac.manchester.tornado.unittests.neurocom;
 
 import org.junit.Test;
+
 import uk.ac.manchester.tornado.api.TaskSchedule;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.unittests.common.TornadoTestBase;

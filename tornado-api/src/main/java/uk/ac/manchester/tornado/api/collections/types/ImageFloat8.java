@@ -44,7 +44,8 @@ package uk.ac.manchester.tornado.api.collections.types;
 import java.nio.FloatBuffer;
 
 public class ImageFloat8 implements PrimitiveStorage<FloatBuffer>, Container<Float8> {
-
+    private static final long serialVersionUID = 1L;
+    
     /**
      * backing array
      */

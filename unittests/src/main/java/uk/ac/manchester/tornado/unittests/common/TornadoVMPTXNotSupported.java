@@ -19,6 +19,7 @@
 package uk.ac.manchester.tornado.unittests.common;
 
 public class TornadoVMPTXNotSupported extends RuntimeException {
+    private static final long serialVersionUID = 1L;
 
     public TornadoVMPTXNotSupported(String message) {
         super(message);

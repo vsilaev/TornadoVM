@@ -126,7 +126,6 @@ public class Inlining extends TornadoTestBase {
         int[] rgbBytes = new int[size * 3];
         int[] greyInts = new int[size];
         int[] seq = new int[size];
-        Random r = new Random();
         IntStream.range(0, rgbBytes.length).forEach(i -> {
             rgbBytes[i] = 1;
         });
@@ -151,7 +150,6 @@ public class Inlining extends TornadoTestBase {
         byte[] rgbBytes = new byte[size];
         int[] greyInts = new int[size];
         int[] seq = new int[size];
-        Random r = new Random();
         IntStream.range(0, rgbBytes.length).forEach(i -> {
             rgbBytes[i] = (byte) -10;
         });

@@ -39,6 +39,7 @@ public class StencilTornado extends BenchmarkDriver {
     private float[] ainit;
 
     private TaskSchedule graph;
+    @SuppressWarnings("unused")
     private SchedulableTask stencilTask;
 
     public StencilTornado(int iterations, int dataSize) {

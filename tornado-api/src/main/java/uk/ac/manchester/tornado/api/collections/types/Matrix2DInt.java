@@ -45,6 +45,8 @@ import java.nio.IntBuffer;
 import java.util.Arrays;
 
 public class Matrix2DInt implements PrimitiveStorage<IntBuffer> {
+    private static final long serialVersionUID = 1L;
+    
     /**
      * backing array
      */

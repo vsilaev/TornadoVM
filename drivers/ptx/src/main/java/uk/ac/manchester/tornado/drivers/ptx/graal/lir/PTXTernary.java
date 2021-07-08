@@ -24,9 +24,8 @@
 
 package uk.ac.manchester.tornado.drivers.ptx.graal.lir;
 
-import static org.graalvm.compiler.lir.LIRInstruction.Use;
-
 import org.graalvm.compiler.core.common.LIRKind;
+import org.graalvm.compiler.lir.LIRInstruction.Use;
 import org.graalvm.compiler.lir.Opcode;
 import org.graalvm.compiler.lir.Variable;
 

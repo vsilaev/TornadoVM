@@ -18,11 +18,11 @@
 
 package uk.ac.manchester.tornado.benchmarks.blurFilter;
 
+import java.util.Random;
+
 import uk.ac.manchester.tornado.api.common.TornadoDevice;
 import uk.ac.manchester.tornado.benchmarks.BenchmarkDriver;
 import uk.ac.manchester.tornado.benchmarks.ComputeKernels;
-
-import java.util.Random;
 
 public class BlurFilterJava extends BenchmarkDriver {
 

@@ -51,6 +51,8 @@ import static uk.ac.manchester.tornado.api.collections.types.StorageFormats.toRo
 import java.nio.FloatBuffer;
 
 public class Matrix2DFloat implements PrimitiveStorage<FloatBuffer> {
+    private static final long serialVersionUID = 1L;
+    
     /**
      * backing array
      */

@@ -19,6 +19,7 @@
 package uk.ac.manchester.tornado.examples;
 
 import java.util.Random;
+
 import org.ejml.data.DMatrix1Row;
 import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.CommonOps_DDRM;

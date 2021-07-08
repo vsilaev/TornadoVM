@@ -23,6 +23,11 @@
  */
 package uk.ac.manchester.tornado.runtime.graal.phases;
 
+import static uk.ac.manchester.tornado.runtime.graal.compiler.TornadoCodeGenerator.debug;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import org.graalvm.compiler.graph.Node;
 import org.graalvm.compiler.graph.iterators.NodePredicate;
 import org.graalvm.compiler.nodes.StructuredGraph;
@@ -32,10 +37,6 @@ import org.graalvm.compiler.nodes.java.NewInstanceNode;
 import org.graalvm.compiler.nodes.java.StoreFieldNode;
 import org.graalvm.compiler.phases.BasePhase;
 
-import static uk.ac.manchester.tornado.runtime.graal.compiler.TornadoCodeGenerator.debug;
-
-import java.util.HashMap;
-import java.util.Map;
 import jdk.vm.ci.meta.ResolvedJavaField;
 import uk.ac.manchester.tornado.api.type.annotations.Vector;
 

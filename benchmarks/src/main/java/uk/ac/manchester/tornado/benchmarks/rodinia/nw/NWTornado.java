@@ -174,6 +174,7 @@ public class NWTornado {
     }
 
     public static void main(String[] args) {
+        @SuppressWarnings("unused")
         int input_itemsets[],output_itemsets[],referrence[];
 
         // the lengths of the two sequences should be able to divided by 16 and at

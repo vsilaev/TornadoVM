@@ -49,26 +49,21 @@ public class TaskMetaData extends AbstractMetaData {
     private final byte[] constantData;
     private int constantSize;
     private long[] globalOffset;
-    private int globalSize;
     private long[] globalWork;
     private int localSize;
     private long[] localWork;
-    private int privateSize;
     private final ScheduleMetaData scheduleMetaData;
     protected Access[] argumentsAccess;
     protected DomainTree domain;
     protected final Map<TornadoAcceleratorDevice, BitSet> profiles;
     private boolean localWorkDefined;
     private boolean globalWorkDefined;
-    private boolean canAssumeExact;
 
     public TaskMetaData(ScheduleMetaData scheduleMetaData, String taskID, int numParameters) {
         super(scheduleMetaData.getId() + "." + taskID, scheduleMetaData);
         this.scheduleMetaData = scheduleMetaData;
-        this.globalSize = 0;
         this.constantSize = 0;
         this.localSize = 0;
-        this.privateSize = 0;
         this.constantData = null;
         profiles = new HashMap<>();
         argumentsAccess = new Access[numParameters];
@@ -77,7 +72,8 @@ public class TaskMetaData extends AbstractMetaData {
         inspectLocalWork();
         inspectGlobalWork();
 
-        this.canAssumeExact = Boolean.parseBoolean(getDefault("coarsener.exact", getId(), "False"));
+        @SuppressWarnings("unused")
+        boolean canAssumeExact = Boolean.parseBoolean(getDefault("coarsener.exact", getId(), "False"));
 
         // Set the number of threads to run (subset of the input space)
         setNumThreads(scheduleMetaData.getNumThreads());

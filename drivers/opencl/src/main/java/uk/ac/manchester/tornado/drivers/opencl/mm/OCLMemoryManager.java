@@ -40,7 +40,6 @@ public class OCLMemoryManager extends TornadoLogger implements TornadoMemoryProv
 
     private final long callStackLimit;
     private long callStackPosition;
-    private long deviceBufferPosition;
     private long deviceBufferAddress;
     private final OCLDeviceContext deviceContext;
     private long deviceHeapPointer;
@@ -89,7 +88,6 @@ public class OCLMemoryManager extends TornadoLogger implements TornadoMemoryProv
 
     public final void reset() {
         callStackPosition = 0;
-        deviceBufferPosition = 0;
         heapPosition = callStackLimit;
         Tornado.info("Reset heap @ 0x%x (%s) on %s", deviceBufferAddress, RuntimeUtilities.humanReadableByteCount(heapLimit, true), deviceContext.getDevice().getDeviceName());
     }

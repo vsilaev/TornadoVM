@@ -22,21 +22,22 @@
 
 package uk.ac.manchester.tornado.drivers.ptx.graal.compiler;
 
-import jdk.vm.ci.code.CallingConvention;
-import org.graalvm.compiler.core.common.CompilationIdentifier;
-import org.graalvm.compiler.core.common.alloc.RegisterAllocationConfig;
-import org.graalvm.compiler.lir.LIR;
-import org.graalvm.compiler.lir.Variable;
-import org.graalvm.compiler.lir.framemap.FrameMapBuilder;
-import org.graalvm.compiler.lir.gen.LIRGenerationResult;
-import uk.ac.manchester.tornado.drivers.ptx.graal.lir.PTXKind;
+import static uk.ac.manchester.tornado.api.exceptions.TornadoInternalError.guarantee;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static uk.ac.manchester.tornado.api.exceptions.TornadoInternalError.guarantee;
+import org.graalvm.compiler.core.common.CompilationIdentifier;
+import org.graalvm.compiler.core.common.alloc.RegisterAllocationConfig;
+import org.graalvm.compiler.lir.LIR;
+import org.graalvm.compiler.lir.Variable;
+import org.graalvm.compiler.lir.framemap.FrameMapBuilder;
+import org.graalvm.compiler.lir.gen.LIRGenerationResult;
+
+import jdk.vm.ci.code.CallingConvention;
+import uk.ac.manchester.tornado.drivers.ptx.graal.lir.PTXKind;
 
 public class PTXLIRGenerationResult extends LIRGenerationResult {
 

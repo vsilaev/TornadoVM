@@ -24,6 +24,7 @@
 package uk.ac.manchester.tornado.drivers.ptx.builtins;
 
 import org.graalvm.compiler.api.replacements.Fold;
+
 import uk.ac.manchester.tornado.api.annotations.ReductionOp;
 
 public class PTXIntrinsics {
