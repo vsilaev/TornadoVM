@@ -38,10 +38,4 @@ public abstract class TornadoBackend<P extends Providers> extends Backend {
     }
 
     public abstract String decodeDeopt(long value);
-
-    @Override
-    public Providers getProviders() {
-        return super.getProviders();
-    }
-
 }
