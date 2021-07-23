@@ -615,9 +615,9 @@ public class TornadoVM extends TornadoLogger {
         if (TornadoOptions.printBytecodes) {
             tornadoVMBytecodeList.append(String.format("vm: BARRIER event-list %d\n", eventList));
         }
-
-        if (contexts.size() == 1) {
-            final TornadoAcceleratorDevice device = contexts.get(0);
+        long count = contexts.stream().filter(Objects::nonNull).count();
+        if (count == 1) {
+            final TornadoAcceleratorDevice device = contexts.stream().filter(Objects::nonNull).findFirst().orElse(null);
             /*
             resetEventIndexes(eventList);
             */
