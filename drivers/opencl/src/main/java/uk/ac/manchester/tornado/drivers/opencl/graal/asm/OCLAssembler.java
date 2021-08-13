@@ -1132,15 +1132,6 @@ public final class OCLAssembler extends Assembler {
         }
     }
 
-    public void emitAttribute(OCLCompilationResultBuilder crb) {
-        if (crb.isParallel()) {
-            emitSymbol(OCLAssemblerConstants.FPGA_ATTRIBUTE);
-        } else {
-            emitSymbol(OCLAssemblerConstants.FPGA_ATTRIBUTE_SEQ);
-        }
-        emitLine("");
-    }
-
     public void assign() {
         emitSymbol(OCLAssemblerConstants.ASSIGN);
     }

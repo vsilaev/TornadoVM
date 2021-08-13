@@ -250,7 +250,7 @@ public class PTXDeviceContext extends TornadoLogger implements Initialisable, To
             Event event = resolveEvent(stackWriteEventId);
             event.waitForEvents();
             long copyInTimer = meta.getProfiler().getTimer(ProfilerType.COPY_IN_TIME);
-            copyInTimer += event.getExecutionTime();
+            copyInTimer += event.getElapsedTime();
             profiler.setTimer(ProfilerType.COPY_IN_TIME, copyInTimer);
             profiler.addValueToMetric(ProfilerType.TASK_COPY_IN_SIZE_BYTES, meta.getId(), stack.getSize());
 
@@ -266,9 +266,9 @@ public class PTXDeviceContext extends TornadoLogger implements Initialisable, To
             tornadoKernelEvent.waitForEvents();
             long timer = meta.getProfiler().getTimer(ProfilerType.TOTAL_KERNEL_TIME);
             // Register globalTime
-            meta.getProfiler().setTimer(ProfilerType.TOTAL_KERNEL_TIME, timer + tornadoKernelEvent.getExecutionTime());
+            meta.getProfiler().setTimer(ProfilerType.TOTAL_KERNEL_TIME, timer + tornadoKernelEvent.getElapsedTime());
             // Register the time for the task
-            meta.getProfiler().setTaskTimer(ProfilerType.TASK_KERNEL_TIME, meta.getId(), tornadoKernelEvent.getExecutionTime());
+            meta.getProfiler().setTaskTimer(ProfilerType.TASK_KERNEL_TIME, meta.getId(), tornadoKernelEvent.getElapsedTime());
             // Register the dispatch time of the kernel
             long dispatchValue = meta.getProfiler().getTimer(ProfilerType.TOTAL_DISPATCH_KERNEL_TIME);
             dispatchValue += tornadoKernelEvent.getDriverDispatchTime();
@@ -410,7 +410,7 @@ public class PTXDeviceContext extends TornadoLogger implements Initialisable, To
     }
 
     public void dumpEvents() {
-        List<PTXEvent> events = stream.getEventsWrapper().getEvents();
+        List<PTXEvent> events = stream.getEventPool().getEvents();
 
         final String deviceName = "PTX-" + device.getDeviceName();
         System.out.printf("Found %d events on device %s:\n", events.size(), deviceName);

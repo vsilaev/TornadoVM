@@ -2,7 +2,7 @@
  * This file is part of Tornado: A heterogeneous programming framework:
  * https://github.com/beehive-lab/tornadovm
  *
- * Copyright (c) 2020, APT Group, Department of Computer Science,
+ * Copyright (c) 2020-2021, APT Group, Department of Computer Science,
  * School of Engineering, The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -24,9 +24,7 @@
 package uk.ac.manchester.tornado.drivers.opencl;
 
 import static uk.ac.manchester.tornado.api.exceptions.TornadoInternalError.guarantee;
-import static uk.ac.manchester.tornado.drivers.opencl.OCLEvent.EVENT_DESCRIPTIONS;
 import static uk.ac.manchester.tornado.drivers.opencl.enums.OCLCommandQueueProperties.CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
-import static uk.ac.manchester.tornado.runtime.common.Tornado.EVENT_WINDOW;
 import static uk.ac.manchester.tornado.runtime.common.Tornado.debug;
 import static uk.ac.manchester.tornado.runtime.common.Tornado.fatal;
 import static uk.ac.manchester.tornado.runtime.common.TornadoOptions.CIRCULAR_EVENTS;
@@ -37,30 +35,34 @@ import java.util.BitSet;
 import java.util.List;
 
 import uk.ac.manchester.tornado.api.exceptions.TornadoBailoutRuntimeException;
+import uk.ac.manchester.tornado.drivers.EventDescriptor;
 
 /**
  * Class which holds mapping between OpenCL events and TornadoVM local events
  * and handles event registration and serialization. Also contains extra
  * information such as events description and tag.
  * 
- * Only one instance of this class is created per device.
+ * Each device holds an event pool. Only one instance of the pool per device.
  */
-class OCLEventsWrapper {
+class OCLEventPool {
 
     private final BitSet retain;
     private final OCLEvent[] events;
     private final OCLCommandQueue[] eventQueues;
     private int eventIndex;
 
-    protected OCLEventsWrapper() {
-        this.retain = new BitSet(EVENT_WINDOW);
+    private int eventPoolSize;
+    
+    protected OCLEventPool(int poolSize) {
+        this.eventPoolSize = poolSize;
+        this.retain = new BitSet(poolSize);
         this.retain.clear();
-        this.events = new OCLEvent[EVENT_WINDOW];
-        this.eventQueues = new OCLCommandQueue[EVENT_WINDOW];
+        this.events = new OCLEvent[poolSize];
+        this.eventQueues = new OCLCommandQueue[poolSize];
         this.eventIndex = 0;
     }
 
-    protected int registerEvent(long oclEventID, int descriptorId, long tag, OCLCommandQueue queue) {
+    protected int registerEvent(long oclEventID, EventDescriptor descriptorId, OCLCommandQueue queue) {
         if (retain.get(eventIndex)) {
             findNextEventSlot();
         }
@@ -72,7 +74,7 @@ class OCLEventsWrapper {
          * exit.
          */
         if (oclEventID <= 0) {
-            fatal("invalid event: status=0x%x, description=%s, tag=0x%x\n", oclEventID, EVENT_DESCRIPTIONS[descriptorId], tag);
+            fatal("invalid event: event=0x%x, description=%s, tag=0x%x\n", oclEventID, descriptorId.getNameDescription());
             fatal("terminating application as system integrity has been compromised.");
             throw new TornadoBailoutRuntimeException("[ERROR] NO EventID received from the OpenCL driver, status : " + oclEventID);
             //System.exit(-1);
@@ -82,7 +84,7 @@ class OCLEventsWrapper {
             //events[currentEvent].waitForEvents();
             events[currentEvent].release();
         }
-        events[currentEvent] = new OCLEvent(queue, oclEventID, descriptorId, tag);
+        events[currentEvent] = new OCLEvent(descriptorId.getNameDescription(), queue, oclEventID);
 
         findNextEventSlot();
         return currentEvent;
@@ -95,7 +97,7 @@ class OCLEventsWrapper {
             eventIndex = 0;
         }
 
-        guarantee(eventIndex != -1, "event window is full (retained=%d, capacity=%d)", retain.cardinality(), EVENT_WINDOW);
+        guarantee(eventIndex != -1, "event window is full (retained=%d, capacity=%d)", retain.cardinality(), eventPoolSize);
     }
 
     protected long[] serializeEvents(int[] dependencies, OCLCommandQueue queue) {

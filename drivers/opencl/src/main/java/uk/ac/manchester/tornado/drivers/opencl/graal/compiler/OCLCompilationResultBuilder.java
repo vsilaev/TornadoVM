@@ -73,6 +73,7 @@ import uk.ac.manchester.tornado.drivers.opencl.graal.lir.OCLControlFlow.LoopInit
 import uk.ac.manchester.tornado.drivers.opencl.graal.lir.OCLControlFlow.LoopPostOp;
 import uk.ac.manchester.tornado.drivers.opencl.graal.lir.OCLLIRStmt;
 import uk.ac.manchester.tornado.drivers.opencl.graal.lir.OCLLIRStmt.AssignStmt;
+import uk.ac.manchester.tornado.runtime.tasks.meta.TaskMetaData;
 
 public class OCLCompilationResultBuilder extends CompilationResultBuilder {
 
@@ -82,6 +83,7 @@ public class OCLCompilationResultBuilder extends CompilationResultBuilder {
     private boolean isKernel;
     private int loops = 0;
     private boolean isParallel;
+    private TaskMetaData metaData;
     private OCLDeviceContextInterface deviceContext;
     HashSet<Block> rescheduledBasicBlocks;
 
@@ -172,10 +174,6 @@ public class OCLCompilationResultBuilder extends CompilationResultBuilder {
             }
 
             return value;
-        }
-
-        public Set<Value> getDependencies() {
-            return dependencies;
         }
 
     }
@@ -488,6 +486,14 @@ public class OCLCompilationResultBuilder extends CompilationResultBuilder {
 
     public void setParallel(boolean parallel) {
         this.isParallel = parallel;
+    }
+
+    public void setTaskMetaData(TaskMetaData metaData) {
+        this.metaData = metaData;
+    }
+
+    public TaskMetaData getTaskMetaData() {
+        return metaData;
     }
 
     public void setDeviceContext(OCLDeviceContextInterface deviceContext) {

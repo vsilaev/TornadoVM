@@ -49,6 +49,7 @@ import uk.ac.manchester.tornado.runtime.common.TornadoAcceleratorDevice;
 
 public abstract class AbstractMetaData implements TaskMetaDataInterface {
 
+    private static final long[] SEQUENTIAL_GLOBAL_WORK_GROUP = { 1, 1, 1 };
     private final String id;
     private TornadoAcceleratorDevice device;
     private boolean shouldRecompile;
@@ -494,6 +495,10 @@ public abstract class AbstractMetaData implements TaskMetaDataInterface {
 
     public boolean isWorkerGridAvailable() {
         return (gridScheduler != null && gridScheduler.get(getId()) != null);
+    }
+
+    public boolean isGridSequential() {
+        return Arrays.equals(getWorkerGrid(getId()).getGlobalWork(), SEQUENTIAL_GLOBAL_WORK_GROUP);
     }
 
     public WorkerGrid getWorkerGrid(String taskName) {

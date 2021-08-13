@@ -2,10 +2,8 @@
  * This file is part of Tornado: A heterogeneous programming framework: 
  * https://github.com/beehive-lab/tornadovm
  *
- * Copyright (c) 2020, APT Group, Department of Computer Science,
+ * Copyright (c) 2013-2021, APT Group, Department of Computer Science,
  * School of Engineering, The University of Manchester. All rights reserved.
- * Copyright (c) 2013-2020, APT Group, Department of Computer Science,
- * The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,71 +45,20 @@ import uk.ac.manchester.tornado.drivers.opencl.exceptions.OCLException;
 import uk.ac.manchester.tornado.runtime.common.RuntimeUtilities;
 import uk.ac.manchester.tornado.runtime.common.TornadoLogger;
 
-public class OCLEvent extends TornadoLogger implements Event {
-
-    protected static final long DEFAULT_TAG = 0x12;
-
-    // @formatter:off
-    protected static final String[] EVENT_DESCRIPTIONS = {
-            "kernel - serial",
-            "kernel - parallel",
-            "writeToDevice - byte[]",
-            "writeToDevice - char[]",
-            "writeToDevice - short[]",
-            "writeToDevice - int[]",
-            "writeToDevice - long[]",
-            "writeToDevice - float[]",
-            "writeToDevice - double[]",
-            "readFromDevice - byte[]",
-            "readFromDevice - char[]",
-            "readFromDevice - short[]",
-            "readFromDevice - int[]",
-            "readFromDevice - long[]",
-            "readFromDevice - float[]",
-            "readFromDevice - double[]",
-            "sync - marker",
-            "sync - barrier",
-            "none"
-    };
-    // @formatter:on
-
-    protected static final int DESC_SERIAL_KERNEL = 0;
-    protected static final int DESC_PARALLEL_KERNEL = 1;
-    protected static final int DESC_WRITE_BYTE = 2;
-    protected static final int DESC_WRITE_CHAR = 3;    
-    protected static final int DESC_WRITE_SHORT = 4;
-    protected static final int DESC_WRITE_INT = 5;
-    protected static final int DESC_WRITE_LONG = 6;
-    protected static final int DESC_WRITE_FLOAT = 7;
-    protected static final int DESC_WRITE_DOUBLE = 8;
-    protected static final int DESC_READ_BYTE = 9;
-    protected static final int DESC_READ_CHAR = 10;
-    protected static final int DESC_READ_SHORT = 11;
-    protected static final int DESC_READ_INT = 12;
-    protected static final int DESC_READ_LONG = 13;
-    protected static final int DESC_READ_FLOAT = 14;
-    protected static final int DESC_READ_DOUBLE = 15;
-    protected static final int DESC_SYNC_MARKER = 16;
-    protected static final int DESC_SYNC_BARRIER = 17;
-    protected static final int EVENT_NONE = 18;
-
+public class OCLEvent implements Event {
     private final OCLCommandQueue queue;
     private final long oclEventID;
     private final String name;
-    private final long tag;
-    private final String description;
     private int status;
 
     static abstract class Callback {
         abstract void execute(long oclEventID, int status);
     }
 
-    OCLEvent(OCLCommandQueue queue, long oclEventID, int descriptorId, long tag) {
+    OCLEvent(String eventNameDescription, OCLCommandQueue queue, long oclEventID) {
         this.queue = queue;
         this.oclEventID = oclEventID;
-        this.description = EVENT_DESCRIPTIONS[descriptorId];
-        this.tag = tag;
-        this.name = String.format("%s: 0x%x", description, tag);
+        this.name = String.format("%s: 0x", eventNameDescription);
         this.status = -1;
     }
 
@@ -133,7 +80,7 @@ public class OCLEvent extends TornadoLogger implements Event {
         try {
             clGetEventProfilingInfo(oclEventID, eventType.getValue(), buffer.array());
         } catch (OCLException e) {
-            error(e.getMessage());
+            TornadoLogger.error(e.getMessage());
         }
         return buffer.getLong();
     }
@@ -171,7 +118,7 @@ public class OCLEvent extends TornadoLogger implements Event {
         try {
             clGetEventInfo(oclEventID, CL_EVENT_COMMAND_EXECUTION_STATUS.getValue(), buffer.array());
         } catch (OCLException e) {
-            error(e.getMessage());
+            TornadoLogger.error(e.getMessage());
         }
         status = buffer.getInt();
         return createOCLCommandExecutionStatus(status);
@@ -190,7 +137,7 @@ public class OCLEvent extends TornadoLogger implements Event {
                 break;
             case CL_ERROR:
             case CL_UNKNOWN:
-                fatal("error on event: %s", name);
+                TornadoLogger.fatal("error on event: %s", name);
         }
         queue.awaitTransfers();
     }
@@ -262,7 +209,7 @@ public class OCLEvent extends TornadoLogger implements Event {
     }
 
     @Override
-    public long getExecutionTime() {
+    public long getElapsedTime() {
         return (getCLEndTime() - getCLStartTime());
     }
 
@@ -272,13 +219,13 @@ public class OCLEvent extends TornadoLogger implements Event {
     }
 
     @Override
-    public double getExecutionTimeInSeconds() {
+    public double getElapsedTimeInSeconds() {
         return RuntimeUtilities.elapsedTimeInSeconds(getCLStartTime(), getCLEndTime());
     }
 
     @Override
     public double getTotalTimeInSeconds() {
-        return getExecutionTimeInSeconds();
+        return getElapsedTimeInSeconds();
     }
 
     @Override
@@ -305,7 +252,7 @@ public class OCLEvent extends TornadoLogger implements Event {
         try {
             clReleaseEvent(oclEventID);
         } catch (OCLException e) {
-            error(e.getMessage());
+            TornadoLogger.error(e.getMessage());
         }
     }
 }
