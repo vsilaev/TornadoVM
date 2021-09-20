@@ -44,7 +44,7 @@ import uk.ac.manchester.tornado.api.common.SchedulableTask;
 import uk.ac.manchester.tornado.api.common.TornadoExecutionHandler;
 import uk.ac.manchester.tornado.api.enums.TornadoExecutionStatus;
 import uk.ac.manchester.tornado.api.runtime.TornadoRuntime;
-import uk.ac.manchester.tornado.drivers.EventDescriptor;
+import uk.ac.manchester.tornado.drivers.common.EventDescriptor;
 import uk.ac.manchester.tornado.drivers.opencl.enums.OCLDeviceType;
 import uk.ac.manchester.tornado.drivers.opencl.enums.OCLMemFlags;
 import uk.ac.manchester.tornado.drivers.opencl.graal.OCLInstalledCode;

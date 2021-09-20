@@ -25,9 +25,6 @@
 package uk.ac.manchester.tornado.drivers.opencl;
 
 import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import uk.ac.manchester.tornado.drivers.common.GridInfo;
 

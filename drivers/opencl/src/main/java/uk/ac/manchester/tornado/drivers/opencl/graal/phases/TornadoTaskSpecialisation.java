@@ -56,7 +56,6 @@ import org.graalvm.compiler.phases.common.DeadCodeEliminationPhase;
 
 import jdk.vm.ci.meta.JavaKind;
 import jdk.vm.ci.meta.ResolvedJavaField;
-import uk.ac.manchester.tornado.api.GridScheduler;
 import uk.ac.manchester.tornado.api.exceptions.TornadoBailoutRuntimeException;
 import uk.ac.manchester.tornado.drivers.opencl.graal.nodes.OCLStackAccessNode;
 import uk.ac.manchester.tornado.runtime.common.RuntimeUtilities;

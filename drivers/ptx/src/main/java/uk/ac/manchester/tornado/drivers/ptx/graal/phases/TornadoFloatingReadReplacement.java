@@ -223,7 +223,6 @@ public class TornadoFloatingReadReplacement extends Phase {
     }
 
     @Override
-    @SuppressWarnings("try")
     protected void run(StructuredGraph graph) {
         EconomicMap<LoopBeginNode, EconomicSet<LocationIdentity>> modifiedInLoops = null;
         if (graph.hasLoops()) {
@@ -248,7 +247,7 @@ public class TornadoFloatingReadReplacement extends Phase {
             }
         }
         if (createFloatingReads) {
-            graph.setAfterFloatingReadPhase();
+            graph.setAfterStage(StructuredGraph.StageFlag.FLOATING_READS);
         }
     }
 
@@ -396,7 +395,6 @@ public class TornadoFloatingReadReplacement extends Phase {
             }
         }
 
-        @SuppressWarnings("try")
         private static void processFloatable(FloatableAccessNode accessNode, TornadoFloatingReadReplacement.MemoryMapImpl state) {
             StructuredGraph graph = accessNode.graph();
             LocationIdentity locationIdentity = accessNode.getLocationIdentity();

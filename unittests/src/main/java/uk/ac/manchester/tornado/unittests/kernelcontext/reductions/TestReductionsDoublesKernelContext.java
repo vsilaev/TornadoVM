@@ -60,7 +60,7 @@ public class TestReductionsDoublesKernelContext extends TornadoTestBase {
         int localIdx = context.localIdx;
 
         // Access the Group Size
-        int localGroupSize = context.getLocalGroupSize(0);
+        int localGroupSize = context.localGroupSizeX;
 
         // Access the Group-ID
         int groupID = context.groupIdx; // Expose Group ID
@@ -135,7 +135,7 @@ public class TestReductionsDoublesKernelContext extends TornadoTestBase {
         int localIdx = context.localIdx;
 
         // Obtain the number of threads per work-group
-        int localGroupSize = context.getLocalGroupSize(0);
+        int localGroupSize = context.localGroupSizeX;
 
         // Obtain the group-ID
         int groupID = context.groupIdx;
@@ -202,7 +202,7 @@ public class TestReductionsDoublesKernelContext extends TornadoTestBase {
 
     private static void doubleReductionMaxGlobalMemory(KernelContext context, double[] a, double[] b) {
         int localIdx = context.localIdx;
-        int localGroupSize = context.getLocalGroupSize(0);
+        int localGroupSize = context.localGroupSizeX;
         int groupID = context.groupIdx; // Expose Group ID
         int id = localGroupSize * groupID + localIdx;
 
@@ -251,7 +251,7 @@ public class TestReductionsDoublesKernelContext extends TornadoTestBase {
     public static void doubleReductionMaxLocalMemory(KernelContext context, double[] a, double[] b) {
         int globalIdx = context.globalIdx;
         int localIdx = context.localIdx;
-        int localGroupSize = context.getLocalGroupSize(0);
+        int localGroupSize = context.localGroupSizeX;
         int groupID = context.groupIdx; // Expose Group ID
 
         double[] localA = context.allocateDoubleLocalArray(256);
@@ -308,7 +308,7 @@ public class TestReductionsDoublesKernelContext extends TornadoTestBase {
 
     private static void doubleReductionMinGlobalMemory(KernelContext context, double[] a, double[] b) {
         int localIdx = context.localIdx;
-        int localGroupSize = context.getLocalGroupSize(0);
+        int localGroupSize = context.localGroupSizeX;
         int groupID = context.groupIdx; // Expose Group ID
         int id = localGroupSize * groupID + localIdx;
 
@@ -357,7 +357,7 @@ public class TestReductionsDoublesKernelContext extends TornadoTestBase {
     public static void doubleReductionMinLocalMemory(KernelContext context, double[] a, double[] b) {
         int globalIdx = context.globalIdx;
         int localIdx = context.localIdx;
-        int localGroupSize = context.getLocalGroupSize(0);
+        int localGroupSize = context.localGroupSizeX;
         int groupID = context.groupIdx; // Expose Group ID
 
         double[] localA = context.allocateDoubleLocalArray(256);
