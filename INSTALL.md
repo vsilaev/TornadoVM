@@ -25,13 +25,13 @@ $ make BACKENDS=opencl,ptx
 
 As well as being built with two compiler backends, TornadoVM can be executed with the following three configurations:
 
-  * TornadoVM with JDK 8 with JVMCI support: see the installation guide [here](11_INSTALL_WITH_JDK8.md).
-  * TornadoVM with GraalVM (either with JDK 8, JDK 11 and JDK 16): see the installation guide [here](10_INSTALL_WITH_GRAALVM.md).
-  * TornadoVM with JDK11+ (e.g. OpenJDK [11-16], Red Hat Mandrel, Amazon Corretto): see the installation guide [here](12_INSTALL_WITH_JDK11_PLUS.md).
+  * TornadoVM with JDK 8 with JVMCI support: see the installation guide [here](assembly/src/docs/11_INSTALL_WITH_JDK8.md).
+  * TornadoVM with GraalVM (either with JDK 8, JDK 11 and JDK 16): see the installation guide [here](assembly/src/docs/10_INSTALL_WITH_GRAALVM.md).
+  * TornadoVM with JDK11+ (e.g. OpenJDK [11-16], Red Hat Mandrel, Amazon Corretto): see the installation guide [here](assembly/src/docs/12_INSTALL_WITH_JDK11_PLUS.md).
 
 Note: To run TornadoVM in Windows OS, install TornadoVM with GraalVM. More information [here](assembly/src/docs/20_INSTALL_WINDOWS_WITH_GRAALVM.md).
 
-Note: To run TornadoVM on ARM Mali, install TornadoVM with GraalVM and JDK 11. More information [here](18_MALI.md).
+Note: To run TornadoVM on ARM Mali, install TornadoVM with GraalVM and JDK 11. More information [here](assembly/src/docs/18_MALI.md).
 
 ## 2. Running Examples
 
@@ -236,13 +236,13 @@ To use the TornadoVM API in your projects, you can checkout our maven repository
       <dependency>
          <groupId>tornado</groupId>
          <artifactId>tornado-api</artifactId>
-         <version>0.10</version>
+         <version>0.11</version>
       </dependency>
 
       <dependency>
          <groupId>tornado</groupId>
          <artifactId>tornado-matrices</artifactId>
-         <version>0.10</version>
+         <version>0.11</version>
       </dependency>
    </dependencies>
 ```
@@ -251,6 +251,7 @@ Notice that, for running with TornadoVM, you will need either the docker images 
 
 #### Versions available
 
+* 0.11
 * 0.10
 * 0.9
 * 0.8
