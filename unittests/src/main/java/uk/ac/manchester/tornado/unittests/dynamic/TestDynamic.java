@@ -198,6 +198,7 @@ public class TestDynamic extends TornadoTestBase {
 
         //@formatter:off
         TaskSchedule taskSchedule = new TaskSchedule("s0")
+            .streamIn(a)    
             .task("t0", TestDynamic::compute, a, b)
             .streamOut(b);
         //@formatter:on

@@ -40,6 +40,14 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicLong;
 
 import uk.ac.manchester.tornado.api.exceptions.TornadoBailoutRuntimeException;
 import uk.ac.manchester.tornado.drivers.opencl.enums.OCLBuildStatus;
@@ -55,6 +63,10 @@ public class OCLProgram extends TornadoLogger {
 
     public OCLProgram(long id, OCLDeviceContext deviceContext) {
         this.id = id;
+        if (id <= 0) {
+            System.out.println("WRONG BUILD " + id);
+            throw new IllegalArgumentException("Program was not built, error: " + id);
+        }
         this.deviceContext = deviceContext;
         this.devices = new long[] { deviceContext.getDeviceId() };
         this.kernels = new ArrayList<>();
@@ -62,7 +74,7 @@ public class OCLProgram extends TornadoLogger {
 
     native static void clReleaseProgram(long programId) throws OCLException;
 
-    native static void clBuildProgram(long programId, long[] devices, String options) throws OCLException;
+    native static long clBuildProgram(long programId, long[] devices, String options) throws OCLException;
 
     native static void clGetProgramInfo(long programId, int param, byte[] buffer) throws OCLException;
 
@@ -104,12 +116,16 @@ public class OCLProgram extends TornadoLogger {
     public void build(String options) {
         if (Thread.currentThread().isInterrupted()) {
             // Prevent ACCESS_VIOLATION in AMD devices
-            throw new TornadoBailoutRuntimeException("Thread was interrupted before build");
+            throw new IllegalStateException("Thread was interrupted before build");
         }
         try {
-            clBuildProgram(id, devices, options);
-        } catch (OCLException e) {
+            long status = executeBuild(() -> clBuildProgram(id, devices, options)).get();
+            if (status < 0) {
+                throw new TornadoBailoutRuntimeException("clBuild failed " + status);
+            }
+        } catch (ExecutionException | InterruptedException e) {
             error(e.getMessage());
+            throw new IllegalStateException("Thread was interrupted during build");
         }
     }
 
@@ -237,6 +253,47 @@ public class OCLProgram extends TornadoLogger {
     public void dump() {
         int numDevices = getNumDevices();
         debug("Num devices: %d", numDevices);
+    }
+    
+    private Future<Long> executeBuild(Callable<Long> buildProcess) {
+        return OCL_BUILD_EXECUTOR.submit(new Callable<Long>() {
+            @Override
+            public Long call() throws Exception {
+                OCL_BUILDS_SEMAPHORE.acquire();
+                try {
+                    return buildProcess.call();
+                } finally {
+                    OCL_BUILDS_SEMAPHORE.release();
+                }
+            }
+            
+        });
+    }
+    
+    private static final int ALL_OCL_BUILDS = 16535;
+    private static final Semaphore OCL_BUILDS_SEMAPHORE = new Semaphore(ALL_OCL_BUILDS);
+    private static final ExecutorService OCL_BUILD_EXECUTOR = Executors.newCachedThreadPool(new ThreadFactory() {
+        private final AtomicLong counter = new AtomicLong();
+        private final ThreadFactory defaultThreadFactory = Executors.defaultThreadFactory(); 
+        @Override
+        public Thread newThread(Runnable r) {
+            Thread result = defaultThreadFactory.newThread(r);
+            result.setDaemon(true);
+            result.setName("OCL Build Thread " + counter.getAndIncrement());
+            return result;
+        }
+    });
+    static {
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
+            public void run() {
+                try {
+                    OCL_BUILDS_SEMAPHORE.acquire(ALL_OCL_BUILDS);
+                } catch (InterruptedException ex) {
+                }
+            }
+            
+        });
     }
 
 }

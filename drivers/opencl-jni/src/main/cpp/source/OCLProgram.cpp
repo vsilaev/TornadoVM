@@ -48,9 +48,9 @@ JNIEXPORT void JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLProgram_c
 /*
  * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLProgram
  * Method:    clBuildProgram
- * Signature: (J[J[C)V
+ * Signature: (J[J[C)J
  */
-JNIEXPORT void JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLProgram_clBuildProgram
+JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLProgram_clBuildProgram
 (JNIEnv *env, jclass clazz, jlong program_id, jlongArray array1, jstring str) {
     jlong *devices = static_cast<jlong *>(env->GetPrimitiveArrayCritical(array1, NULL));
     jsize numDevices = env->GetArrayLength(array1);
@@ -66,6 +66,7 @@ JNIEXPORT void JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLProgram_c
         env->ReleasePrimitiveArrayCritical(array1, devices, 0);
     }
     LOG_OCL_AND_VALIDATE("clBuildProgram", status);
+    return (jlong)status;
 
 }
 

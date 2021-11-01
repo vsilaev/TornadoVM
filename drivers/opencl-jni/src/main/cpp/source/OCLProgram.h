@@ -40,9 +40,9 @@ JNIEXPORT void JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLProgram_c
 /*
  * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLProgram
  * Method:    clBuildProgram
- * Signature: (J[JLjava/lang/String;)V
+ * Signature: (J[JLjava/lang/String;)J
  */
-JNIEXPORT void JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLProgram_clBuildProgram
+JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLProgram_clBuildProgram
         (JNIEnv *, jclass, jlong, jlongArray, jstring);
 
 

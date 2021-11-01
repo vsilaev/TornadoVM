@@ -1240,6 +1240,9 @@ public class TornadoTaskSchedule implements AbstractTaskGraph {
             long start = timer.time();
             if (policy == Policy.PERFORMANCE) {
                 for (int k = 0; k < PERFORMANCE_WARMUP; k++) {
+                    if (Thread.currentThread().isInterrupted()) {
+                        return Long.MAX_VALUE;
+                    }
                     runAllTasksJavaSequential();
                 }
                 start = timer.time();
@@ -1277,17 +1280,23 @@ public class TornadoTaskSchedule implements AbstractTaskGraph {
             if (policy == Policy.PERFORMANCE) {
                 // first warm up
                 for (int k = 0; k < PERFORMANCE_WARMUP; k++) {
+                    if (Thread.currentThread().isInterrupted()) {
+                        return Long.MAX_VALUE;
+                    }
                     task.execute();
                 }
                 start = timer.time();
             }
             try {
+                if (Thread.currentThread().isInterrupted()) {
+                    return Long.MAX_VALUE;
+                }
                 task.execute();
             } finally {
                 if (!task.isFinished()) {
                     // Execute was interrupted, need to reset device 
                     // while it's in unpredictable state 
-                    task.getDevice().reset();
+                    //task.getDevice().reset();
                     return Long.MAX_VALUE;
                 }
             }
@@ -1332,7 +1341,7 @@ public class TornadoTaskSchedule implements AbstractTaskGraph {
                 } catch (InterruptedException | ExecutionException ex) {
                     return -1;
                 }
-            }).filter(idx -> idx >= 0).findFirst().orElse(-1);
+            }).filter(idx -> idx >= 0).findAny().orElse(-1);
 
             if (deviceWinnerIndex >= 0) {
                 policyTimeTable.put(policy, deviceWinnerIndex);

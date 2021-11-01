@@ -41,6 +41,9 @@ public class OCLKernel extends TornadoLogger {
 
     public OCLKernel(long id, OCLDeviceContext deviceContext) {
         this.oclKernelID = id;
+        if (id <= 0) {
+            throw new IllegalArgumentException("Kernel was not built, error: " + id);
+        }
         this.deviceContext = deviceContext;
         this.kernelName = queryName(id, deviceContext);
 
