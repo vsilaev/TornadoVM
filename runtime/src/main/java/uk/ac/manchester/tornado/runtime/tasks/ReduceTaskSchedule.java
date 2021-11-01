@@ -258,22 +258,26 @@ class ReduceTaskSchedule {
             // Update streamIn if needed (substitute if output appears as
             // stream-in with the new created array).
             for (int i = 0; i < streamInObjects.size(); i++) {
-
+                Object streamInObject = streamInObjects.get(i);
                 // Update table that consistency between input variables and reduce tasks.
                 // This part is used to STREAM_IN data when performing multiple reductions in
                 // the same task-schedule
                 if (tableReduce.containsKey(taskNumber)) {
-                    if (!reduceOperandTable.containsKey(streamInObjects.get(i))) {
+                    if (!reduceOperandTable.containsKey(streamInObject)) {
                         LinkedList<Integer> taskList = new LinkedList<>();
                         taskList.add(taskNumber);
-                        reduceOperandTable.put(streamInObjects.get(i), taskList);
-                    } else {
-                        reduceOperandTable.get(streamInObjects.get(i)).add(taskNumber);
+                        reduceOperandTable.put(streamInObject, taskList);
+                    } 
+                    // Was removed by the following
+                    // [fix] Multiple reduction tasks within the same TaskSchedule
+                    /*else {
+                        reduceOperandTable.get(streamInObject).add(taskNumber);
                     }
+                    */
                 }
 
-                if (originalReduceVariables.containsKey(streamInObjects.get(i))) {
-                    streamInObjects.set(i, originalReduceVariables.get(streamInObjects.get(i)));
+                if (originalReduceVariables.containsKey(streamInObject)) {
+                    streamInObjects.set(i, originalReduceVariables.get(streamInObject));
                 }
             }
 
@@ -285,8 +289,9 @@ class ReduceTaskSchedule {
             TornadoTaskSchedule.performStreamInThread(rewrittenTaskSchedule, streamInObjects);
 
             for (int i = 0; i < streamOutObjects.size(); i++) {
-                if (originalReduceVariables.containsKey(streamOutObjects.get(i))) {
-                    Object newArray = originalReduceVariables.get(streamOutObjects.get(i));
+                Object streamOutObject = streamOutObjects.get(i);
+                if (originalReduceVariables.containsKey(streamOutObject)) {
+                    Object newArray = originalReduceVariables.get(streamOutObject);
                     streamOutObjects.set(i, newArray);
                 }
             }
