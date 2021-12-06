@@ -3,6 +3,7 @@
 /dist/
 .project
 .classpath
+/.metadata/*
 Makefile
 Makefile.in
 *.lo
