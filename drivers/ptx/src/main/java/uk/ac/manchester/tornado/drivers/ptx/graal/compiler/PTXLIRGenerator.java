@@ -24,7 +24,6 @@ package uk.ac.manchester.tornado.drivers.ptx.graal.compiler;
 
 import static uk.ac.manchester.tornado.api.exceptions.TornadoInternalError.shouldNotReachHere;
 import static uk.ac.manchester.tornado.api.exceptions.TornadoInternalError.unimplemented;
-import static uk.ac.manchester.tornado.runtime.graal.compiler.TornadoCodeGenerator.trace;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -39,7 +38,6 @@ import org.graalvm.compiler.lir.ConstantValue;
 import org.graalvm.compiler.lir.LIRFrameState;
 import org.graalvm.compiler.lir.LIRInstruction;
 import org.graalvm.compiler.lir.LabelRef;
-import org.graalvm.compiler.lir.StandardOp;
 import org.graalvm.compiler.lir.SwitchStrategy;
 import org.graalvm.compiler.lir.Variable;
 import org.graalvm.compiler.lir.gen.LIRGenerationResult;
@@ -57,6 +55,7 @@ import jdk.vm.ci.meta.JavaKind;
 import jdk.vm.ci.meta.PlatformKind;
 import jdk.vm.ci.meta.Value;
 import jdk.vm.ci.meta.ValueKind;
+import uk.ac.manchester.tornado.drivers.common.logging.Logger;
 import uk.ac.manchester.tornado.drivers.ptx.PTXTargetDescription;
 import uk.ac.manchester.tornado.drivers.ptx.graal.PTXArchitecture;
 import uk.ac.manchester.tornado.drivers.ptx.graal.PTXLIRKindTool;
@@ -197,7 +196,7 @@ public class PTXLIRGenerator extends LIRGenerator {
         DeoptimizationReason reason = getMetaAccess().decodeDeoptReason(constant);
         DeoptimizationAction action = getMetaAccess().decodeDeoptAction(constant);
         int debugId = getMetaAccess().decodeDebugId(constant);
-        trace("emitDeoptimize: id=%d, reason=%s, action=%s", debugId, reason, action);
+        Logger.traceBuildLIR(Logger.BACKEND.PTX, "emitDeoptimize: id=%d, reason=%s, action=%s", debugId, reason, action);
         append(new PTXControlFlow.DeoptOp(actionAndReason));
     }
 
@@ -223,7 +222,7 @@ public class PTXLIRGenerator extends LIRGenerator {
 
     @Override
     public void emitReturn(JavaKind javaKind, Value input) {
-        trace("emitReturn: input=%s", input);
+        Logger.traceBuildLIR(Logger.BACKEND.PTX, "emitReturn: input=%s", input);
         if (input != null) {
             PTXKind returnKind = (PTXKind) input.getPlatformKind();
             LIRKind lirKind = LIRKind.value(returnKind);
@@ -239,12 +238,12 @@ public class PTXLIRGenerator extends LIRGenerator {
 
     @Override
     public void emitJump(LabelRef label) {
-        trace("emitJump: label=%s", label);
+        Logger.traceBuildLIR(Logger.BACKEND.PTX, "emitJump: label=%s", label);
         append(new PTXControlFlow.Branch(label, false, false));
     }
 
     public void emitJump(LabelRef label, boolean isLoopEdgeBack) {
-        trace("emitJump: label=%s isLoopEdgeBack=%b", label, isLoopEdgeBack);
+        Logger.traceBuildLIR(Logger.BACKEND.PTX, "emitJump: label=%s isLoopEdgeBack=%b", label, isLoopEdgeBack);
         append(new PTXControlFlow.Branch(label, false, isLoopEdgeBack));
     }
 
@@ -266,7 +265,7 @@ public class PTXLIRGenerator extends LIRGenerator {
 
     @Override
     public Variable emitConditionalMove(PlatformKind cmpKind, Value left, Value right, Condition cond, boolean unorderedIsTrue, Value trueValue, Value falseValue) {
-        trace("emitConditionalMove?");
+        Logger.traceBuildLIR(Logger.BACKEND.PTX, "emitConditionalMove");
 
         LIRKind kind = LIRKind.combine(trueValue, falseValue);
         Variable predicate = newVariable(LIRKind.value(PTXKind.PRED));
@@ -320,7 +319,7 @@ public class PTXLIRGenerator extends LIRGenerator {
 
     @Override
     public void emitStrategySwitch(SwitchStrategy strategy, Variable key, LabelRef[] keyTargets, LabelRef defaultTarget) {
-        trace("emitStrategySwitch: strategy=%s key=%s defaultTarget=%s", strategy, key, defaultTarget);
+        Logger.traceBuildLIR(Logger.BACKEND.PTX, "emitStrategySwitch: strategy=%s key=%s defaultTarget=%s", strategy, key, defaultTarget);
         LIRKind kind = LIRKind.value(PTXKind.PRED);
         Variable predicate = newVariable(kind);
         Constant[] constants = strategy.getKeyConstants();
@@ -359,7 +358,7 @@ public class PTXLIRGenerator extends LIRGenerator {
     }
 
     @Override
-    public StandardOp.ZapRegistersOp createZapRegisters(Register[] zappedRegisters, JavaConstant[] zapValues) {
+    public LIRInstruction createZapRegisters(Register[] zappedRegisters, JavaConstant[] zapValues) {
         unimplemented();
         return null;
     }
@@ -372,7 +371,7 @@ public class PTXLIRGenerator extends LIRGenerator {
 
     public Variable newReturnVariable(ValueKind<?> lirKind) {
         final Variable var = super.newVariable(lirKind);
-        trace("newReturnVariable: %s <- %s (%s)", var.toString(), lirKind.toString(), lirKind.getClass().getName());
+        Logger.traceBuildLIR(Logger.BACKEND.PTX, "newReturnVariable: %s <- %s (%s)", var.toString(), lirKind.toString(), lirKind.getClass().getName());
 
         PTXLIRGenerationResult res = (PTXLIRGenerationResult) getResult();
         res.setReturnVariable(var);
@@ -387,7 +386,7 @@ public class PTXLIRGenerator extends LIRGenerator {
 
     public Variable newVariable(ValueKind<?> lirKind, boolean isArray) {
         final Variable var = super.newVariable(lirKind);
-        trace("newVariable: %s <- %s (%s)", var.toString(), lirKind.toString(), lirKind.getClass().getName());
+        Logger.traceBuildLIR(Logger.BACKEND.PTX, "newVariable: %s <- %s (%s)", var.toString(), lirKind.toString(), lirKind.getClass().getName());
 
         PTXLIRGenerationResult res = (PTXLIRGenerationResult) getResult();
         int indexForType = res.insertVariableAndGetIndex(var, isArray);
@@ -420,7 +419,7 @@ public class PTXLIRGenerator extends LIRGenerator {
     }
 
     public void emitParameterAlloc() {
-        trace("emitParameterAlloc");
+        Logger.traceBuildLIR(Logger.BACKEND.PTX, "emitParameterAlloc");
         Variable stackPointer = newVariable(LIRKind.value(PTXArchitecture.STACK_POINTER.ptxKind));
         parameterAllocations.put(PTXArchitecture.STACK_POINTER.getName(), stackPointer);
         append(new PTXLIRStmt.LoadStmt(new PTXUnary.MemoryAccess(PTXAssemblerConstants.STACK_PTR_NAME), stackPointer, PTXNullaryOp.LD));

@@ -74,6 +74,7 @@ import org.graalvm.compiler.phases.graph.ReentrantNodeIterator;
 import org.graalvm.word.LocationIdentity;
 
 import uk.ac.manchester.tornado.drivers.ptx.graal.nodes.FixedArrayNode;
+import uk.ac.manchester.tornado.drivers.ptx.graal.nodes.PTXBarrierNode;
 import uk.ac.manchester.tornado.drivers.ptx.graal.nodes.vector.VectorLoadElementNode;
 
 /**
@@ -395,6 +396,28 @@ public class TornadoFloatingReadReplacement extends Phase {
             }
         }
 
+        /**
+         * @param accessNode
+         *            is a {@link FixedNode} that will be replaced by a
+         *            {@link FloatingNode}. This method checks if the node that is going
+         *            to be replaced has an {@link PTXBarrierNode} as next.
+         */
+        private static boolean isNextNodePTXBarrierNode(FloatableAccessNode accessNode) {
+            return (accessNode.next() instanceof PTXBarrierNode);
+        }
+
+        /**
+         * @param nextNode
+         *            is a {@link FixedNode} that will be replaced by a
+         *            {@link FloatingNode}. This method removes the redundant
+         *            {@link PTXBarrierNode}.
+         */
+        private static void replaceRedundantNextPTXBarrierNode(Node nextNode) {
+            nextNode.replaceAtUsages(nextNode.successors().first());
+            Node predecessor = nextNode.predecessor();
+            predecessor.replaceFirstSuccessor(nextNode, nextNode.successors().first());
+        }
+
         private static void processFloatable(FloatableAccessNode accessNode, TornadoFloatingReadReplacement.MemoryMapImpl state) {
             StructuredGraph graph = accessNode.graph();
             LocationIdentity locationIdentity = accessNode.getLocationIdentity();
@@ -404,6 +427,9 @@ public class TornadoFloatingReadReplacement extends Phase {
                 try (DebugCloseable position = accessNode.withNodeSourcePosition()) {
                     FloatingAccessNode floatingNode = accessNode.asFloatingNode();
                     assert floatingNode.getLastLocationAccess() == lastLocationAccess;
+                    if (isNextNodePTXBarrierNode(accessNode)) {
+                        replaceRedundantNextPTXBarrierNode(accessNode.next());
+                    }
                     graph.replaceFixedWithFloating(accessNode, floatingNode);
                 }
             }

@@ -70,7 +70,6 @@ public class PTXAssembler extends Assembler {
     private List<String> operandStack;
     private boolean emitEOL;
     private boolean convertTabToSpace;
-    private PTXLIRGenerationResult lirGenRes;
 
     public PTXAssembler(TargetDescription target, PTXLIRGenerationResult lirGenRes) {
         super(target);
@@ -78,7 +77,6 @@ public class PTXAssembler extends Assembler {
         emitEOL = true;
         convertTabToSpace = false;
         operandStack = new ArrayList<>(10);
-        this.lirGenRes = lirGenRes;
     }
 
     public void emitSymbol(String sym) {
@@ -479,6 +477,7 @@ public class PTXAssembler extends Assembler {
         public static final PTXUnaryIntrinsic LOG2 = new PTXUnaryIntrinsic("lg2.approx", null);
         public static final PTXUnaryIntrinsic SIN = new PTXUnaryIntrinsic("sin.approx", null);
         public static final PTXUnaryIntrinsic COS = new PTXUnaryIntrinsic("cos.approx", null);
+        public static final PTXUnaryIntrinsic RSQRT = new PTXUnaryIntrinsic("rsqrt.approx", null);
         public static final PTXUnaryIntrinsic FLOAT_FLOOR = new PTXUnaryIntrinsic(CONVERT, ROUND_NEGATIVE_INFINITY_INTEGER, true, false);
 
         public static final PTXUnaryIntrinsic POPCOUNT = new PTXUnaryIntrinsic("popc") {
@@ -486,8 +485,10 @@ public class PTXAssembler extends Assembler {
             public void emit(PTXCompilationResultBuilder crb, Value x, Variable dest) {
                 final PTXAssembler asm = crb.getAssembler();
                 emitOpcode(asm);
+                /*
                 PTXKind destType = (PTXKind) dest.getPlatformKind();
-
+                */
+                
                 PTXKind instructionKind = PTXKind.B32;
                 if (((PTXKind) x.getPlatformKind()).is64Bit()) {
                     instructionKind = PTXKind.B64;

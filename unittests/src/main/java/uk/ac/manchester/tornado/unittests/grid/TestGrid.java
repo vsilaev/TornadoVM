@@ -110,14 +110,14 @@ public class TestGrid extends TornadoTestBase {
         GridScheduler gridScheduler = new GridScheduler("s0.t1", worker);
         ts.execute(gridScheduler);
 
-        worker.setGlobalWork(512, 512, 1);
+        worker.setLocalWork(32, 32, 1);
         ts.execute(gridScheduler);
 
         matrixMultiplication(a, b, seq, numElements);
 
         for (int i = 0; i < numElements; i++) {
             for (int j = 0; j < numElements; j++) {
-                assertEquals(seq[i * numElements + j], c[i * numElements + j], 0.01f);
+                assertEquals(seq[i * numElements + j], c[i * numElements + j], 0.1f);
             }
 
         }

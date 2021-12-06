@@ -104,7 +104,7 @@ public class OCLCodeCache {
      * </code>
      * </p>
      */
-    private final StringBuffer OPENCL_BINARIES = TornadoOptions.FPGA_BINARIES;
+    private final StringBuilder OPENCL_BINARIES = TornadoOptions.FPGA_BINARIES;
 
     private final boolean PRINT_WARNINGS = false;
 

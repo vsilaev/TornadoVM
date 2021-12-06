@@ -11,11 +11,11 @@ pipeline {
     }
 
     environment {
-        JDK_8_JAVA_HOME="/opt/jenkins/jdks/openjdk1.8.0_302-jvmci-21.2-b08"
-        CORRETTO_11_JAVA_HOME="/opt/jenkins/jdks/amazon-corretto-11.0.12.7.1-linux-x64"
-        GRAALVM_8_JAVA_HOME="/opt/jenkins/jdks/graalvm-ce-java8-21.2.0"
-        GRAALVM_11_JAVA_HOME="/opt/jenkins/jdks/graalvm-ce-java11-21.2.0"
-        GRAALVM_16_JAVA_HOME="/opt/jenkins/jdks/graalvm-ce-java16-21.2.0"
+        JDK_8_JAVA_HOME="/opt/jenkins/jdks/openjdk1.8.0_302-jvmci-21.3-b04"
+        CORRETTO_11_JAVA_HOME="/opt/jenkins/jdks/amazon-corretto-11.0.13.8.1-linux-x64"
+        JDK_17_JAVA_HOME="/opt/jenkins/jdks/jdk-17.0.1+12"
+        GRAALVM_11_JAVA_HOME="/opt/jenkins/jdks/graalvm-ce-java11-21.3.0"
+        GRAALVM_17_JAVA_HOME="/opt/jenkins/jdks/graalvm-ce-java17-21.3.0"
         TORNADO_ROOT="/var/lib/jenkins/workspace/Tornado-pipeline"
         PATH="/var/lib/jenkins/workspace/Slambench/slambench-tornado-refactor/bin:/var/lib/jenkins/workspace/Tornado-pipeline/bin/bin:$PATH"    
         TORNADO_SDK="/var/lib/jenkins/workspace/Tornado-pipeline/bin/sdk" 
@@ -36,9 +36,9 @@ pipeline {
                     if (params.fullBuild == true) {
                         runJDK8()
                         runCorrettoJDK11()
-                        runGraalVM8()
+                        runJDK17()
                         runGraalVM11()
-                        runGraalVM16()
+                        runGraalVM17()
                     } else {
                         Random rnd = new Random()
                         int NO_OF_JDKS = 5
@@ -50,14 +50,13 @@ pipeline {
                                 runCorrettoJDK11()
                                 break
                             case 2:
-                                runGraalVM8()
-                                break
-                            case 3:
                                 runGraalVM11()
                                 break
-                            case 4:
-                                runGraalVM16()
+                            case 3:
+                                runGraalVM17()
                                 break
+                            case 4:
+                                runJDK17()
                         }
                     }
                 }
@@ -92,10 +91,10 @@ void runCorrettoJDK11() {
     }
 }
 
-void runGraalVM8() {
-    stage('GraalVM 8') {
-        withEnv(["JAVA_HOME=${GRAALVM_8_JAVA_HOME}"]) {
-            buildAndTest("GraalVM JDK 8", "graal-jdk-8")
+void runJDK17() {
+    stage('JDK 17') {
+        withEnv(["JAVA_HOME=${JDK_17_JAVA_HOME}"]) {
+            buildAndTest("JDK 17", "jdk-11-plus")
         }
     }
 }
@@ -108,10 +107,10 @@ void runGraalVM11() {
     }
 }
 
-void runGraalVM16() {
-    stage('GraalVM 16') {
-        withEnv(["JAVA_HOME=${GRAALVM_16_JAVA_HOME}"]) {
-            buildAndTest("GraalVM JDK 16", "graal-jdk-11-plus")
+void runGraalVM17() {
+    stage('GraalVM 17') {
+        withEnv(["JAVA_HOME=${GRAALVM_17_JAVA_HOME}"]) {
+            buildAndTest("GraalVM JDK 17", "graal-jdk-11-plus")
         }
     }
 }
@@ -126,8 +125,8 @@ void buildAndTest(String JDK, String tornadoProfile) {
     }
     stage('PTX: Unit Tests') {
         timeout(time: 12, unit: 'MINUTES') {
-            sh 'tornado-test.py --verbose -J"-Dtornado.unittests.device=0:0"'
-            sh 'tornado-test.py -V  -J"-Dtornado.unittests.device=0:0" -J"-Dtornado.heap.allocation=1MB" uk.ac.manchester.tornado.unittests.fails.HeapFail#test03'
+            sh 'tornado-test.py --verbose -J"-Dtornado.unittests.device=0:0 -Dtornado.ptx.priority=100"'
+            sh 'tornado-test.py -V  -J"-Dtornado.unittests.device=0:0 -Dtornado.heap.allocation=1MB -Dtornado.ptx.priority=100" uk.ac.manchester.tornado.unittests.fails.HeapFail#test03'
             sh 'test-native.sh'
         }
     }
@@ -135,15 +134,15 @@ void buildAndTest(String JDK, String tornadoProfile) {
         parallel (
             "OpenCL and GPU: Nvidia GeForce GTX 1060" : {
                 timeout(time: 12, unit: 'MINUTES') {
-                    sh 'tornado-test.py --verbose -J"-Dtornado.unittests.device=1:1"'
-                    sh 'tornado-test.py -V  -J"-Dtornado.unittests.device=1:1" -J"-Dtornado.heap.allocation=1MB" uk.ac.manchester.tornado.unittests.fails.HeapFail#test03'
+                    sh 'tornado-test.py --verbose -J"-Dtornado.ptx.priority=100 -Dtornado.unittests.device=1:1"'
+                    sh 'tornado-test.py -V  -J" -Dtornado.ptx.priority=100 -Dtornado.unittests.device=1:1 -Dtornado.heap.allocation=1MB" uk.ac.manchester.tornado.unittests.fails.HeapFail#test03'
                     sh 'test-native.sh'
                 }
             },
             "OpenCL and CPU: Intel Xeon E5-2620" : {
                 timeout(time: 12, unit: 'MINUTES') {
-                    sh 'tornado-test.py --verbose -J"-Dtornado.unittests.device=1:0"'
-                    sh 'tornado-test.py -V  -J"-Dtornado.unittests.device=1:0" -J"-Dtornado.heap.allocation=1MB" uk.ac.manchester.tornado.unittests.fails.HeapFail#test03'
+                    sh 'tornado-test.py --verbose -J"-Dtornado.ptx.priority=100 -Dtornado.unittests.device=1:0"'
+                    sh 'tornado-test.py -V  -J" -Dtornado.ptx.priority=100 -Dtornado.unittests.device=1:0 -Dtornado.heap.allocation=1MB" uk.ac.manchester.tornado.unittests.fails.HeapFail#test03'
                     sh 'test-native.sh'
                 }
             }

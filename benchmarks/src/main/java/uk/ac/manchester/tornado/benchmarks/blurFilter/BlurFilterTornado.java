@@ -38,8 +38,6 @@ public class BlurFilterTornado extends BenchmarkDriver {
     int[] blueFilter;
     float[] filter;
 
-    TaskSchedule ts;
-
     public BlurFilterTornado(int iterations, int size) {
         super(iterations);
         this.size = size;

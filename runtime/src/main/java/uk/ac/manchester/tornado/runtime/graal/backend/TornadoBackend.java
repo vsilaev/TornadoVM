@@ -38,4 +38,15 @@ public abstract class TornadoBackend<P extends Providers> extends Backend {
     }
 
     public abstract String decodeDeopt(long value);
+
+    @Override
+    public Providers getProviders() {
+        return super.getProviders();
+    }
+
+    public abstract boolean isInitialised();
+
+    public abstract void init();
+
+    public abstract int getMethodIndex();
 }

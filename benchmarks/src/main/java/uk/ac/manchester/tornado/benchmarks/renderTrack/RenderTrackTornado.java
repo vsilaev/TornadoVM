@@ -15,7 +15,6 @@ public class RenderTrackTornado extends BenchmarkDriver {
     private int size;
     private ImageFloat3 input;
     private ImageByte3 output;
-    private TaskSchedule s0;
 
     public RenderTrackTornado(int size, int iterations) {
         super(iterations);
@@ -33,18 +32,18 @@ public class RenderTrackTornado extends BenchmarkDriver {
                 input.set(i, j, new Float3(i, j, value));
             }
         }
-        s0 = new TaskSchedule("s0")//
+        ts = new TaskSchedule("s0")//
                 .task("t0", ComputeKernels::renderTrack, output, input) //
                 .streamOut(output);
-        s0.warmup();
+        ts.warmup();
     }
 
     @Override
     public void tearDown() {
-        s0.dumpProfiles();
+        ts.dumpProfiles();
         input = null;
         output = null;
-        s0.getDevice().reset();
+        ts.getDevice().reset();
         super.tearDown();
     }
 
@@ -84,7 +83,7 @@ public class RenderTrackTornado extends BenchmarkDriver {
 
     @Override
     public void benchmarkMethod(TornadoDevice device) {
-        s0.mapAllTo(device);
-        s0.execute();
+        ts.mapAllTo(device);
+        ts.execute();
     }
 }

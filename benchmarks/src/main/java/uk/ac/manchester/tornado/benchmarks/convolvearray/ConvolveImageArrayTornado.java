@@ -35,7 +35,6 @@ public class ConvolveImageArrayTornado extends BenchmarkDriver {
     private float[] input;
     private float[] output;
     private float[] filter;
-    private TaskSchedule ts;
 
     public ConvolveImageArrayTornado(int iterations, int imageSizeX, int imageSizeY, int filterSize) {
         super(iterations);

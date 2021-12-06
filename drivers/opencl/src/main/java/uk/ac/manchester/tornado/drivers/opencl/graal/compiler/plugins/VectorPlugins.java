@@ -73,6 +73,7 @@ public final class VectorPlugins {
                 @Override
                 public boolean handleInvoke(GraphBuilderContext b, ResolvedJavaMethod method, ValueNode[] args) {
                     OCLKind vectorKind = OCLKind.resolveToVectorKind(method.getDeclaringClass());
+
                     if (vectorKind == OCLKind.ILLEGAL) {
                         return false;
                     }
@@ -142,11 +143,6 @@ public final class VectorPlugins {
         }
         guarantee(vector != null, "[Vector Plugins] unable to resolve vector");
         return vector;
-    }
-
-    private static VectorValueNode resolveReceiver(Receiver receiver) {
-        ValueNode thisObject = receiver.get();
-        return resolveReceiver(thisObject);
     }
 
     private static void registerVectorPlugins(final InvocationPlugins plugins, final OCLKind vectorKind, final Class<?> storageType, final Class<?> elementType) {

@@ -40,7 +40,7 @@ import uk.ac.manchester.tornado.api.common.Access;
 import uk.ac.manchester.tornado.api.common.Event;
 import uk.ac.manchester.tornado.api.common.SchedulableTask;
 import uk.ac.manchester.tornado.api.enums.TornadoDeviceType;
-import uk.ac.manchester.tornado.api.enums.TornadoVMBackend;
+import uk.ac.manchester.tornado.api.enums.TornadoVMBackendType;
 import uk.ac.manchester.tornado.api.exceptions.TornadoBailoutRuntimeException;
 import uk.ac.manchester.tornado.api.exceptions.TornadoInternalError;
 import uk.ac.manchester.tornado.api.exceptions.TornadoMemoryException;
@@ -77,6 +77,7 @@ import uk.ac.manchester.tornado.runtime.common.RuntimeUtilities;
 import uk.ac.manchester.tornado.runtime.common.Tornado;
 import uk.ac.manchester.tornado.runtime.common.TornadoAcceleratorDevice;
 import uk.ac.manchester.tornado.runtime.common.TornadoInstalledCode;
+import uk.ac.manchester.tornado.runtime.common.TornadoLogger;
 import uk.ac.manchester.tornado.runtime.common.TornadoSchedulingStrategy;
 import uk.ac.manchester.tornado.runtime.sketcher.Sketch;
 import uk.ac.manchester.tornado.runtime.sketcher.TornadoSketcher;
@@ -194,8 +195,8 @@ public class PTXTornadoDevice implements TornadoAcceleratorDevice {
             return installedCode;
         } catch (Exception e) {
             System.err.println(e.getMessage());
-            driver.fatal("unable to compile %s for device %s\n", task.getId(), getDeviceName());
-            driver.fatal("exception occurred when compiling %s\n", ((CompilableTask) task).getMethod().getName());
+            TornadoLogger.fatal("unable to compile %s for device %s\n", task.getId(), getDeviceName());
+            TornadoLogger.fatal("exception occurred when compiling %s\n", ((CompilableTask) task).getMethod().getName());
             throw new TornadoBailoutRuntimeException("[Error During the Task Compilation] ", e);
         }
     }
@@ -638,8 +639,8 @@ public class PTXTornadoDevice implements TornadoAcceleratorDevice {
     }
 
     @Override
-    public TornadoVMBackend getTornadoVMBackend() {
-        return TornadoVMBackend.PTX;
+    public TornadoVMBackendType getTornadoVMBackend() {
+        return TornadoVMBackendType.PTX;
     }
 
     /**

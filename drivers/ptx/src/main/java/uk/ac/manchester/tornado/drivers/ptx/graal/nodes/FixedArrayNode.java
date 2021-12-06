@@ -22,8 +22,6 @@
 
 package uk.ac.manchester.tornado.drivers.ptx.graal.nodes;
 
-import static uk.ac.manchester.tornado.runtime.graal.compiler.TornadoCodeGenerator.trace;
-
 import org.graalvm.compiler.core.common.LIRKind;
 import org.graalvm.compiler.core.common.type.StampFactory;
 import org.graalvm.compiler.core.common.type.TypeReference;
@@ -37,6 +35,7 @@ import org.graalvm.compiler.nodes.spi.NodeLIRBuilderTool;
 
 import jdk.vm.ci.meta.ResolvedJavaType;
 import jdk.vm.ci.meta.Value;
+import uk.ac.manchester.tornado.drivers.common.logging.Logger;
 import uk.ac.manchester.tornado.drivers.ptx.graal.PTXArchitecture.PTXMemoryBase;
 import uk.ac.manchester.tornado.drivers.ptx.graal.PTXStampFactory;
 import uk.ac.manchester.tornado.drivers.ptx.graal.asm.PTXAssembler.PTXBinaryTemplate;
@@ -93,7 +92,7 @@ public class FixedArrayNode extends FixedNode implements LIRLowerable {
 
     @Override
     public void generate(NodeLIRBuilderTool gen) {
-        trace("emitFixedArray: elementKind=%s length=%s", elementKind, length);
+        Logger.traceBuildLIR(Logger.BACKEND.PTX, "emitFixedArray: elementKind=%s length=%s", elementKind, length);
         /*
          * using as_T reinterprets the data as type T - consider: float x = (float) 1;
          * and int value = 1, float x = &(value);

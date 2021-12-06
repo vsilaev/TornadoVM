@@ -32,9 +32,8 @@ import org.junit.Test;
 import uk.ac.manchester.tornado.api.TaskSchedule;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.annotations.Reduce;
-import uk.ac.manchester.tornado.api.enums.TornadoVMBackend;
+import uk.ac.manchester.tornado.api.enums.TornadoVMBackendType;
 import uk.ac.manchester.tornado.unittests.common.TornadoTestBase;
-
 
 public class TestVirtualDeviceKernel extends TornadoTestBase {
 
@@ -48,8 +47,8 @@ public class TestVirtualDeviceKernel extends TornadoTestBase {
             fileLog.delete();
         }
     }
-    private static final int SIZE = 8192;
 
+    private static final int SIZE = 8192;
 
     private static void maxReduction(float[] input, @Reduce float[] result) {
         for (@Parallel int i = 0; i < input.length; i++) {
@@ -95,14 +94,16 @@ public class TestVirtualDeviceKernel extends TornadoTestBase {
 
     @Test
     public void testVirtualDeviceKernelGPU() {
-        assertNotBackend(TornadoVMBackend.PTX);
+        assertNotBackend(TornadoVMBackendType.PTX);
+        assertNotBackend(TornadoVMBackendType.SPIRV);
 
         testVirtualDeviceKernel("virtualDeviceKernelGPU.cl");
     }
 
     @Test
     public void testVirtualDeviceKernelCPU() {
-        assertNotBackend(TornadoVMBackend.PTX);
+        assertNotBackend(TornadoVMBackendType.PTX);
+        assertNotBackend(TornadoVMBackendType.SPIRV);
 
         testVirtualDeviceKernel("virtualDeviceKernelCPU.cl");
     }

@@ -74,9 +74,8 @@ import uk.ac.manchester.tornado.api.runtime.TornadoAPIProvider;
 /**
  * Tornado Task Schedule API.
  * <p>
- * </> Task-based parallel API to express code to be compiled and executed from
- * Java to OpenCL a t runtime. The Tornado runtime executes the generated OpenCL
- * program on any OpenCL-compatible device.
+ * Task-based parallel API to express methods to be accelerated
+ * on any OpenCL, PTX or SPIRV compatible device.
  * </p>
  */
 public class TaskSchedule implements TornadoAPI, ProfileInterface {
@@ -187,8 +186,8 @@ public class TaskSchedule implements TornadoAPI, ProfileInterface {
     }
 
     @Override
-    public <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> TaskSchedule task(String id, Task15<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> code, T1 arg1,
-            T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7, T8 arg8, T9 arg9, T10 arg10, T11 arg11, T12 arg12, T13 arg13, T14 arg14, T15 arg15) {
+    public <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> TaskSchedule task(String id, Task15<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> code, T1 arg1, T2 arg2, 
+            T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7, T8 arg8, T9 arg9, T10 arg10, T11 arg11, T12 arg12, T13 arg13, T14 arg14, T15 arg15) {
         return addTask(TaskPackage.createPackage(checkTaskName(id), code, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15));
     }
 
@@ -448,9 +447,9 @@ public class TaskSchedule implements TornadoAPI, ProfileInterface {
      * 
      * Arrays can be of different sizes.
      * 
-     * If a {@link GridTask} is not passed in the {@link #execute()} method, then it
-     * will also trigger recompilation. Otherwise TornadoVM will not recompile the
-     * code, since the first compilation was generic.
+     * If a {@link GridScheduler} is not passed in the {@link #execute()} method,
+     * then it will also trigger recompilation. Otherwise TornadoVM will not
+     * recompile the code, since the first compilation was generic.
      * 
      * 
      * @param oldRef

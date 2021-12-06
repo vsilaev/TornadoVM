@@ -65,7 +65,7 @@ import org.graalvm.compiler.phases.util.Providers;
 
 import jdk.vm.ci.meta.ResolvedJavaMethod;
 import uk.ac.manchester.tornado.api.common.Access;
-import uk.ac.manchester.tornado.api.enums.TornadoVMBackend;
+import uk.ac.manchester.tornado.api.enums.TornadoVMBackendType;
 import uk.ac.manchester.tornado.api.exceptions.TornadoBailoutRuntimeException;
 import uk.ac.manchester.tornado.api.exceptions.TornadoInternalError;
 import uk.ac.manchester.tornado.api.exceptions.TornadoRuntimeException;
@@ -193,7 +193,7 @@ public class TornadoSketcher {
         if (cacheContainsSketch(request.resolvedMethod, request.driverIndex, request.deviceIndex)) {
             return;
         }
-        List<TornadoSketcherCacheEntry> sketches = cache.computeIfAbsent(request.resolvedMethod, k -> Collections.synchronizedList(new ArrayList<>(TornadoVMBackend.values().length)));
+        List<TornadoSketcherCacheEntry> sketches = cache.computeIfAbsent(request.resolvedMethod, k -> Collections.synchronizedList(new ArrayList<>(TornadoVMBackendType.values().length)));
         Future<Sketch> result = getTornadoExecutor().submit(new TornadoSketcherCallable(request));
         sketches.add(new TornadoSketcherCacheEntry(request.driverIndex, request.deviceIndex, result));
     }

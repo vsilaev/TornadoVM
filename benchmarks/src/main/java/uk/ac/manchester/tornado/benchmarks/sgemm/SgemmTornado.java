@@ -22,7 +22,10 @@ import static uk.ac.manchester.tornado.benchmarks.LinearAlgebraArrays.sgemm;
 
 import java.util.Random;
 
+import uk.ac.manchester.tornado.api.GridScheduler;
 import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.WorkerGrid;
+import uk.ac.manchester.tornado.api.WorkerGrid2D;
 import uk.ac.manchester.tornado.api.common.TornadoDevice;
 import uk.ac.manchester.tornado.api.runtime.TornadoRuntime;
 import uk.ac.manchester.tornado.benchmarks.BenchmarkDriver;
@@ -35,7 +38,10 @@ public class SgemmTornado extends BenchmarkDriver {
     private float[] a;
     private float[] b;
     private float[] c;
-    private TaskSchedule graph;
+    private GridScheduler grid;
+    WorkerGrid worker;
+
+    private boolean USE_GRID = Boolean.parseBoolean(TornadoRuntime.getProperty("usegrid", "False"));
 
     public SgemmTornado(int iterations, int m, int n) {
         super(iterations);
@@ -59,29 +65,40 @@ public class SgemmTornado extends BenchmarkDriver {
             b[i] = random.nextFloat();
         }
 
-        graph = new TaskSchedule("benchmark");
-        graph.streamIn(a, b);
-        graph.task("sgemm", LinearAlgebraArrays::sgemm, m, n, n, a, b, c);
-        graph.streamOut(c);
-        graph.warmup();
+        if (USE_GRID) {
+            worker = new WorkerGrid2D(m, n);
+            worker.setLocalWork(16, 16, 1);
+            grid = new GridScheduler();
+            grid.setWorkerGrid("benchmark.sgemm", worker);
+        }
+
+        ts = new TaskSchedule("benchmark");
+        ts.streamIn(a, b);
+        ts.task("sgemm", LinearAlgebraArrays::sgemm, m, n, n, a, b, c);
+        ts.streamOut(c);
+        ts.warmup();
     }
 
     @Override
     public void tearDown() {
-        graph.dumpProfiles();
+        ts.dumpProfiles();
 
         a = null;
         b = null;
         c = null;
 
-        graph.getDevice().reset();
+        ts.getDevice().reset();
         super.tearDown();
     }
 
     @Override
     public void benchmarkMethod(TornadoDevice device) {
-        graph.mapAllTo(device);
-        graph.execute();
+        ts.mapAllTo(device);
+        if (grid == null) {
+            ts.execute();
+        } else {
+            ts.execute(grid);
+        }
     }
 
     @Override
@@ -91,8 +108,8 @@ public class SgemmTornado extends BenchmarkDriver {
         boolean val = true;
 
         benchmarkMethod(device);
-        graph.syncObjects(c);
-        graph.clearProfiles();
+        ts.syncObjects(c);
+        ts.clearProfiles();
 
         sgemm(m, n, m, a, b, result);
 

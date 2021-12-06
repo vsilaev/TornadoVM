@@ -63,13 +63,19 @@ public final class Tornado implements TornadoCI {
      * Priority of the PTX Backend. The higher the number, the more priority over
      * the rest of the backends.
      */
-    public static final int PTX_BACKEND_PRIORITY = Integer.parseInt(Tornado.getProperty("tornado.ptx.priority", "1"));
+    public static final int PTX_BACKEND_PRIORITY = Integer.parseInt(Tornado.getProperty("tornado.ptx.priority", "0"));
 
     /**
      * Priority of the OpenCL Backend. The higher the number, the more priority over
      * the rest of the backends.
      */
-    public static final int OPENCL_BACKEND_PRIORITY = Integer.parseInt(Tornado.getProperty("tornado.opencl.priority", "0"));
+    public static final int OPENCL_BACKEND_PRIORITY = Integer.parseInt(Tornado.getProperty("tornado.opencl.priority", "10"));
+
+    /**
+     * Priority of the SPIRV Backend. The higher the number, the more priority over
+     * the rest of the backends.
+     */
+    public static final int SPIRV_BACKEND_PRIORITY = Integer.parseInt(Tornado.getProperty("tornado.spirv.priority", "11"));
 
     public static final boolean VALIDATE_ARRAY_HEADERS = Boolean.parseBoolean(settings.getProperty("tornado.opencl.array.validate", "False"));
     public static final boolean TORNADO_LOOPS_REVERSE = Boolean.parseBoolean(settings.getProperty("tornado.loops.reverse", "True"));
@@ -111,7 +117,7 @@ public final class Tornado implements TornadoCI {
     public static final TornadoLogger log = new TornadoLogger(Tornado.class);
 
     public static void debug(final String msg) {
-        log.debug(msg);
+        TornadoLogger.debug(msg);
     }
 
     private static void loadSettings(String filename) {
@@ -149,7 +155,7 @@ public final class Tornado implements TornadoCI {
     }
 
     public static void error(final String msg) {
-        log.error(msg);
+        TornadoLogger.error(msg);
     }
 
     public static void error(final String pattern, final Object... args) {
@@ -157,7 +163,7 @@ public final class Tornado implements TornadoCI {
     }
 
     public static void fatal(final String msg) {
-        log.fatal(msg);
+        TornadoLogger.fatal(msg);
     }
 
     public static void fatal(final String pattern, final Object... args) {
@@ -165,7 +171,7 @@ public final class Tornado implements TornadoCI {
     }
 
     public static void info(final String msg) {
-        log.info(msg);
+        TornadoLogger.info(msg);
     }
 
     public static void info(final String pattern, final Object... args) {
@@ -173,7 +179,7 @@ public final class Tornado implements TornadoCI {
     }
 
     public static void trace(final String msg) {
-        log.trace(msg);
+        TornadoLogger.trace(msg);
     }
 
     public static void trace(final String pattern, final Object... args) {
@@ -181,7 +187,7 @@ public final class Tornado implements TornadoCI {
     }
 
     public static void warn(final String msg) {
-        log.warn(msg);
+        TornadoLogger.warn(msg);
     }
 
     public static void warn(final String pattern, final Object... args) {

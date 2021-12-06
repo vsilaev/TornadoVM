@@ -48,7 +48,7 @@ import uk.ac.manchester.tornado.api.TornadoDeviceContext;
 import uk.ac.manchester.tornado.api.TornadoTargetDevice;
 import uk.ac.manchester.tornado.api.enums.TornadoDeviceType;
 import uk.ac.manchester.tornado.api.enums.TornadoExecutionStatus;
-import uk.ac.manchester.tornado.api.enums.TornadoVMBackend;
+import uk.ac.manchester.tornado.api.enums.TornadoVMBackendType;
 import uk.ac.manchester.tornado.api.mm.TornadoDeviceObjectState;
 import uk.ac.manchester.tornado.api.mm.TornadoMemoryProvider;
 
@@ -225,5 +225,5 @@ public interface TornadoDevice {
 
     void setAtomicsMapping(ConcurrentHashMap<Object, Integer> mappingAtomics);
 
-    TornadoVMBackend getTornadoVMBackend();
+    TornadoVMBackendType getTornadoVMBackend();
 }

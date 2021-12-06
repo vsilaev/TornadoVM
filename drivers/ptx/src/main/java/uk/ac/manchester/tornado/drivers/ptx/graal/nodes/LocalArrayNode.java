@@ -22,8 +22,6 @@
 
 package uk.ac.manchester.tornado.drivers.ptx.graal.nodes;
 
-import static uk.ac.manchester.tornado.runtime.graal.compiler.TornadoCodeGenerator.trace;
-
 import org.graalvm.compiler.core.common.LIRKind;
 import org.graalvm.compiler.core.common.type.StampFactory;
 import org.graalvm.compiler.core.common.type.TypeReference;
@@ -39,6 +37,7 @@ import org.graalvm.compiler.nodes.spi.NodeLIRBuilderTool;
 import jdk.vm.ci.meta.JavaKind;
 import jdk.vm.ci.meta.ResolvedJavaType;
 import jdk.vm.ci.meta.Value;
+import uk.ac.manchester.tornado.drivers.common.logging.Logger;
 import uk.ac.manchester.tornado.drivers.ptx.graal.PTXArchitecture.PTXMemoryBase;
 import uk.ac.manchester.tornado.drivers.ptx.graal.asm.PTXAssembler.PTXBinaryTemplate;
 import uk.ac.manchester.tornado.drivers.ptx.graal.compiler.PTXLIRGenerator;
@@ -89,7 +88,7 @@ public class LocalArrayNode extends FixedNode implements LIRLowerable, MarkLocal
 
     @Override
     public void generate(NodeLIRBuilderTool gen) {
-        trace("emitLocalArray length=%s kind=%s", length, kind);
+        Logger.traceBuildLIR(Logger.BACKEND.PTX, "emitLocalArray length=%s kind=%s", length, kind);
         final Value lengthValue = gen.operand(length);
 
         LIRKind lirKind = LIRKind.value(kind);

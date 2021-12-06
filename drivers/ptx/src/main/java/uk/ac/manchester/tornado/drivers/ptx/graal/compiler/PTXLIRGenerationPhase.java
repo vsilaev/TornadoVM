@@ -39,16 +39,17 @@ import org.graalvm.compiler.nodes.spi.NodeLIRBuilderTool;
 import jdk.vm.ci.code.TargetDescription;
 
 public class PTXLIRGenerationPhase extends LIRPhase<PTXLIRGenerationPhase.LIRGenerationContext> {
+
     public static final class LIRGenerationContext {
 
         private final StructuredGraph graph;
-
         private final LIRGeneratorTool lirGen;
         private final NodeLIRBuilderTool nodeLirBuilder;
         private final StructuredGraph.ScheduleResult schedule;
         private final boolean isKernel;
 
-        public LIRGenerationContext(final LIRGeneratorTool lirGen, final NodeLIRBuilderTool nodeLirBuilder, final StructuredGraph graph, final StructuredGraph.ScheduleResult schedule, final boolean isKernel) {
+        public LIRGenerationContext(final LIRGeneratorTool lirGen, final NodeLIRBuilderTool nodeLirBuilder, final StructuredGraph graph, final StructuredGraph.ScheduleResult schedule,
+                final boolean isKernel) {
             this.nodeLirBuilder = nodeLirBuilder;
             this.lirGen = lirGen;
             this.graph = graph;
@@ -73,12 +74,7 @@ public class PTXLIRGenerationPhase extends LIRPhase<PTXLIRGenerationPhase.LIRGen
         assert SSAUtil.verifySSAForm(lirGenRes.getLIR());
     }
 
-    private static void emitBlock(PTXNodeLIRBuilder nodeLirBuilder,
-                                  LIRGenerationResult lirGenRes,
-                                  Block b,
-                                  StructuredGraph graph,
-                                  BlockMap<List<Node>> blockMap,
-                                  boolean isKernel) {
+    private static void emitBlock(PTXNodeLIRBuilder nodeLirBuilder, LIRGenerationResult lirGenRes, Block b, StructuredGraph graph, BlockMap<List<Node>> blockMap, boolean isKernel) {
         if (lirGenRes.getLIR().getLIRforBlock(b) == null) {
             for (final Block pred : b.getPredecessors()) {
                 if (!b.isLoopHeader() || !pred.isLoopEnd()) {

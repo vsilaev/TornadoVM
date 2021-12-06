@@ -22,8 +22,6 @@
 
 package uk.ac.manchester.tornado.drivers.ptx.graal.nodes;
 
-import static uk.ac.manchester.tornado.runtime.graal.compiler.TornadoCodeGenerator.trace;
-
 import org.graalvm.compiler.core.common.LIRKind;
 import org.graalvm.compiler.core.common.type.StampFactory;
 import org.graalvm.compiler.graph.NodeClass;
@@ -37,6 +35,7 @@ import org.graalvm.compiler.nodes.spi.LIRLowerable;
 import org.graalvm.compiler.nodes.spi.NodeLIRBuilderTool;
 
 import jdk.vm.ci.meta.JavaKind;
+import uk.ac.manchester.tornado.drivers.common.logging.Logger;
 import uk.ac.manchester.tornado.drivers.ptx.graal.PTXArchitecture.PTXBuiltInRegisterArray;
 import uk.ac.manchester.tornado.drivers.ptx.graal.asm.PTXAssembler.PTXTernaryOp;
 import uk.ac.manchester.tornado.drivers.ptx.graal.compiler.PTXNodeLIRBuilder;
@@ -59,7 +58,7 @@ public class GlobalThreadIdNode extends FloatingNode implements LIRLowerable, Ma
 
     @Override
     public void generate(NodeLIRBuilderTool gen) {
-        trace("emitGlobalThreadId: dim=%s", index);
+        Logger.traceBuildLIR(Logger.BACKEND.PTX, "emitGlobalThreadId: dim=%s", index);
         LIRGeneratorTool tool = gen.getLIRGeneratorTool();
         LIRKind kind = tool.getLIRKind(stamp);
         PTXNodeLIRBuilder ptxNodeBuilder = (PTXNodeLIRBuilder) gen;

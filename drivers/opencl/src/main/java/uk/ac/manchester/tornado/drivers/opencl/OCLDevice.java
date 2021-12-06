@@ -38,9 +38,8 @@ import uk.ac.manchester.tornado.drivers.opencl.enums.OCLDeviceInfo;
 import uk.ac.manchester.tornado.drivers.opencl.enums.OCLDeviceType;
 import uk.ac.manchester.tornado.drivers.opencl.enums.OCLLocalMemType;
 import uk.ac.manchester.tornado.runtime.common.RuntimeUtilities;
-import uk.ac.manchester.tornado.runtime.common.TornadoLogger;
 
-public class OCLDevice extends TornadoLogger implements OCLTargetDevice {
+public class OCLDevice implements OCLTargetDevice {
 
     private final long id;
     private final int index;
@@ -281,6 +280,7 @@ public class OCLDevice extends TornadoLogger implements OCLTargetDevice {
 
     @Override
     public long[] getDeviceMaxWorkItemSizes() {
+
         if (maxWorkItemSizes != null) {
             return maxWorkItemSizes;
         }
@@ -385,7 +385,7 @@ public class OCLDevice extends TornadoLogger implements OCLTargetDevice {
     }
 
     @Override
-    public Object getDeviceInfo() {
+    public String getDeviceInfo() {
         StringBuilder sb = new StringBuilder();
         sb.append(String.format("id=0x%x, deviceName=%s, type=%s, available=%s\n", id, getDeviceName(), getDeviceType().toString(), isDeviceAvailable()));
         sb.append(String.format("Freq=%s, max compute units=%d\n", humanReadableFreq(getDeviceMaxClockFrequency()), getDeviceMaxComputeUnits()));

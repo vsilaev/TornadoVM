@@ -131,11 +131,6 @@ public final class PTXVectorPlugins {
         return vector;
     }
 
-    private static VectorValueNode resolveReceiver(GraphBuilderContext b, PTXKind vectorKind, Receiver receiver) {
-        ValueNode thisObject = receiver.get();
-        return resolveReceiver(b, vectorKind, thisObject);
-    }
-
     private static void registerVectorPlugins(final Plugins ps, final InvocationPlugins plugins, final PTXKind vectorKind, final Class<?> storageType, final Class<?> elementType) {
 
         final Class<?> declaringClass = vectorKind.getJavaClass();

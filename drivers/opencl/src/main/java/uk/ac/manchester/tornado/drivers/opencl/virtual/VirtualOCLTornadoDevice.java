@@ -37,7 +37,7 @@ import uk.ac.manchester.tornado.api.common.Access;
 import uk.ac.manchester.tornado.api.common.Event;
 import uk.ac.manchester.tornado.api.common.SchedulableTask;
 import uk.ac.manchester.tornado.api.enums.TornadoDeviceType;
-import uk.ac.manchester.tornado.api.enums.TornadoVMBackend;
+import uk.ac.manchester.tornado.api.enums.TornadoVMBackendType;
 import uk.ac.manchester.tornado.api.exceptions.TornadoBailoutRuntimeException;
 import uk.ac.manchester.tornado.api.exceptions.TornadoInternalError;
 import uk.ac.manchester.tornado.api.mm.ObjectBuffer;
@@ -60,6 +60,7 @@ import uk.ac.manchester.tornado.runtime.common.RuntimeUtilities;
 import uk.ac.manchester.tornado.runtime.common.Tornado;
 import uk.ac.manchester.tornado.runtime.common.TornadoAcceleratorDevice;
 import uk.ac.manchester.tornado.runtime.common.TornadoInstalledCode;
+import uk.ac.manchester.tornado.runtime.common.TornadoLogger;
 import uk.ac.manchester.tornado.runtime.common.TornadoSchedulingStrategy;
 import uk.ac.manchester.tornado.runtime.sketcher.Sketch;
 import uk.ac.manchester.tornado.runtime.sketcher.TornadoSketcher;
@@ -199,9 +200,9 @@ public class VirtualOCLTornadoDevice implements TornadoAcceleratorDevice {
 
             return null;
         } catch (Exception e) {
-            driver.fatal("unable to compile %s for device %s", task.getId(), getDeviceName());
-            driver.fatal("exception occured when compiling %s", ((CompilableTask) task).getMethod().getName());
-            driver.fatal("exception: %s", e.toString());
+            TornadoLogger.fatal("unable to compile %s for device %s", task.getId(), getDeviceName());
+            TornadoLogger.fatal("exception occured when compiling %s", ((CompilableTask) task).getMethod().getName());
+            TornadoLogger.fatal("exception: %s", e.toString());
             throw new TornadoBailoutRuntimeException("[Error During the Task Compilation] ", e);
         }
     }
@@ -450,7 +451,7 @@ public class VirtualOCLTornadoDevice implements TornadoAcceleratorDevice {
     }
 
     @Override
-    public TornadoVMBackend getTornadoVMBackend() {
-        return TornadoVMBackend.VIRTUAL;
+    public TornadoVMBackendType getTornadoVMBackend() {
+        return TornadoVMBackendType.VIRTUAL;
     }
 }

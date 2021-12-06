@@ -27,9 +27,8 @@ import static uk.ac.manchester.tornado.runtime.common.TornadoOptions.DUMP_EVENTS
 
 import uk.ac.manchester.tornado.api.exceptions.TornadoBailoutRuntimeException;
 import uk.ac.manchester.tornado.api.exceptions.TornadoInternalError;
-import uk.ac.manchester.tornado.runtime.common.TornadoLogger;
 
-public class PTXContext extends TornadoLogger {
+public class PTXContext {
 
     private final long ptxContext;
     private final PTXDevice device;

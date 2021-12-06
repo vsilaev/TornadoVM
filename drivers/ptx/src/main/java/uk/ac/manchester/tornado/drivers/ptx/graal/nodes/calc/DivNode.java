@@ -22,8 +22,6 @@
 
 package uk.ac.manchester.tornado.drivers.ptx.graal.nodes.calc;
 
-import static uk.ac.manchester.tornado.runtime.graal.compiler.TornadoCodeGenerator.trace;
-
 /*
     This implementation is copied from the Graal compiler 0:22. We need to do this because on later versions of the compiler,
     the DivNode as a child of FloatingNode does not exist any longer.
@@ -39,6 +37,8 @@ import org.graalvm.compiler.nodes.NodeView;
 import org.graalvm.compiler.nodes.ValueNode;
 import org.graalvm.compiler.nodes.calc.BinaryArithmeticNode;
 import org.graalvm.compiler.nodes.spi.NodeLIRBuilderTool;
+
+import uk.ac.manchester.tornado.drivers.common.logging.Logger;
 
 @NodeInfo(shortName = "div_node")
 public class DivNode extends BinaryArithmeticNode<ArithmeticOpTable.BinaryOp.Div> {
@@ -66,7 +66,7 @@ public class DivNode extends BinaryArithmeticNode<ArithmeticOpTable.BinaryOp.Div
     }
 
     public void generate(NodeLIRBuilderTool nodeValueMap, ArithmeticLIRGeneratorTool gen) {
-        trace("emtiDiv: x=%s, y=%s", x, y);
+        Logger.traceBuildLIR(Logger.BACKEND.PTX, "emtiDiv: x=%s, y=%s", x, y);
         nodeValueMap.setResult(this, gen.emitDiv(nodeValueMap.operand(this.getX()), nodeValueMap.operand(this.getY()), null));
     }
 }

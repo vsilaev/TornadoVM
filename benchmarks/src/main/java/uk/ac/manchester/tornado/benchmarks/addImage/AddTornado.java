@@ -36,8 +36,6 @@ public class AddTornado extends BenchmarkDriver {
 
     private ImageFloat4 a,b,c;
 
-    private TaskSchedule ts;
-
     public AddTornado(int iterations, int numElementsX, int numElementsY) {
         super(iterations);
         this.numElementsX = numElementsX;
