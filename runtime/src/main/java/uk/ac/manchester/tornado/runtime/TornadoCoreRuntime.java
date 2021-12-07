@@ -135,8 +135,6 @@ public class TornadoCoreRuntime extends TornadoLogger implements TornadoRuntimeC
     private final HotSpotJVMCIRuntime vmRuntime;
     private final TornadoVMConfig vmConfig;
 
-    private static final int DEFAULT_DRIVER = 0;
-
     private TornadoCoreRuntime() {
         objectMappings = new WeakHashMap<>();
 
@@ -251,7 +249,24 @@ public class TornadoCoreRuntime extends TornadoLogger implements TornadoRuntimeC
 
     @Override
     public TornadoAcceleratorDevice getDefaultDevice() {
-        return (tornadoVMDrivers == null || tornadoVMDrivers[DEFAULT_DRIVER] == null) ? JVM : (TornadoAcceleratorDevice) tornadoVMDrivers[DEFAULT_DRIVER].getDefaultDevice();
+        if (tornadoVMDrivers == null || tornadoVMDrivers.length == 0) {
+            return JVM;
+        }
+        int driverIndex = Tornado.DEFAULT_DRIVER_INDEX;
+        int maxDriverIndex = tornadoVMDrivers.length - 1;
+        if (driverIndex > maxDriverIndex || driverIndex < 0) {
+            throw new IllegalStateException("tornado.driver JVM property specifies defualt driver index #" + driverIndex + ", but the max available index is " + maxDriverIndex);
+        }
+        TornadoAcceleratorDriver driver = tornadoVMDrivers[driverIndex];
+        if (null == driver) {
+            return JVM;
+        }
+        int deviceIndex = Tornado.DEFAULT_DEVICE_INDEX;
+        int maxDeviceIndex = driver.getDeviceCount();
+        if (deviceIndex > maxDeviceIndex || deviceIndex < 0) {
+            throw new IllegalStateException("tornado.device JVM property specifies defualt device index #" + deviceIndex + ", but the max available index is " + maxDeviceIndex + " for the driver #" + driverIndex);
+        }
+        return (TornadoAcceleratorDevice)driver.getDevice(deviceIndex);
     }
 
     @Override
