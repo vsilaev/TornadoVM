@@ -59,6 +59,7 @@ public class PTXVectorSplit {
      * will perform unwrapping of the Tornado vector to vector types which exist in
      * PTX.
      */
+    @SuppressWarnings("all")
     private void PTXVectorSplit(String actualVectorName, PTXKind actualKind) {
         this.actualKind = actualKind;
 

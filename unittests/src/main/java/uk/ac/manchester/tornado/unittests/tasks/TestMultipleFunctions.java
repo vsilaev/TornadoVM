@@ -19,15 +19,16 @@ package uk.ac.manchester.tornado.unittests.tasks;
 
 import static junit.framework.TestCase.assertEquals;
 
+import java.util.Random;
+import java.util.stream.IntStream;
+
 import org.junit.Assert;
 import org.junit.Test;
+
 import uk.ac.manchester.tornado.api.TaskSchedule;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.collections.types.Float4;
 import uk.ac.manchester.tornado.unittests.common.TornadoTestBase;
-
-import java.util.Random;
-import java.util.stream.IntStream;
 
 /**
  * Tests TornadoVM compilation under different scenarios, when not performing
@@ -158,8 +159,7 @@ public class TestMultipleFunctions extends TornadoTestBase {
      * non-main kernel functions.
      */
     public static void vectorTypes(Float4 a, Float4 b, Float4 c) {
-        c = Float4.add(foo(a), bar(b));
-        //c.set(Float4.add(foo(a), bar(b)));
+        c.set(Float4.add(foo(a), bar(b)));
     }
 
     @Test
@@ -318,6 +318,11 @@ public class TestMultipleFunctions extends TornadoTestBase {
         //@formatter:on
 
         Float4 result = Float4.add(foo(a), bar(b));
+
+        assertEquals(result.getX(), c.getX());
+        assertEquals(result.getY(), c.getY());
+        assertEquals(result.getW(), c.getW());
+        assertEquals(result.getZ(), c.getZ());
     }
 
     /**

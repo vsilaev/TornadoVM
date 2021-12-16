@@ -179,7 +179,7 @@ public abstract class BenchmarkRunner {
 
         try {
             final String canonicalName = String.format("%s.%s.Benchmark", BenchmarkRunner.class.getPackage().getName(), args[0]);
-            final BenchmarkRunner benchmarkRunner = (BenchmarkRunner) Class.forName(canonicalName).newInstance();
+            final BenchmarkRunner benchmarkRunner = (BenchmarkRunner) Class.forName(canonicalName).getConstructor().newInstance();
             final String[] benchmarkArgs = Arrays.copyOfRange(args, 1, args.length);
 
             if (System.getProperty("config") != null) {
@@ -188,7 +188,7 @@ public abstract class BenchmarkRunner {
 
             benchmarkRunner.parseArgs(benchmarkArgs);
             benchmarkRunner.run();
-        } catch (ClassNotFoundException | IllegalAccessException | InstantiationException e) {
+        } catch (ReflectiveOperationException e) {
             e.printStackTrace();
             System.exit(0);
         }

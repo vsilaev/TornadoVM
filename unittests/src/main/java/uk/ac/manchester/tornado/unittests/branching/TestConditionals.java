@@ -22,7 +22,6 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
 import java.util.Arrays;
-import java.util.Random;
 import java.util.stream.IntStream;
 
 import org.junit.Test;
@@ -95,8 +94,6 @@ public class TestConditionals extends TornadoTestBase {
         final int size = 128;
         int[] a = new int[size];
         int[] serial = new int[size];
-
-        Random random = new Random();
 
         IntStream.range(0, size).forEach(i -> {
             a[i] = 50;

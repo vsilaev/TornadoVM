@@ -129,7 +129,7 @@ public abstract class PTXArrayWrapper<T> implements ObjectBuffer {
     }
 
     private PTXByteBuffer prepareArrayHeader() {
-        final PTXByteBuffer header = deviceContext.getMemoryManager().getSubBuffer((int) bufferOffset, arrayHeaderSize);
+        final PTXByteBuffer header = deviceContext.getMemoryManager().getSubBuffer((int) getBufferOffset(), arrayHeaderSize);
         header.buffer.clear();
         header.buffer.position(header.buffer.capacity());
         return header;
@@ -148,7 +148,7 @@ public abstract class PTXArrayWrapper<T> implements ObjectBuffer {
     }
 
     private PTXByteBuffer buildArrayHeader(int arraySize) {
-        final PTXByteBuffer header = deviceContext.getMemoryManager().getSubBuffer((int) bufferOffset, arrayHeaderSize);
+        final PTXByteBuffer header = deviceContext.getMemoryManager().getSubBuffer((int) getBufferOffset(), arrayHeaderSize);
         header.buffer.clear();
         int index = 0;
         while (index < arrayLengthOffset) {
@@ -206,7 +206,7 @@ public abstract class PTXArrayWrapper<T> implements ObjectBuffer {
     }
 
     private PTXByteBuffer buildArrayHeaderBatch(long arraySize) {
-        final PTXByteBuffer header = deviceContext.getMemoryManager().getSubBuffer((int) bufferOffset, arrayHeaderSize);
+        final PTXByteBuffer header = deviceContext.getMemoryManager().getSubBuffer((int) getBufferOffset(), arrayHeaderSize);
         header.buffer.clear();
         int index = 0;
         while (index < arrayLengthOffset) {

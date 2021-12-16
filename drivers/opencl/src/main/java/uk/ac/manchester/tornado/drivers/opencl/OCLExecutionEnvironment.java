@@ -23,9 +23,9 @@
  */
 package uk.ac.manchester.tornado.drivers.opencl;
 
-import uk.ac.manchester.tornado.api.TornadoDeviceContext;
-
 import java.util.List;
+
+import uk.ac.manchester.tornado.api.TornadoDeviceContext;
 
 public interface OCLExecutionEnvironment {
 

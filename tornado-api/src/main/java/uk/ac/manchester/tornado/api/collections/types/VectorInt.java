@@ -51,7 +51,7 @@ public class VectorInt implements PrimitiveStorage<IntBuffer> {
     
     private final int numElements;
     private final int[] storage;
-    private static final int elementSize = 1;
+    private static final int ELEMENT_SIZE = 1;
 
     /**
      * Creates a vector using the provided backing array
@@ -83,7 +83,7 @@ public class VectorInt implements PrimitiveStorage<IntBuffer> {
      *            vector int array
      */
     public VectorInt(int[] storage) {
-        this(storage.length / elementSize, storage);
+        this(storage.length / ELEMENT_SIZE, storage);
     }
 
     public int[] getArray() {
@@ -224,7 +224,7 @@ public class VectorInt implements PrimitiveStorage<IntBuffer> {
      * @return String
      */
     public String toString(String fmt) {
-        StringBuffer sb = new StringBuffer("[");
+        StringBuilder sb = new StringBuilder("[");
         sb.append("[ ");
         for (int i = 0; i < numElements; i++) {
             sb.append(String.format(fmt, get(i)) + " ");
@@ -236,7 +236,7 @@ public class VectorInt implements PrimitiveStorage<IntBuffer> {
     public String toString() {
         String str = String.format("VectorInt <%d>", numElements);
         if (numElements < 32) {
-            str += toString(IntOps.fmt);
+            str += toString(IntOps.FMT);
         }
         return str;
     }

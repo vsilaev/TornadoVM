@@ -1,9 +1,8 @@
-
 /*
  * This file is part of Tornado: A heterogeneous programming framework:
  * https://github.com/beehive-lab/tornadovm
  *
- * Copyright (c) 2020, APT Group, Department of Computer Science,
+ * Copyright (c) 2013-2020, APT Group, Department of Computer Science,
  * The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -39,65 +38,13 @@
  * obligated to do so.  If you do not wish to do so, delete this
  * exception statement from your version.
  *
- * Author Gary Frost
  */
-package uk.ac.manchester.tornado.api.profiler;
+package uk.ac.manchester.tornado.api.exceptions;
 
-import java.io.File;
+public class TornadoAPIException extends RuntimeException {
+    private static final long serialVersionUID = 1L;
 
-public class ChromeEventJSonWriter extends JSonWriter<ChromeEventJSonWriter> {
-    ContentWriter NO_ARGS = null;
-
-    ChromeEventJSonWriter() {
-        super();
-        objectStart();
-        arrayStart("traceEvents");
-        object(() -> {
-            object("args", () ->
-                kv("name", "Tornado")
-            );
-            kv("ph", "M");
-            pidAndTid();
-            kv("name", "tornadovm");
-            kv("sort_index", 1);
-        });
-    }
-
-    ChromeEventJSonWriter pidAndTid() {
-        return kv("pid", 0).kv("tid", Thread.currentThread().getId());
-    }
-
-    ChromeEventJSonWriter common(String phase, String name, String category) {
-        return kv("ph", phase).kv("name", name).kv("cat", category).pidAndTid();
-    }
-
-    public ChromeEventJSonWriter x(String name, String category, long startNs, long endNs, ContentWriter cw) {
-        return compact().object(() -> {
-            common("X", name, category);
-            ns("ts", startNs);
-            nsd("dur", endNs - startNs);
-            if (cw != NO_ARGS) {
-                object("args", () -> {
-                    nonCompact();
-                    cw.write();
-                });
-            } else {
-                nonCompact();
-            }
-        });
-    }
-
-    ChromeEventJSonWriter b(String name, String category, long startNs) {
-        return common("B", name, category).ns("ts", startNs);
-    }
-
-    ChromeEventJSonWriter e(String name, long durationNs) {
-        return kv("ph", "E").kv("name", name).pidAndTid().ns("ts", durationNs);
-    }
-
-    @Override
-    void write(File file) {
-        arrayEnd().objectEnd();
-        super.write(file);
+    public TornadoAPIException(final String msg, Exception e) {
+        super(msg, e);
     }
 }

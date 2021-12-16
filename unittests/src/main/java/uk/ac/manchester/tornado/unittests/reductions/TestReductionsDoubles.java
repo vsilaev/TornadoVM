@@ -462,6 +462,7 @@ public class TestReductionsDoubles extends TornadoTestBase {
         }
     }
 
+    @SuppressWarnings("unused")
     private static void computeMax(final double[] values, final double[] sum, @Reduce final double[] std) {
         final double s = sum[0] / values.length;
         for (@Parallel int i = 0; i < values.length; i++) {

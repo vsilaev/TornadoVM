@@ -32,7 +32,7 @@ public final class TornadoLIRGenerator {
     public static final TornadoLogger log = new TornadoLogger(TornadoLIRGenerator.class);
 
     public static void debug(final String msg) {
-        log.debug(msg);
+        TornadoLogger.debug(msg);
     }
 
     public static void debug(final String pattern, final Object... args) {
@@ -40,7 +40,7 @@ public final class TornadoLIRGenerator {
     }
 
     public static void error(final String msg) {
-        log.error(msg);
+        TornadoLogger.error(msg);
     }
 
     public static void error(final String pattern, final Object... args) {
@@ -48,7 +48,7 @@ public final class TornadoLIRGenerator {
     }
 
     public static void fatal(final String msg) {
-        log.fatal(msg);
+        TornadoLogger.fatal(msg);
     }
 
     public static void fatal(final String pattern, final Object... args) {
@@ -56,7 +56,7 @@ public final class TornadoLIRGenerator {
     }
 
     public static void info(final String msg) {
-        log.info(msg);
+        TornadoLogger.info(msg);
     }
 
     public static void info(final String pattern, final Object... args) {
@@ -64,7 +64,7 @@ public final class TornadoLIRGenerator {
     }
 
     public static void trace(final String msg) {
-        log.trace(msg);
+        TornadoLogger.trace(msg);
     }
 
     public static void trace(final String pattern, final Object... args) {
@@ -72,7 +72,7 @@ public final class TornadoLIRGenerator {
     }
 
     public static void warn(final String msg) {
-        log.warn(msg);
+        TornadoLogger.warn(msg);
     }
 
     public static void warn(final String pattern, final Object... args) {

@@ -55,19 +55,19 @@ public final class Double6 implements PrimitiveStorage<DoubleBuffer> {
      * backing array
      */
     @Payload
-    final protected double[] storage;
+    final double[] storage;
 
     /**
      * number of elements in the storage
      */
-    final private static int numElements = 6;
+    private static final int NUM_ELEMENTS = 6;
 
     public Double6(double[] storage) {
         this.storage = storage;
     }
 
     public Double6() {
-        this(new double[numElements]);
+        this(new double[NUM_ELEMENTS]);
     }
 
     public Double6(double s0, double s1, double s2, double s3, double s4, double s5) {
@@ -179,14 +179,14 @@ public final class Double6 implements PrimitiveStorage<DoubleBuffer> {
 
     public static Double6 loadFromArray(final double[] array, int index) {
         final Double6 result = new Double6();
-        for (int i = 0; i < numElements; i++) {
+        for (int i = 0; i < NUM_ELEMENTS; i++) {
             result.set(i, array[index + i]);
         }
         return result;
     }
 
     public final void storeToArray(final double[] array, int index) {
-        for (int i = 0; i < numElements; i++) {
+        for (int i = 0; i < NUM_ELEMENTS; i++) {
             array[index + i] = get(i);
         }
     }
@@ -203,7 +203,7 @@ public final class Double6 implements PrimitiveStorage<DoubleBuffer> {
 
     @Override
     public int size() {
-        return numElements;
+        return NUM_ELEMENTS;
     }
 
     /**
@@ -214,7 +214,7 @@ public final class Double6 implements PrimitiveStorage<DoubleBuffer> {
      */
     public static Double6 add(Double6 a, Double6 b) {
         final Double6 result = new Double6();
-        for (int i = 0; i < numElements; i++) {
+        for (int i = 0; i < NUM_ELEMENTS; i++) {
             result.set(i, a.get(i) + b.get(i));
         }
         return result;
@@ -222,7 +222,7 @@ public final class Double6 implements PrimitiveStorage<DoubleBuffer> {
 
     public static Double6 sub(Double6 a, Double6 b) {
         final Double6 result = new Double6();
-        for (int i = 0; i < numElements; i++) {
+        for (int i = 0; i < NUM_ELEMENTS; i++) {
             result.set(i, a.get(i) - b.get(i));
         }
         return result;
@@ -230,7 +230,7 @@ public final class Double6 implements PrimitiveStorage<DoubleBuffer> {
 
     public static Double6 div(Double6 a, Double6 b) {
         final Double6 result = new Double6();
-        for (int i = 0; i < numElements; i++) {
+        for (int i = 0; i < NUM_ELEMENTS; i++) {
             result.set(i, a.get(i) / b.get(i));
         }
         return result;
@@ -238,7 +238,7 @@ public final class Double6 implements PrimitiveStorage<DoubleBuffer> {
 
     public static Double6 mult(Double6 a, Double6 b) {
         final Double6 result = new Double6();
-        for (int i = 0; i < numElements; i++) {
+        for (int i = 0; i < NUM_ELEMENTS; i++) {
             result.set(i, a.get(i) * b.get(i));
         }
         return result;
@@ -246,7 +246,7 @@ public final class Double6 implements PrimitiveStorage<DoubleBuffer> {
 
     public static Double6 min(Double6 a, Double6 b) {
         final Double6 result = new Double6();
-        for (int i = 0; i < numElements; i++) {
+        for (int i = 0; i < NUM_ELEMENTS; i++) {
             result.set(i, Math.min(a.get(i), b.get(i)));
         }
         return result;
@@ -254,7 +254,7 @@ public final class Double6 implements PrimitiveStorage<DoubleBuffer> {
 
     public static Double6 max(Double6 a, Double6 b) {
         final Double6 result = new Double6();
-        for (int i = 0; i < numElements; i++) {
+        for (int i = 0; i < NUM_ELEMENTS; i++) {
             result.set(i, Math.max(a.get(i), b.get(i)));
         }
         return result;
@@ -265,7 +265,7 @@ public final class Double6 implements PrimitiveStorage<DoubleBuffer> {
      */
     public static Double6 add(Double6 a, double b) {
         final Double6 result = new Double6();
-        for (int i = 0; i < numElements; i++) {
+        for (int i = 0; i < NUM_ELEMENTS; i++) {
             result.set(i, a.get(i) + b);
         }
         return result;
@@ -273,7 +273,7 @@ public final class Double6 implements PrimitiveStorage<DoubleBuffer> {
 
     public static Double6 sub(Double6 a, double b) {
         final Double6 result = new Double6();
-        for (int i = 0; i < numElements; i++) {
+        for (int i = 0; i < NUM_ELEMENTS; i++) {
             result.set(i, a.get(i) - b);
         }
         return result;
@@ -281,7 +281,7 @@ public final class Double6 implements PrimitiveStorage<DoubleBuffer> {
 
     public static Double6 mult(Double6 a, double b) {
         final Double6 result = new Double6();
-        for (int i = 0; i < numElements; i++) {
+        for (int i = 0; i < NUM_ELEMENTS; i++) {
             result.set(i, a.get(i) * b);
         }
         return result;
@@ -308,7 +308,7 @@ public final class Double6 implements PrimitiveStorage<DoubleBuffer> {
      */
     public static Double6 sqrt(Double6 a) {
         final Double6 result = new Double6();
-        for (int i = 0; i < numElements; i++) {
+        for (int i = 0; i < NUM_ELEMENTS; i++) {
             a.set(i, TornadoMath.sqrt(a.get(i)));
         }
         return result;
@@ -316,7 +316,7 @@ public final class Double6 implements PrimitiveStorage<DoubleBuffer> {
 
     public static Double6 floor(Double6 a) {
         final Double6 result = new Double6();
-        for (int i = 0; i < numElements; i++) {
+        for (int i = 0; i < NUM_ELEMENTS; i++) {
             a.set(i, TornadoMath.floor(a.get(i)));
         }
         return result;
@@ -324,7 +324,7 @@ public final class Double6 implements PrimitiveStorage<DoubleBuffer> {
 
     public static Double6 fract(Double6 a) {
         final Double6 result = new Double6();
-        for (int i = 0; i < numElements; i++) {
+        for (int i = 0; i < NUM_ELEMENTS; i++) {
             a.set(i, TornadoMath.fract(a.get(i)));
         }
         return result;
@@ -332,7 +332,7 @@ public final class Double6 implements PrimitiveStorage<DoubleBuffer> {
 
     public static Double6 clamp(Double6 a, double min, double max) {
         Double6 result = new Double6();
-        for (int i = 0; i < numElements; i++) {
+        for (int i = 0; i < NUM_ELEMENTS; i++) {
             a.set(i, TornadoMath.clamp(a.get(i), min, max));
         }
         return result;
@@ -343,7 +343,7 @@ public final class Double6 implements PrimitiveStorage<DoubleBuffer> {
      */
     public static double min(Double6 value) {
         double result = Double.MAX_VALUE;
-        for (int i = 0; i < numElements; i++) {
+        for (int i = 0; i < NUM_ELEMENTS; i++) {
             result = Math.min(result, value.get(i));
         }
         return result;
@@ -351,7 +351,7 @@ public final class Double6 implements PrimitiveStorage<DoubleBuffer> {
 
     public static double max(Double6 value) {
         double result = Double.MIN_VALUE;
-        for (int i = 0; i < numElements; i++) {
+        for (int i = 0; i < NUM_ELEMENTS; i++) {
             result = Math.max(result, value.get(i));
         }
         return result;
@@ -360,7 +360,7 @@ public final class Double6 implements PrimitiveStorage<DoubleBuffer> {
     public static double dot(Double6 a, Double6 b) {
         double result = 0f;
         final Double6 m = mult(a, b);
-        for (int i = 0; i < numElements; i++) {
+        for (int i = 0; i < NUM_ELEMENTS; i++) {
             result += m.get(i);
         }
         return result;

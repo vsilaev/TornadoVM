@@ -51,7 +51,7 @@ import uk.ac.manchester.tornado.api.type.annotations.Vector;
 public final class Byte3 implements PrimitiveStorage<ByteBuffer> {
     private static final long serialVersionUID = 1L;
 
-    private static final String numberFormat = "{ x=%-7d, y=%-7d, z=%-7d }";
+    private static final String NUMBER_FORMAT = "{ x=%-7d, y=%-7d, z=%-7d }";
 
     public static final Class<Byte3> TYPE = Byte3.class;
 
@@ -59,19 +59,19 @@ public final class Byte3 implements PrimitiveStorage<ByteBuffer> {
      * backing array
      */
     @Payload
-    final protected byte[] storage;
+    private final byte[] storage;
 
     /**
      * number of elements in the storage
      */
-    final private static int numElements = 3;
+    private static final int NUM_ELEMENTS = 3;
 
     public Byte3(byte[] storage) {
         this.storage = storage;
     }
 
     public Byte3() {
-        this(new byte[numElements]);
+        this(new byte[NUM_ELEMENTS]);
     }
 
     public Byte3(byte x, byte y, byte z) {
@@ -139,10 +139,10 @@ public final class Byte3 implements PrimitiveStorage<ByteBuffer> {
     }
 
     public String toString() {
-        return toString(numberFormat);
+        return toString(NUMBER_FORMAT);
     }
 
-    protected static Byte3 loadFromArray(final byte[] array, int index) {
+    static Byte3 loadFromArray(final byte[] array, int index) {
         final Byte3 result = new Byte3();
         result.setX(array[index]);
         result.setY(array[index + 1]);
@@ -150,7 +150,7 @@ public final class Byte3 implements PrimitiveStorage<ByteBuffer> {
         return result;
     }
 
-    protected final void storeToArray(final byte[] array, int index) {
+    void storeToArray(final byte[] array, int index) {
         array[index] = getX();
         array[index + 1] = getY();
         array[index + 2] = getZ();
@@ -168,7 +168,7 @@ public final class Byte3 implements PrimitiveStorage<ByteBuffer> {
 
     @Override
     public int size() {
-        return numElements;
+        return NUM_ELEMENTS;
     }
 
     /*

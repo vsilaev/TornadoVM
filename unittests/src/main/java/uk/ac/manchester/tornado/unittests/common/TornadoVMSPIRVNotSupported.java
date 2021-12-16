@@ -18,6 +18,7 @@
 package uk.ac.manchester.tornado.unittests.common;
 
 public class TornadoVMSPIRVNotSupported extends RuntimeException {
+    private static final long serialVersionUID = 1L;
 
     public TornadoVMSPIRVNotSupported(String message) {
         super(message);

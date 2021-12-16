@@ -44,27 +44,29 @@ package uk.ac.manchester.tornado.api.collections.types;
 import java.nio.FloatBuffer;
 import java.util.Arrays;
 
+import uk.ac.manchester.tornado.api.exceptions.TornadoRuntimeException;
+
 public class Matrix2DFloat4 implements PrimitiveStorage<FloatBuffer> {
     private static final long serialVersionUID = 1L;
     /**
      * backing array
      */
-    final protected float[] storage;
+    protected final float[] storage;
 
     /**
      * number of elements in the storage
      */
-    final private int numElements;
+    private final int numElements;
 
     /**
      * Number of rows
      */
-    final protected int M;
+    protected final int M;
 
     /**
      * Number of columns
      */
-    final protected int N;
+    protected final int N;
 
     /**
      * Vector-width each position in the matrix
@@ -181,7 +183,7 @@ public class Matrix2DFloat4 implements PrimitiveStorage<FloatBuffer> {
                 }
             }
         } else {
-            throw new RuntimeException("Square matrix expected");
+            throw new TornadoRuntimeException("Square matrix expected");
         }
     }
 
@@ -198,16 +200,15 @@ public class Matrix2DFloat4 implements PrimitiveStorage<FloatBuffer> {
     }
 
     public String toString(String fmt) {
-        String str = "";
+        StringBuilder str = new StringBuilder("");
 
         for (int i = 0; i < M; i++) {
             for (int j = 0; j < N; j++) {
-                str += String.format(fmt, get(i, j)) + " ";
+                str.append(String.format(fmt, get(i, j)) + " ");
             }
-            str += "\n";
+            str.append("\n");
         }
-        str.trim();
-        return str;
+        return str.toString().trim();
     }
 
     public static void scale(Matrix2DFloat4 matrix, float value) {
