@@ -69,21 +69,6 @@ import uk.ac.manchester.tornado.runtime.tasks.GlobalObjectState;
 
 public class TornadoCoreRuntime extends TornadoLogger implements TornadoRuntimeCI {
 
-    private static final OptionValues options;
-    static {
-        EconomicMap<OptionKey<?>, Object> opts = OptionValues.newOptionMap();
-        opts.putAll(HotSpotGraalOptionValues.defaultOptions().getMap());
-
-        opts.put(GraalOptions.OmitHotExceptionStacktrace, false);
-
-        opts.put(GraalOptions.MatchExpressions, true);
-        opts.put(GraalOptions.RemoveNeverExecutedCode, false);
-        opts.put(ConstantLoadOptimization.Options.LIROptConstantLoadOptimization, false);
-        opts.put(PostAllocationOptimizationStage.Options.LIROptRedundantMoveElimination, false);
-
-        options = new OptionValues(opts);
-    }
-
     private static final ThreadFactory executorThreadFactory = new ThreadFactory() {
         private final AtomicInteger threadId = new AtomicInteger(0);
 
@@ -98,12 +83,34 @@ public class TornadoCoreRuntime extends TornadoLogger implements TornadoRuntimeC
     private static final ExecutorService EXECUTOR = Executors.newFixedThreadPool(TornadoOptions.TORNADO_SKETCHER_THREADS, executorThreadFactory);
     private static final TornadoCoreRuntime runtime = new TornadoCoreRuntime();
     private static final JVMMapping JVM = new JVMMapping();
+    private static final int DEFAULT_DRIVER = 0;
+    private static DebugContext debugContext = null;
+    private static OptionValues options;
+    private final Map<Object, GlobalObjectState> objectMappings;
+    private final JVMCIBackend vmBackend;
+    private final HotSpotJVMCIRuntime vmRuntime;
+    private final TornadoVMConfig vmConfig;
+    private TornadoAcceleratorDriver[] tornadoVMDrivers;
+    private int driverCount;
+
+    private TornadoCoreRuntime() {
+        objectMappings = new WeakHashMap<>();
+
+        initOptions();
+        guarantee(!GraalOptions.OmitHotExceptionStacktrace.getValue(options), "error");
+
+        if (!(JVMCI.getRuntime() instanceof HotSpotJVMCIRuntime)) {
+            shouldNotReachHere("Unsupported JVMCIRuntime: ", JVMCI.getRuntime().getClass().getName());
+        }
+        vmRuntime = (HotSpotJVMCIRuntime) JVMCI.getRuntime();
+        vmBackend = vmRuntime.getHostJVMCIBackend();
+        vmConfig = new TornadoVMConfig(vmRuntime.getConfigStore(), vmBackend.getMetaAccess());
+        tornadoVMDrivers = loadDrivers();
+    }
 
     public static TornadoCoreRuntime getTornadoRuntime() {
         return runtime;
     }
-
-    private static DebugContext debugContext = null;
 
     public static DebugContext getDebugContext() {
         if (debugContext == null) {
@@ -128,26 +135,22 @@ public class TornadoCoreRuntime extends TornadoLogger implements TornadoRuntimeC
         return runtime.vmConfig;
     }
 
-    private final Map<Object, GlobalObjectState> objectMappings;
-    private TornadoAcceleratorDriver[] tornadoVMDrivers;
-    private int driverCount;
-    private final JVMCIBackend vmBackend;
-    private final HotSpotJVMCIRuntime vmRuntime;
-    private final TornadoVMConfig vmConfig;
+    public static OptionValues getOptions() {
+        return options;
+    }
 
-    private TornadoCoreRuntime() {
-        objectMappings = new WeakHashMap<>();
+    private void initOptions() {
+        EconomicMap<OptionKey<?>, Object> opts = OptionValues.newOptionMap();
+        opts.putAll(HotSpotGraalOptionValues.defaultOptions().getMap());
 
-        guarantee(!GraalOptions.OmitHotExceptionStacktrace.getValue(options), "error");
+        opts.put(GraalOptions.OmitHotExceptionStacktrace, false);
 
-        if (!(JVMCI.getRuntime() instanceof HotSpotJVMCIRuntime)) {
-            shouldNotReachHere("Unsupported JVMCIRuntime: ", JVMCI.getRuntime().getClass().getName());
-        }
-        vmRuntime = (HotSpotJVMCIRuntime) JVMCI.getRuntime();
-        vmBackend = vmRuntime.getHostJVMCIBackend();
-        vmConfig = new TornadoVMConfig(vmRuntime.getConfigStore(), vmBackend.getMetaAccess());
-        tornadoVMDrivers = loadDrivers();
+        opts.put(GraalOptions.MatchExpressions, true);
+        opts.put(GraalOptions.RemoveNeverExecutedCode, false);
+        opts.put(ConstantLoadOptimization.Options.LIROptConstantLoadOptimization, false);
+        opts.put(PostAllocationOptimizationStage.Options.LIROptRedundantMoveElimination, false);
 
+        options = new OptionValues(opts);
     }
 
     public void clearObjectState() {
@@ -160,7 +163,7 @@ public class TornadoCoreRuntime extends TornadoLogger implements TornadoRuntimeC
     private TornadoAcceleratorDriver[] loadDrivers() {
         ServiceLoader<TornadoDriverProvider> loader = ServiceLoader.load(TornadoDriverProvider.class);
         List<TornadoDriverProvider> providerList = StreamSupport.stream(loader.spliterator(), false).sorted().collect(Collectors.toList());
-        TornadoAcceleratorDriver[] tornadoVMDrivers = new TornadoAcceleratorDriver[TornadoDrivers.values().length];
+        TornadoAcceleratorDriver[] tornadoAcceleratorDrivers = new TornadoAcceleratorDriver[TornadoDrivers.values().length];
         int index = 0;
         for (TornadoDriverProvider provider : providerList) {
             if (Tornado.FULL_DEBUG) {
@@ -170,17 +173,13 @@ public class TornadoCoreRuntime extends TornadoLogger implements TornadoRuntimeC
             if ((!isRMI) || (isRMI && SHOULD_LOAD_RMI)) {
                 TornadoAcceleratorDriver driver = provider.createDriver(options, vmRuntime, vmConfig);
                 if (driver != null) {
-                    tornadoVMDrivers[index] = driver;
+                    tornadoAcceleratorDrivers[index] = driver;
                     index++;
                 }
             }
         }
         driverCount = index;
-        return tornadoVMDrivers;
-    }
-
-    public static OptionValues getOptions() {
-        return options;
+        return tornadoAcceleratorDrivers;
     }
 
     public GlobalObjectState resolveObject(Object object) {
@@ -249,24 +248,7 @@ public class TornadoCoreRuntime extends TornadoLogger implements TornadoRuntimeC
 
     @Override
     public TornadoAcceleratorDevice getDefaultDevice() {
-        if (tornadoVMDrivers == null || tornadoVMDrivers.length == 0) {
-            return JVM;
-        }
-        int driverIndex = Tornado.DEFAULT_DRIVER_INDEX;
-        int maxDriverIndex = tornadoVMDrivers.length - 1;
-        if (driverIndex > maxDriverIndex || driverIndex < 0) {
-            throw new IllegalStateException("tornado.driver JVM property specifies defualt driver index #" + driverIndex + ", but the max available index is " + maxDriverIndex);
-        }
-        TornadoAcceleratorDriver driver = tornadoVMDrivers[driverIndex];
-        if (null == driver) {
-            return JVM;
-        }
-        int deviceIndex = Tornado.DEFAULT_DEVICE_INDEX;
-        int maxDeviceIndex = driver.getDeviceCount();
-        if (deviceIndex > maxDeviceIndex || deviceIndex < 0) {
-            throw new IllegalStateException("tornado.device JVM property specifies defualt device index #" + deviceIndex + ", but the max available index is " + maxDeviceIndex + " for the driver #" + driverIndex);
-        }
-        return (TornadoAcceleratorDevice)driver.getDevice(deviceIndex);
+        return (tornadoVMDrivers == null || tornadoVMDrivers[DEFAULT_DRIVER] == null) ? JVM : (TornadoAcceleratorDevice) tornadoVMDrivers[DEFAULT_DRIVER].getDefaultDevice();
     }
 
     @Override

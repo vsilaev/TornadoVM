@@ -117,7 +117,7 @@ public class TornadoVM extends TornadoLogger {
         this.graphContext = graphContext;
         this.timeProfiler = timeProfiler;
 
-        useDependencies = graphContext.meta().enableOooExecution() | VM_USE_DEPS;
+        useDependencies = graphContext.meta().enableOooExecution() || VM_USE_DEPS;
         totalTime = 0;
         invocations = 0;
 
@@ -378,16 +378,6 @@ public class TornadoVM extends TornadoLogger {
         return single(lastEvent);
     }
 
-    private static class ExecutionInfo {
-        CallStack stack;
-        int[] waitList;
-
-        public ExecutionInfo(CallStack stack, int[] waitList) {
-            this.stack = stack;
-            this.waitList = waitList;
-        }
-    }
-
     private void profilerUpdateForPreCompiledTask(SchedulableTask task) {
         if (task instanceof PrebuiltTask && timeProfiler instanceof TimeProfiler) {
             PrebuiltTask prebuiltTask = (PrebuiltTask) task;
@@ -570,7 +560,7 @@ public class TornadoVM extends TornadoLogger {
         if (task.meta() instanceof TaskMetaData) {
             metadata = (TaskMetaData) task.meta();
         } else {
-            throw new RuntimeException("task.meta is not instanceof TaskMetadata");
+            throw new TornadoRuntimeException("task.meta is not instanceof TaskMetadata");
         }
 
         // We attach the profiler
@@ -617,7 +607,7 @@ public class TornadoVM extends TornadoLogger {
 
     private List<Integer> executeBarrier(StringBuilder tornadoVMBytecodeList, int eventList, int[] waitList) {
         if (TornadoOptions.PRINT_BYTECODES) {
-            tornadoVMBytecodeList.append(String.format("vm: BARRIER event-list %d\n", eventList));
+            tornadoVMBytecodeList.append(String.format("vm: BARRIER event-list %d%n", eventList));
         }
         /*
         long count = contexts.stream().filter(Objects::nonNull).count();
@@ -791,7 +781,7 @@ public class TornadoVM extends TornadoLogger {
     }
 
     public void printTimes() {
-        System.out.printf("vm: complete %d iterations - %.9f s mean and %.9f s total\n", invocations, (totalTime / invocations), totalTime);
+        System.out.printf("vm: complete %d iterations - %.9f s mean and %.9f s total%nn", invocations, (totalTime / invocations), totalTime);
     }
 
     public void clearProfiles() {
@@ -830,7 +820,7 @@ public class TornadoVM extends TornadoLogger {
                     TornadoAcceleratorDevice device = (TornadoAcceleratorDevice) eventSet.getDevice();
                     final Event profile = device.resolveEvent(i);
                     if (profile.getStatus() == COMPLETE) {
-                        System.out.printf("task: %s %s %9d %9d %9d %9d %9d\n", device.getDeviceName(), meta.getId(), profile.getElapsedTime(), profile.getQueuedTime(), profile.getSubmitTime(),
+                        System.out.printf("task: %s %s %9d %9d %9d %9d %9d%n", device.getDeviceName(), meta.getId(), profile.getElapsedTime(), profile.getQueuedTime(), profile.getSubmitTime(),
                                 profile.getStartTime(), profile.getEndTime());
                     }
                 }
@@ -844,5 +834,15 @@ public class TornadoVM extends TornadoLogger {
 
     private static List<Integer> single(int value) {
         return Collections.singletonList(Integer.valueOf(value));
+    }
+    
+    private static class ExecutionInfo {
+        CallStack stack;
+        int[] waitList;
+
+        public ExecutionInfo(CallStack stack, int[] waitList) {
+            this.stack = stack;
+            this.waitList = waitList;
+        }
     }
 }

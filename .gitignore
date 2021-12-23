@@ -64,4 +64,5 @@ drivers/spirv-levelzero-jni/.idea/
 drivers/spirv/target/
 level-zero/
 spirv-beehive-toolkit/
+etc/dependencies/*
 

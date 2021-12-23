@@ -53,7 +53,6 @@ import uk.ac.manchester.tornado.api.enums.TornadoDeviceType;
 import uk.ac.manchester.tornado.api.exceptions.TornadoRuntimeException;
 import uk.ac.manchester.tornado.api.mm.TaskMetaDataInterface;
 import uk.ac.manchester.tornado.api.runtime.TornadoRuntime;
-import uk.ac.manchester.tornado.runtime.TornadoAcceleratorDriver;
 import uk.ac.manchester.tornado.runtime.TornadoCoreRuntime;
 import uk.ac.manchester.tornado.runtime.analyzer.CodeAnalysis;
 import uk.ac.manchester.tornado.runtime.analyzer.MetaReduceCodeAnalysis;
@@ -66,6 +65,8 @@ import uk.ac.manchester.tornado.runtime.tasks.meta.MetaDataUtils;
 
 class ReduceTaskSchedule {
 
+    private static final String EXCEPTION_MESSAGE_ERROR = "[ERROR] reduce type not supported yet: ";
+    private static final String OPERATION_NOT_SUPPORTED_MESSAGE = "Operation not supported";
     private static final String SEQUENTIAL_TASK_REDUCE_NAME = "reduce_seq";
 
     private static final String TASK_SCHEDULE_PREFIX = "XXX__GENERATED_REDUCE";
@@ -104,12 +105,66 @@ class ReduceTaskSchedule {
         this.streamOutObjects = streamOutObjects;
         this.sketchGraph = graph;
     }
-
-    private static boolean isAheadOfTime() {
-        return TornadoOptions.FPGA_BINARIES == null ? false : true;
+    
+    /**
+     * @param driverIndex
+     *            Index within the Tornado drivers' index
+     * @param device
+     *            Index of the device within the Tornado's device list.
+     * @param inputSize
+     *            Input size
+     * @return Output array size
+     */
+    private static int obtainSizeArrayResult(int driverIndex, int device, int inputSize) {
+        TornadoDeviceType deviceType = TornadoCoreRuntime.getTornadoRuntime().getDriver(driverIndex).getDevice(device).getDeviceType();
+        TornadoDevice deviceToRun = TornadoCoreRuntime.getTornadoRuntime().getDriver(driverIndex).getDevice(device);
+        switch (deviceType) {
+            case CPU:
+                return deviceToRun.getAvailableProcessors() + 1;
+            case GPU:
+            case ACCELERATOR:
+                return inputSize > calculateAcceleratorGroupSize(deviceToRun, inputSize) ? (inputSize / calculateAcceleratorGroupSize(deviceToRun, inputSize)) + 1 : 2;
+            default:
+                break;
+        }
+        return 0;
     }
 
-    private void inspectBinariesFPGA(String taskScheduleName, TaskMetaDataInterface taskMeta, String taskNameSimple, String sequentialTaskName) {
+    /**
+     * It computes the right local work group size for GPUs/FPGAs.
+     *
+     * @param device
+     *            Input device.
+     * @param globalWorkSize
+     *            Number of global threads to run.
+     * @return Local Work Threads.
+     */
+    private static int calculateAcceleratorGroupSize(TornadoDevice device, long globalWorkSize) {
+
+        if (device.getPlatformName().contains("AMD")) {
+            return DEFAULT_GPU_WORK_GROUP;
+        }
+
+        int maxBlockSize = (int) device.getDeviceMaxWorkgroupDimensions()[0];
+
+        if (maxBlockSize <= 0) {
+            // Due to a bug on Xilinx platforms, this value can be -1. In that case, we
+            // setup the block size to the default value.
+            return DEFAULT_GPU_WORK_GROUP;
+        }
+
+        if (maxBlockSize == globalWorkSize) {
+            maxBlockSize /= 4;
+        }
+
+        int value = (int) Math.min(maxBlockSize, globalWorkSize);
+        while (globalWorkSize % value != 0) {
+            value--;
+        }
+        return value;
+    }
+
+    private static void inspectBinariesFPGA(String taskScheduleName, TaskMetaDataInterface taskMeta, String taskNameSimple, String sequentialTaskName) {
         StringBuilder originalBinaries = TornadoOptions.FPGA_BINARIES;
         if (originalBinaries != null) {
             String[] binaries = originalBinaries.toString().split(",");
@@ -117,7 +172,7 @@ class ReduceTaskSchedule {
                 binaries = MetaDataUtils.processPrecompiledBinariesFromFile(binaries[0]);
                 StringBuilder sb = new StringBuilder();
                 for (String binary : binaries) {
-                    sb.append(binary.replaceAll(" ", "")).append(",");
+                    sb.append(binary.replace(" ", "")).append(",");
                 }
                 sb = sb.deleteCharAt(sb.length() - 1);
                 originalBinaries = new StringBuilder(sb.toString());
@@ -138,6 +193,10 @@ class ReduceTaskSchedule {
             TornadoOptions.FPGA_BINARIES = originalBinaries;
         }
     }
+    
+    private static boolean isAheadOfTime() {
+        return TornadoOptions.FPGA_BINARIES != null;
+    }
 
     private static void fillOutputArrayWithNeutral(Object reduceArray, Object neutral) {
         if (reduceArray instanceof int[]) {
@@ -149,7 +208,7 @@ class ReduceTaskSchedule {
         } else if (reduceArray instanceof long[]) {
             Arrays.fill((long[]) reduceArray, (long) neutral);
         } else {
-            throw new TornadoRuntimeException("[ERROR] reduce type not supported yet: " + reduceArray.getClass());
+            throw new TornadoRuntimeException(EXCEPTION_MESSAGE_ERROR + reduceArray.getClass());
         }
     }
 
@@ -166,7 +225,7 @@ class ReduceTaskSchedule {
         } else if (reduceVariable instanceof long[]) {
             return new long[size];
         } else {
-            throw new TornadoRuntimeException("[ERROR] reduce type not supported yet: " + reduceVariable.getClass());
+            throw new TornadoRuntimeException(EXCEPTION_MESSAGE_ERROR + reduceVariable.getClass());
         }
     }
 
@@ -180,7 +239,7 @@ class ReduceTaskSchedule {
         } else if (reduceVariable instanceof long[]) {
             return new long[1];
         } else {
-            throw new TornadoRuntimeException("[ERROR] reduce type not supported yet: " + reduceVariable.getClass());
+            throw new TornadoRuntimeException(EXCEPTION_MESSAGE_ERROR + reduceVariable.getClass());
         }
     }
 
@@ -194,7 +253,7 @@ class ReduceTaskSchedule {
         } else if (originalArray instanceof long[]) {
             return ((long[]) originalArray)[0];
         } else {
-            throw new TornadoRuntimeException("[ERROR] reduce type not supported yet: " + originalArray.getClass());
+            throw new TornadoRuntimeException(EXCEPTION_MESSAGE_ERROR + originalArray.getClass());
         }
     }
 
@@ -586,7 +645,7 @@ class ReduceTaskSchedule {
             case MIN:
                 return Math.min(a, b);
             default:
-                throw new TornadoRuntimeException("Operation not supported");
+                throw new TornadoRuntimeException(OPERATION_NOT_SUPPORTED_MESSAGE);
         }
     }
 
@@ -601,7 +660,7 @@ class ReduceTaskSchedule {
             case MIN:
                 return Math.min(a, b);
             default:
-                throw new TornadoRuntimeException("Operation not supported");
+                throw new TornadoRuntimeException(OPERATION_NOT_SUPPORTED_MESSAGE);
         }
     }
 
@@ -616,7 +675,7 @@ class ReduceTaskSchedule {
             case MIN:
                 return Math.min(a, b);
             default:
-                throw new TornadoRuntimeException("Operation not supported");
+                throw new TornadoRuntimeException(OPERATION_NOT_SUPPORTED_MESSAGE);
         }
     }
 
@@ -631,7 +690,7 @@ class ReduceTaskSchedule {
             case MIN:
                 return Math.min(a, b);
             default:
-                throw new TornadoRuntimeException("Operation not supported");
+                throw new TornadoRuntimeException(OPERATION_NOT_SUPPORTED_MESSAGE);
         }
     }
 
@@ -701,62 +760,4 @@ class ReduceTaskSchedule {
         }
     }
 
-    /**
-     * @param driverIndex
-     *            Index within the Tornado drivers' index
-     * @param device
-     *            Index of the device within the Tornado's device list.
-     * @param inputSize
-     *            Input size
-     * @return Output array size
-     */
-    private static int obtainSizeArrayResult(int driverIndex, int device, int inputSize) {
-        TornadoAcceleratorDriver driver = TornadoCoreRuntime.getTornadoRuntime().getDriver(driverIndex);
-        TornadoDeviceType deviceType = driver.getDevice(device).getDeviceType();
-        TornadoDevice deviceToRun = driver.getDevice(device);
-        switch (deviceType) {
-            case CPU:
-                return deviceToRun.getAvailableProcessors() + 1;
-            case GPU:
-            case ACCELERATOR:
-                return inputSize > calculateAcceleratorGroupSize(deviceToRun, inputSize) ? (inputSize / calculateAcceleratorGroupSize(deviceToRun, inputSize)) + 1 : 2;
-            default:
-                break;
-        }
-        return 0;
-    }
-
-    /**
-     * It computes the right local work group size for GPUs/FPGAs.
-     *
-     * @param device
-     *            Input device.
-     * @param globalWorkSize
-     *            Number of global threads to run.
-     * @return Local Work Threads.
-     */
-    private static int calculateAcceleratorGroupSize(TornadoDevice device, long globalWorkSize) {
-
-        if (device.getPlatformName().contains("AMD")) {
-            return DEFAULT_GPU_WORK_GROUP;
-        }
-
-        int maxBlockSize = (int) device.getDeviceMaxWorkgroupDimensions()[0];
-
-        if (maxBlockSize <= 0) {
-            // Due to a bug on Xilinx platforms, this value can be -1. In that case, we
-            // setup the block size to the default value.
-            return DEFAULT_GPU_WORK_GROUP;
-        }
-
-        if (maxBlockSize == globalWorkSize) {
-            maxBlockSize /= 4;
-        }
-
-        int value = (int) Math.min(maxBlockSize, globalWorkSize);
-        while (globalWorkSize % value != 0) {
-            value--;
-        }
-        return value;
-    }
 }

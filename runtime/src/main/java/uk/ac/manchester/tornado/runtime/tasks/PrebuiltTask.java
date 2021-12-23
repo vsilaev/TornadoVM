@@ -39,11 +39,11 @@ import uk.ac.manchester.tornado.runtime.tasks.meta.TaskMetaData;
 
 public class PrebuiltTask implements SchedulableTask {
 
+    protected final Object[] args;
+    protected final TaskMetaData meta;
     private final String entryPoint;
     private final String filename;
-    protected final Object[] args;
     private final Access[] argumentsAccess;
-    protected final TaskMetaData meta;
     protected long batchThreads;
 
     private TornadoProfiler profiler;
@@ -130,7 +130,7 @@ public class PrebuiltTask implements SchedulableTask {
     }
 
     public String getEntryPoint() {
-        return entryPoint;
+        return getTaskName();
     }
 
     @Override
@@ -158,13 +158,13 @@ public class PrebuiltTask implements SchedulableTask {
     }
 
     @Override
-    public void setBatchThreads(long batchThreads) {
-        this.batchThreads = batchThreads;
+    public long getBatchThreads() {
+        return batchThreads;
     }
 
     @Override
-    public long getBatchThreads() {
-        return batchThreads;
+    public void setBatchThreads(long batchThreads) {
+        this.batchThreads = batchThreads;
     }
 
     @Override
