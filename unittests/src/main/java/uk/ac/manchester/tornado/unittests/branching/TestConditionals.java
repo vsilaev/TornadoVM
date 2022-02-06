@@ -38,40 +38,12 @@ public class TestConditionals extends TornadoTestBase {
         }
     }
 
-    @Test
-    public void testIfStatement() {
-        final int size = 10;
-        int[] a = new int[size];
-        Arrays.fill(a, 5);
-
-        new TaskSchedule("s0") //
-                .task("t0", TestConditionals::ifStatement, a) //
-                .streamOut(a) //
-                .execute(); //
-
-        assertEquals(10, a[0]);
-    }
-
     public static void ifElseStatement(int[] a) {
         if (a[0] == 1) {
             a[0] = 5;
         } else {
             a[0] = 10;
         }
-    }
-
-    @Test
-    public void testIfElseStatement() {
-        final int size = 10;
-        int[] a = new int[size];
-        Arrays.fill(a, 5);
-
-        new TaskSchedule("s0") //
-                .task("t0", TestConditionals::ifElseStatement, a) //
-                .streamOut(a) //
-                .execute(); //
-
-        assertEquals(10, a[0]);
     }
 
     public static void nestedIfElseStatement(int[] a) {
@@ -87,6 +59,143 @@ public class TestConditionals extends TornadoTestBase {
                 a[i] = 2;
             }
         }
+    }
+
+    public static void switchStatement(int[] a) {
+        int value = a[0];
+        switch (value) {
+            case 10:
+                a[0] = 5;
+                break;
+            case 20:
+                a[0] = 10;
+                break;
+            default:
+                a[0] = 20;
+        }
+    }
+
+    public static void switchStatement2(int[] a) {
+        int value = a[0];
+        switch (value) {
+            case 10:
+                a[0] = 5;
+                break;
+            case 20:
+                a[0] = 10;
+                break;
+        }
+    }
+
+    public static void switchStatement3(int[] a) {
+        for (int i = 0; i < a.length; i++) {
+            int value = a[i];
+            switch (value) {
+                case 10:
+                    a[i] = 5;
+                    break;
+                case 20:
+                    a[i] = 10;
+                    break;
+            }
+        }
+    }
+
+    public static void switchStatement4(int[] a) {
+        for (@Parallel int i = 0; i < a.length; i++) {
+            int value = a[i];
+            switch (value) {
+                case 10:
+                    a[i] = 5;
+                    break;
+                case 20:
+                    a[i] = 10;
+                    break;
+            }
+        }
+    }
+
+    public static void switchStatement5(int[] a) {
+        for (@Parallel int i = 0; i < a.length; i++) {
+            int value = a[i];
+            switch (value) {
+                case 12:
+                    a[i] = 5;
+                    break;
+                case 22:
+                    a[i] = 10;
+                    break;
+                case 42:
+                    a[i] = 30;
+                    break;
+            }
+            a[i] *= 2;
+        }
+    }
+
+    public static void switchStatement6(int[] a) {
+        for (@Parallel int i = 0; i < a.length; i++) {
+            int value = a[i];
+            switch (value) {
+                case 12:
+                case 22:
+                    a[i] = 10;
+                    break;
+                case 42:
+                    a[i] = 30;
+                    break;
+            }
+        }
+    }
+
+    public static void ternaryCondition(int[] a) {
+        for (@Parallel int i = 0; i < a.length; i++) {
+            a[i] = (a[i] == 20) ? 10 : 5;
+        }
+    }
+
+    public static void ternaryComplexCondition(int[] a, int[] b) {
+        for (@Parallel int i = 0; i < a.length; i++) {
+            for (int x = 0; x < a.length; x++) {
+                if (i == a.length) {
+                    a[x] = (a[x] == 20) ? a[x] + b[x] : 5;
+                }
+            }
+        }
+    }
+
+    public static void ternaryComplexCondition2(int[] a, int[] b) {
+        for (@Parallel int i = 0; i < a.length; i++) {
+            a[i] = (a[i] == 20) ? a[i] + b[i] : 5;
+        }
+    }
+
+    @Test
+    public void testIfStatement() {
+        final int size = 10;
+        int[] a = new int[size];
+        Arrays.fill(a, 5);
+
+        new TaskSchedule("s0") //
+                .task("t0", TestConditionals::ifStatement, a) //
+                .streamOut(a) //
+                .execute(); //
+
+        assertEquals(10, a[0]);
+    }
+
+    @Test
+    public void testIfElseStatement() {
+        final int size = 10;
+        int[] a = new int[size];
+        Arrays.fill(a, 5);
+
+        new TaskSchedule("s0") //
+                .task("t0", TestConditionals::ifElseStatement, a) //
+                .streamOut(a) //
+                .execute(); //
+
+        assertEquals(10, a[0]);
     }
 
     @Test
@@ -108,20 +217,6 @@ public class TestConditionals extends TornadoTestBase {
                 .execute(); //
 
         assertArrayEquals(serial, a);
-    }
-
-    public static void switchStatement(int[] a) {
-        int value = a[0];
-        switch (value) {
-            case 10:
-                a[0] = 5;
-                break;
-            case 20:
-                a[0] = 10;
-                break;
-            default:
-                a[0] = 20;
-        }
     }
 
     @Test
@@ -156,18 +251,6 @@ public class TestConditionals extends TornadoTestBase {
         assertEquals(20, a[0]);
     }
 
-    public static void switchStatement2(int[] a) {
-        int value = a[0];
-        switch (value) {
-            case 10:
-                a[0] = 5;
-                break;
-            case 20:
-                a[0] = 10;
-                break;
-        }
-    }
-
     @Test
     public void testSwitch2() {
 
@@ -182,20 +265,6 @@ public class TestConditionals extends TornadoTestBase {
                 .execute(); //
 
         assertEquals(10, a[0]);
-    }
-
-    public static void switchStatement3(int[] a) {
-        for (int i = 0; i < a.length; i++) {
-            int value = a[i];
-            switch (value) {
-                case 10:
-                    a[i] = 5;
-                    break;
-                case 20:
-                    a[i] = 10;
-                    break;
-            }
-        }
     }
 
     @Test
@@ -213,20 +282,6 @@ public class TestConditionals extends TornadoTestBase {
 
         for (int value : a) {
             assertEquals(10, value);
-        }
-    }
-
-    public static void switchStatement4(int[] a) {
-        for (@Parallel int i = 0; i < a.length; i++) {
-            int value = a[i];
-            switch (value) {
-                case 10:
-                    a[i] = 5;
-                    break;
-                case 20:
-                    a[i] = 10;
-                    break;
-            }
         }
     }
 
@@ -248,24 +303,6 @@ public class TestConditionals extends TornadoTestBase {
         }
     }
 
-    public static void switchStatement5(int[] a) {
-        for (@Parallel int i = 0; i < a.length; i++) {
-            int value = a[i];
-            switch (value) {
-                case 12:
-                    a[i] = 5;
-                    break;
-                case 22:
-                    a[i] = 10;
-                    break;
-                case 42:
-                    a[i] = 30;
-                    break;
-            }
-            a[i] *= 2;
-        }
-    }
-
     @Test
     public void testSwitch5() {
         final int size = 10;
@@ -280,27 +317,6 @@ public class TestConditionals extends TornadoTestBase {
 
         for (int value : a) {
             assertEquals(10, value);
-        }
-    }
-
-    public static void switchStatement6(int[] a) {
-        for (@Parallel int i = 0; i < a.length; i++) {
-            int value = a[i];
-            switch (value) {
-                case 12:
-                case 22:
-                    a[i] = 10;
-                    break;
-                case 42:
-                    a[i] = 30;
-                    break;
-            }
-        }
-    }
-
-    public static void ternaryCondition(int[] a) {
-        for (@Parallel int i = 0; i < a.length; i++) {
-            a[i] = (a[i] == 20) ? 10 : 5;
         }
     }
 
@@ -324,16 +340,6 @@ public class TestConditionals extends TornadoTestBase {
         }
     }
 
-    public static void ternaryComplexCondition(int[] a, int[] b) {
-        for (@Parallel int i = 0; i < a.length; i++) {
-            for (int x = 0; x < a.length; x++) {
-                if (i == a.length) {
-                    a[x] = (a[x] == 20) ? a[x] + b[x] : 5;
-                }
-            }
-        }
-    }
-
     @Test
     public void testComplexTernaryCondition() {
 
@@ -351,12 +357,6 @@ public class TestConditionals extends TornadoTestBase {
 
         for (int value : a) {
             assertEquals(20, value);
-        }
-    }
-
-    public static void ternaryComplexCondition2(int[] a, int[] b) {
-        for (@Parallel int i = 0; i < a.length; i++) {
-            a[i] = (a[i] == 20) ? a[i] + b[i] : 5;
         }
     }
 

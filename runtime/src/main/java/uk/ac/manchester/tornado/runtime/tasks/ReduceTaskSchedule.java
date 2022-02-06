@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -60,6 +61,7 @@ import uk.ac.manchester.tornado.runtime.analyzer.MetaReduceTasks;
 import uk.ac.manchester.tornado.runtime.analyzer.ReduceCodeAnalysis;
 import uk.ac.manchester.tornado.runtime.analyzer.ReduceCodeAnalysis.REDUCE_OPERATION;
 import uk.ac.manchester.tornado.runtime.common.TornadoOptions;
+import uk.ac.manchester.tornado.runtime.tasks.ReduceTaskSchedule.CompiledTaskPackage;
 import uk.ac.manchester.tornado.runtime.tasks.meta.AbstractMetaData;
 import uk.ac.manchester.tornado.runtime.tasks.meta.MetaDataUtils;
 
@@ -93,6 +95,7 @@ class ReduceTaskSchedule {
     private Map<Object, Object> neutralElementsNew = new HashMap<>();
     private Map<Object, Object> neutralElementsOriginal = new HashMap<>();
     private TaskSchedule rewrittenTaskSchedule;
+    private Map<Object, LinkedList<Integer>> reduceOperandTable;
     private CachedGraph<?> sketchGraph;
     private boolean hybridMode;
     private Map<Object, REDUCE_OPERATION> hybridMergeTable;
@@ -316,6 +319,22 @@ class ReduceTaskSchedule {
             // stream-in with the new created array).
             for (int i = 0; i < streamInObjects.size(); i++) {
                 Object streamInObject = streamInObjects.get(i);
+                // Update table that consistency between input variables and reduce tasks.
+                // This part is used to STREAM_IN data when performing multiple reductions in
+                // the same task-schedule
+                if (tableReduce.containsKey(taskNumber)) {
+                    if (!reduceOperandTable.containsKey(streamInObject)) {
+                        LinkedList<Integer> taskList = new LinkedList<>();
+                        taskList.add(taskNumber);
+                        reduceOperandTable.put(streamInObject, taskList);
+                    } 
+                    // Was removed by the following
+                    // [fix] Multiple reduction tasks within the same TaskSchedule
+                    /*else {
+                        reduceOperandTable.get(streamInObject).add(taskNumber);
+                    }
+                    */
+                }
                 if (originalReduceVariables.containsKey(streamInObject)) {
                     streamInObjects.set(i, originalReduceVariables.get(streamInObject));
                 }
@@ -403,6 +422,9 @@ class ReduceTaskSchedule {
         if (originalReduceVariables == null) {
             originalReduceVariables = new HashMap<>();
         }
+        if (reduceOperandTable == null) {
+            reduceOperandTable = new HashMap<>();
+        }        
         // Create new buffer variables and update the corresponding streamIn and
         // streamOut
         Executor executor = TornadoCoreRuntime.getTornadoExecutor();
@@ -508,6 +530,25 @@ class ReduceTaskSchedule {
                     taskPackage.getTaskParameters()[i + 1] = value;
                 }
             }
+            
+            // TODO: THE NEXT IF MAY BE REMOVED AS LONG AS reduceOperandTable has only lists of size 1
+            // The whole access to reduceOperandTable may be removed
+            // See issue https://github.com/beehive-lab/TornadoVM/issues/149 
+            
+            // Analyze of we have multiple reduce tasks in the same task-schedule. In the
+            // case we reuse same input data, we need to stream in the input the rest of the
+            // reduce parallel tasks
+            if (tableReduce.containsKey(taskNumber)) {
+                // We only analyze for parallel tasks
+                for (int i = 0; i < taskPackage.getTaskParameters().length - 1; i++) {
+                    Object parameterToMethod = taskPackage.getTaskParameters()[i + 1];
+                    if (reduceOperandTable.containsKey(parameterToMethod)) {
+                        if (reduceOperandTable.get(parameterToMethod).size() > 1) {
+                            rewrittenTaskSchedule.forceCopyIn(parameterToMethod);
+                        }
+                    }
+                }
+            }            
 
             TaskMetaDataInterface originalMeta = owner.getTask(tsName + "." + taskPackage.getId()).meta();
             TornadoDevice originalDevice = owner.getDeviceForTask(originalMeta.getId());
