@@ -60,15 +60,17 @@ public class OCLInstalledCode extends InstalledCode implements TornadoInstalledC
     private final OCLProgram program;
     private final OCLDeviceContext deviceContext;
     private final OCLKernel kernel;
-    private boolean valid;
 
     private final OCLKernelScheduler scheduler;
     private final int[] internalEvents = new int[1];
 
     private final long[] singleThreadGlobalWorkSize = new long[] { 1 };
     private final long[] singleThreadLocalWorkSize = new long[] { 1 };
+    
+    private final boolean isSPIRVBinary;
+    private boolean valid;    
 
-    public OCLInstalledCode(final String entryPoint, final byte[] code, final OCLDeviceContext deviceContext, final OCLProgram program, final OCLKernel kernel) {
+    public OCLInstalledCode(final String entryPoint, final byte[] code, final OCLDeviceContext deviceContext, final OCLProgram program, final OCLKernel kernel, boolean isSPIRVBinary) {
         super(entryPoint);
         this.code = code;
         this.deviceContext = deviceContext;
@@ -76,6 +78,7 @@ public class OCLInstalledCode extends InstalledCode implements TornadoInstalledC
         this.DEFAULT_SCHEDULER = new OCLGPUScheduler(deviceContext);
         this.kernel = kernel;
         this.program = program;
+        this.isSPIRVBinary = isSPIRVBinary;
         valid = kernel != null;
     }
 
@@ -94,10 +97,6 @@ public class OCLInstalledCode extends InstalledCode implements TornadoInstalledC
     @Override
     public boolean isValid() {
         return valid;
-    }
-
-    public OCLKernel getKernel() {
-        return kernel;
     }
 
     /**
@@ -201,6 +200,11 @@ public class OCLInstalledCode extends InstalledCode implements TornadoInstalledC
         kernel.setArg(index, buffer);
         index++;
 
+
+        if (isSPIRVBinary) {
+            return;
+        }
+
         // constant memory
         if (meta != null && meta.getConstantSize() > 0) {
             kernel.setArg(index, ByteBuffer.wrap(meta.getConstantData()));
@@ -252,7 +256,7 @@ public class OCLInstalledCode extends InstalledCode implements TornadoInstalledC
         if (meta == null) {
             task = deviceContext.enqueueNDRangeKernel(kernel, 1, null, singleThreadGlobalWorkSize, singleThreadLocalWorkSize, waitEvents);
         } else {
-            if (meta.isParallel() || meta.isWorkerGridAvailable()) {
+            if (meta.isParallel() || meta.isWorkerGridAvailable() /*CHECK*/) {
                 if (meta.enableThreadCoarsener()) {
                     task = DEFAULT_SCHEDULER.submit(kernel, meta, waitEvents, batchThreads);
                 } else {
@@ -266,7 +270,7 @@ public class OCLInstalledCode extends InstalledCode implements TornadoInstalledC
                         System.out.println("\tDevice  : " + ((OCLTornadoDevice) meta.getLogicDevice()).getPhysicalDevice().getDeviceName());
                     }
                 }
-                if ((meta.getGlobalWork() == null) || (meta.getGlobalWork().length == 0)) {
+                if ((meta.getGlobalWork() == null) || (meta.getGlobalWork().length == 0) /*CHECK*/) {
                     task = deviceContext.enqueueNDRangeKernel(kernel, 1, null, singleThreadGlobalWorkSize, singleThreadLocalWorkSize, waitEvents);
                 } else {
                     task = deviceContext.enqueueNDRangeKernel(kernel, 1, null, meta.getGlobalWork(), meta.getLocalWork(), waitEvents);

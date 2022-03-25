@@ -168,26 +168,36 @@ public class OCLDeviceContext extends TornadoLogger implements Initialisable, OC
         queue.flush(); 
     }
 
+    @Override
     public long getDeviceId() {
         return device.getId();
     }
-
+    
+    @Override
     public int enqueueBarrier() {
         long oclEvent = queue.enqueueBarrier();
         return oclEventPool.registerEvent(oclEvent, EventDescriptor.DESC_SYNC_BARRIER, queue);
     }
 
+    @Override
     public int enqueueMarker() {
         long oclEvent = queue.enqueueMarker();
         return oclEventPool.registerEvent(oclEvent, EventDescriptor.DESC_SYNC_MARKER, queue);
     }
 
+    @Override
     public OCLProgram createProgramWithSource(byte[] source, long[] lengths) {
         return context.createProgramWithSource(source, lengths, this);
     }
 
+    @Override
     public OCLProgram createProgramWithBinary(byte[] binary, long[] lengths) {
         return context.createProgramWithBinary(device.getId(), binary, lengths, this);
+    }
+    
+    @Override
+    public OCLProgram createProgramWithIL(byte[] spirvBinary, long[] lengths) {
+        return context.createProgramWithIL(spirvBinary, lengths, this);
     }
 
     public int enqueueNDRangeKernel(OCLKernel kernel, int dim, long[] globalWorkOffset, long[] globalWorkSize, long[] localWorkSize, int[] waitEvents) {

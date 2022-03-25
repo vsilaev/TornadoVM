@@ -42,7 +42,8 @@
 package uk.ac.manchester.tornado.api.exceptions;
 
 public class TornadoDynamicReconfigurationException extends RuntimeException {
-
+    private static final long serialVersionUID = 1L;
+    
     private final String message;
 
     public TornadoDynamicReconfigurationException(final String msg) {

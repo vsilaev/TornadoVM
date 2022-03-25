@@ -2,7 +2,7 @@
  * This file is part of Tornado: A heterogeneous programming framework:
  * https://github.com/beehive-lab/tornadovm
  *
- * Copyright (c) 2020, APT Group, Department of Computer Science,
+ * Copyright (c) 2020-2022, APT Group, Department of Computer Science,
  * School of Engineering, The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -85,7 +85,7 @@ public class PTXMathPlugins {
     }
 
     private static void registerFloatMath1Plugins(Registration r, Class<?> type, JavaKind kind) {
-        r.register1("floatAtan", type, new InvocationPlugin() {
+        r.register1("atan", type, new InvocationPlugin() {
             @Override
             public boolean apply(GraphBuilderContext b, ResolvedJavaMethod targetMethod, Receiver receiver, ValueNode value) {
                 b.push(kind, b.append(PTXFPUnaryIntrinsicNode.create(value, ATAN, kind)));
@@ -133,7 +133,7 @@ public class PTXMathPlugins {
             }
         });
 
-        r.register1("floatSin", type, new InvocationPlugin() {
+        r.register1("sin", type, new InvocationPlugin() {
             @Override
             public boolean apply(GraphBuilderContext b, ResolvedJavaMethod targetMethod, Receiver receiver, ValueNode value) {
                 b.push(kind, b.append(PTXFPUnaryIntrinsicNode.create(value, SIN, kind)));
@@ -141,7 +141,7 @@ public class PTXMathPlugins {
             }
         });
 
-        r.register1("floatCos", type, new InvocationPlugin() {
+        r.register1("cos", type, new InvocationPlugin() {
             @Override
             public boolean apply(GraphBuilderContext b, ResolvedJavaMethod targetMethod, Receiver receiver, ValueNode value) {
                 b.push(kind, b.append(PTXFPUnaryIntrinsicNode.create(value, COS, kind)));
@@ -149,15 +149,7 @@ public class PTXMathPlugins {
             }
         });
 
-        r.register1("floatSqrt", type, new InvocationPlugin() {
-            @Override
-            public boolean apply(GraphBuilderContext b, ResolvedJavaMethod targetMethod, Receiver receiver, ValueNode value) {
-                b.push(kind, b.append(PTXFPUnaryIntrinsicNode.create(value, SQRT, kind)));
-                return true;
-            }
-        });
-
-        r.register1("floatTan", type, new InvocationPlugin() {
+        r.register1("tan", type, new InvocationPlugin() {
             @Override
             public boolean apply(GraphBuilderContext b, ResolvedJavaMethod targetMethod, Receiver receiver, ValueNode value) {
                 b.push(kind, b.append(PTXFPUnaryIntrinsicNode.create(value, TAN, kind)));
@@ -165,7 +157,7 @@ public class PTXMathPlugins {
             }
         });
 
-        r.register1("floatTanh", type, new InvocationPlugin() {
+        r.register1("tanh", type, new InvocationPlugin() {
             @Override
             public boolean apply(GraphBuilderContext b, ResolvedJavaMethod targetMethod, Receiver receiver, ValueNode value) {
                 b.push(kind, b.append(PTXFPUnaryIntrinsicNode.create(value, TANH, kind)));

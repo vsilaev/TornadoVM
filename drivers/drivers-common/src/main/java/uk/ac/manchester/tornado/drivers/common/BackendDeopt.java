@@ -2,7 +2,7 @@
  * This file is part of Tornado: A heterogeneous programming framework:
  * https://github.com/beehive-lab/tornadovm
  *
- * Copyright (c) 2020, APT Group, Department of Computer Science,
+ * Copyright (c) 2022, APT Group, Department of Computer Science,
  * School of Engineering, The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -21,17 +21,19 @@
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
  */
-package uk.ac.manchester.tornado.drivers.opencl;
+package uk.ac.manchester.tornado.drivers.common;
 
-public interface TornadoPlatform {
+import org.graalvm.compiler.phases.util.Providers;
 
-    void cleanup();
+import jdk.vm.ci.meta.DeoptimizationAction;
+import jdk.vm.ci.meta.DeoptimizationReason;
+import jdk.vm.ci.meta.JavaConstant;
 
-    OCLExecutionEnvironment createContext();
+public class BackendDeopt {
 
-    String getName();
-
-    String getVendor();
-
-    String getVersion();
+    public static String decodeDeopt(long value, Providers providers) {
+        DeoptimizationReason reason = providers.getMetaAccess().decodeDeoptReason(JavaConstant.forLong(value));
+        DeoptimizationAction action = providers.getMetaAccess().decodeDeoptAction(JavaConstant.forLong(value));
+        return String.format("deopt: reason=%s, action=%s", reason.toString(), action.toString());
+    }
 }

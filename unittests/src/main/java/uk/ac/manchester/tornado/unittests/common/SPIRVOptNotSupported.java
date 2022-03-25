@@ -22,6 +22,7 @@ package uk.ac.manchester.tornado.unittests.common;
  * not supported.
  */
 public class SPIRVOptNotSupported extends RuntimeException {
+    private static final long serialVersionUID = 1L;
 
     public SPIRVOptNotSupported(String message) {
         super(message);

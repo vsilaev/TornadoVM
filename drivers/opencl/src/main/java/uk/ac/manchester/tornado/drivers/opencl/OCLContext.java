@@ -110,6 +110,8 @@ public class OCLContext implements OCLExecutionEnvironment {
     native static long clCreateProgramWithSource(long contextId, byte[] data, long lengths[]) throws OCLException;
 
     native static long clCreateProgramWithBinary(long contextId, long deviceId, byte[] data, long lengths[]) throws OCLException;
+    
+    native static long clCreateProgramWithIL(long contextId, byte[] spirvBinaryCode, long[] lengths) throws OCLException;
 
     public int getNumDevices() {
         return devices.size();
@@ -191,6 +193,19 @@ public class OCLContext implements OCLExecutionEnvironment {
 
         return program;
     }
+    
+    public OCLProgram createProgramWithIL(byte[] spirvBinary, long[] lengths, OCLDeviceContext deviceContext) {
+        OCLProgram program = null;
+
+        try {
+            program = new OCLProgram(clCreateProgramWithIL(contextID, spirvBinary, lengths), deviceContext);
+            programs.add(program);
+        } catch (OCLException e) {
+            TornadoLogger.error(e.getMessage());
+        }
+
+        return program;
+    }    
 
     public void cleanup() {
 
@@ -223,11 +238,11 @@ public class OCLContext implements OCLExecutionEnvironment {
             long t4 = System.nanoTime();
 
             if (Tornado.FULL_DEBUG) {
-                System.out.printf("cleanup: %-10s..........%.9f s\n", "programs", (t1 - t0) * 1e-9);
-                System.out.printf("cleanup: %-10s..........%.9f s\n", "memory", (t2 - t1) * 1e-9);
-                System.out.printf("cleanup: %-10s..........%.9f s\n", "queues", (t3 - t2) * 1e-9);
-                System.out.printf("cleanup: %-10s..........%.9f s\n", "context", (t4 - t3) * 1e-9);
-                System.out.printf("cleanup: %-10s..........%.9f s\n", "total", (t4 - t0) * 1e-9);
+                System.out.printf("cleanup: %-10s..........%.9f s%n", "programs", (t1 - t0) * 1e-9);
+                System.out.printf("cleanup: %-10s..........%.9f s%n", "memory", (t2 - t1) * 1e-9);
+                System.out.printf("cleanup: %-10s..........%.9f s%n", "queues", (t3 - t2) * 1e-9);
+                System.out.printf("cleanup: %-10s..........%.9f s%n", "context", (t4 - t3) * 1e-9);
+                System.out.printf("cleanup: %-10s..........%.9f s%n", "total", (t4 - t0) * 1e-9);
             }
         } catch (OCLException e) {
             TornadoLogger.error(e.getMessage());
