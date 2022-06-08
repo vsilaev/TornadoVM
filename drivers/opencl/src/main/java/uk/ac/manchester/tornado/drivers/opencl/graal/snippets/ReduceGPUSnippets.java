@@ -26,8 +26,6 @@
 package uk.ac.manchester.tornado.drivers.opencl.graal.snippets;
 
 import org.graalvm.compiler.api.replacements.Snippet;
-import org.graalvm.compiler.api.replacements.SnippetReflectionProvider;
-import org.graalvm.compiler.debug.DebugHandlersFactory;
 import org.graalvm.compiler.nodes.StructuredGraph;
 import org.graalvm.compiler.nodes.ValueNode;
 import org.graalvm.compiler.nodes.java.NewArrayNode;
@@ -40,7 +38,6 @@ import org.graalvm.compiler.replacements.SnippetTemplate.Arguments;
 import org.graalvm.compiler.replacements.SnippetTemplate.SnippetInfo;
 import org.graalvm.compiler.replacements.Snippets;
 
-import jdk.vm.ci.code.TargetDescription;
 import jdk.vm.ci.meta.JavaKind;
 import uk.ac.manchester.tornado.api.collections.math.TornadoMath;
 import uk.ac.manchester.tornado.drivers.opencl.builtins.OpenCLIntrinsics;
@@ -847,8 +844,8 @@ public class ReduceGPUSnippets implements Snippets {
         private final SnippetInfo partialReduceMinDoubleSnippet = snippet(ReduceGPUSnippets.class, "partialReduceDoubleMin");
         private final SnippetInfo partialReduceMinDoubleSnippetCarrierValue = snippet(ReduceGPUSnippets.class, "partialReduceDoubleMinCarrierValue");
 
-        public Templates(OptionValues options, Iterable<DebugHandlersFactory> debugHandlersFactories, Providers providers, SnippetReflectionProvider snippetReflection, TargetDescription target) {
-            super(options, debugHandlersFactories, providers, snippetReflection, target);
+        public Templates(OptionValues options, Providers providers) {
+            super(options, providers);
         }
 
         private SnippetInfo getSnippetFromOCLBinaryNodeInteger(OCLIntBinaryIntrinsicNode value, ValueNode extra) {

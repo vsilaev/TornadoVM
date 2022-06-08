@@ -37,20 +37,17 @@ import uk.ac.manchester.tornado.runtime.common.Tornado;
  */
 public class OCLByteBuffer {
     protected ByteBuffer buffer;
-    protected long bytes;
+    private final long oclBufferId;
+    protected final long bytes;
+    private final long offset;
 
     protected final OCLDeviceContext deviceContext;
 
-    protected long offset;
-
-    protected OCLByteBuffer(final OCLDeviceContext device) {
-        this.deviceContext = device;
-    }
-
-    public OCLByteBuffer(final OCLDeviceContext device, final long offset, final long numBytes) {
-        this(device);
-        this.offset = offset;
+    public OCLByteBuffer(final OCLDeviceContext deviceContext, final long oclBufferId, final long offset, final long numBytes) {
+        this.deviceContext = deviceContext;
+        this.oclBufferId = oclBufferId;
         this.bytes = numBytes;
+        this.offset = offset;
         buffer = ByteBuffer.allocateDirect((int) numBytes);
         buffer.order(deviceContext.getByteOrder());
     }
@@ -102,7 +99,6 @@ public class OCLByteBuffer {
         System.out.printf("Buffer  : capacity = %s, in use = %s, device = %s \n", RuntimeUtilities.humanReadableByteCount(bytes, true),
                 RuntimeUtilities.humanReadableByteCount(buffer.position(), true), deviceContext.getDevice().getDeviceName());
         for (int i = 0; i < buffer.position(); i += width) {
-            System.out.printf("[0x%04x]: ", i + toAbsoluteAddress());
             for (int j = 0; j < Math.min(buffer.capacity() - i, width); j++) {
                 if (j % 2 == 0) {
                     System.out.printf(" ");
@@ -135,10 +131,6 @@ public class OCLByteBuffer {
 
     public int getAlignment() {
         return 64;
-    }
-
-    public long getBufferOffset() {
-        return offset;
     }
 
     public char getChar() {
@@ -261,12 +253,12 @@ public class OCLByteBuffer {
         return buffer.putShort(value);
     }
 
-    public long toAbsoluteAddress() {
-        return deviceContext.getMemoryManager().toAbsoluteDeviceAddress(offset);
+    public long toBuffer() {
+        return oclBufferId;
     }
 
-    public long toBuffer() {
-        return deviceContext.getMemoryManager().toBuffer();
+    public long getOffset() {
+        return offset;
     }
 
     public long toConstantAddress() {
@@ -276,18 +268,6 @@ public class OCLByteBuffer {
     public long toAtomicAddress() {
         return deviceContext.getMemoryManager().toAtomicAddress();
     }
-
-    public void allocateAtomicRegion() {
-        deviceContext.getMemoryManager().allocateAtomicRegion();
-    }
-
-    public long toRelativeAddress() {
-        return deviceContext.getMemoryManager().toRelativeDeviceAddress(offset);
-    }
-
-//    public Object value() {
-//        return buffer.array();
-//    }
 
     public void zeroMemory() {
         Tornado.warn("zero memory unimplemented");

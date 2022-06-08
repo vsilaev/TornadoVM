@@ -25,7 +25,6 @@
 package uk.ac.manchester.tornado.drivers.spirv.graal.compiler;
 
 import static org.graalvm.compiler.core.common.GraalOptions.ConditionalElimination;
-import static org.graalvm.compiler.core.common.GraalOptions.ImmutableCode;
 import static org.graalvm.compiler.core.common.GraalOptions.OptConvertDeoptsToGuards;
 import static org.graalvm.compiler.core.common.GraalOptions.PartialEscapeAnalysis;
 import static org.graalvm.compiler.core.phases.HighTier.Options.Inline;
@@ -55,6 +54,7 @@ import uk.ac.manchester.tornado.drivers.spirv.graal.phases.TornadoTaskSpecializa
 import uk.ac.manchester.tornado.runtime.common.TornadoOptions;
 import uk.ac.manchester.tornado.runtime.graal.compiler.TornadoHighTier;
 import uk.ac.manchester.tornado.runtime.graal.phases.ExceptionSuppression;
+import uk.ac.manchester.tornado.runtime.graal.phases.TornadoFieldAccessFixup;
 import uk.ac.manchester.tornado.runtime.graal.phases.TornadoFullInliningPolicy;
 import uk.ac.manchester.tornado.runtime.graal.phases.TornadoInliningPolicy;
 import uk.ac.manchester.tornado.runtime.graal.phases.TornadoLocalMemoryAllocation;
@@ -64,20 +64,15 @@ import uk.ac.manchester.tornado.runtime.graal.phases.TornadoValueTypeCleanup;
 
 public class SPIRVHighTier extends TornadoHighTier {
 
-    private CanonicalizerPhase createCanonicalizerPhase(OptionValues options, CanonicalizerPhase.CustomSimplification customCanonicalizer) {
-        CanonicalizerPhase canonicalizer;
-        if (ImmutableCode.getValue(options)) {
-            canonicalizer = CanonicalizerPhase.createWithoutReadCanonicalization();
-        } else {
-            canonicalizer = CanonicalizerPhase.create();
-        }
+    private CanonicalizerPhase createCanonicalizerPhase(CanonicalizerPhase.CustomSimplification customCanonicalizer) {
+        CanonicalizerPhase canonicalizer = CanonicalizerPhase.create();
         return canonicalizer.copyWithCustomSimplification(customCanonicalizer);
     }
 
     public SPIRVHighTier(OptionValues options, TornadoDeviceContext deviceContext, CanonicalizerPhase.CustomSimplification customCanonicalizer, MetaAccessProvider metaAccessProvider) {
         super(customCanonicalizer);
 
-        CanonicalizerPhase canonicalizer = createCanonicalizerPhase(options, customCanonicalizer);
+        CanonicalizerPhase canonicalizer = createCanonicalizerPhase(customCanonicalizer);
         appendPhase(canonicalizer);
 
         if (Inline.getValue(options)) {
@@ -91,6 +86,7 @@ public class SPIRVHighTier extends TornadoHighTier {
         }
 
         appendPhase(new TornadoTaskSpecialization(canonicalizer));
+        appendPhase(new TornadoFieldAccessFixup());
         appendPhase(canonicalizer);
         appendPhase(new DeadCodeEliminationPhase(Optional));
 

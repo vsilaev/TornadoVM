@@ -638,7 +638,6 @@ public class TestMath extends TornadoTestBase {
         assertNotBackend(TornadoVMBackendType.OPENCL);
         assertNotBackend(TornadoVMBackendType.SPIRV);
 
-        Random r = new Random();
         final int size = 128;
         float[] a = new float[size];
         float[] seqA = new float[size];
@@ -681,7 +680,6 @@ public class TestMath extends TornadoTestBase {
         assertNotBackend(TornadoVMBackendType.OPENCL);
         assertNotBackend(TornadoVMBackendType.SPIRV);
 
-        Random r = new Random();
         final int size = 128;
         double[] a = new double[size];
         double[] seqA = new double[size];

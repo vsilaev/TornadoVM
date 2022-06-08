@@ -27,9 +27,7 @@ package uk.ac.manchester.tornado.drivers.ptx.graal.compiler;
 import static org.graalvm.compiler.phases.common.DeadCodeEliminationPhase.Optionality.Optional;
 import static uk.ac.manchester.tornado.api.exceptions.TornadoInternalError.guarantee;
 import static uk.ac.manchester.tornado.drivers.ptx.graal.PTXCodeUtil.buildKernelName;
-import static uk.ac.manchester.tornado.drivers.ptx.graal.compiler.PTXLIRGenerationPhase.LIRGenerationContext;
 import static uk.ac.manchester.tornado.runtime.TornadoCoreRuntime.getDebugContext;
-import static uk.ac.manchester.tornado.runtime.TornadoCoreRuntime.getTornadoRuntime;
 import static uk.ac.manchester.tornado.runtime.common.Tornado.DUMP_COMPILED_METHODS;
 import static uk.ac.manchester.tornado.runtime.common.Tornado.error;
 import static uk.ac.manchester.tornado.runtime.common.Tornado.info;
@@ -80,6 +78,7 @@ import jdk.vm.ci.meta.ResolvedJavaMethod;
 import uk.ac.manchester.tornado.drivers.ptx.graal.PTXProviders;
 import uk.ac.manchester.tornado.drivers.ptx.graal.PTXSuitesProvider;
 import uk.ac.manchester.tornado.drivers.ptx.graal.backend.PTXBackend;
+import uk.ac.manchester.tornado.drivers.ptx.graal.compiler.PTXLIRGenerationPhase.LIRGenerationContext;
 import uk.ac.manchester.tornado.drivers.ptx.graal.nodes.PrintfNode;
 import uk.ac.manchester.tornado.runtime.TornadoCoreRuntime;
 import uk.ac.manchester.tornado.runtime.common.Tornado;
@@ -356,8 +355,7 @@ public class PTXCompiler {
     public static PTXCompilationResult compileCodeForDevice(ResolvedJavaMethod resolvedMethod, Object[] args, TaskMetaData meta, PTXProviders providers, PTXBackend backend, long batchThreads) {
         Tornado.info("Compiling %s on %s", resolvedMethod.getName(), backend.getDeviceContext().getDevice().getDeviceName());
         final TornadoCompilerIdentifier id = new TornadoCompilerIdentifier("compile-kernel" + resolvedMethod.getName(), compilationId.getAndIncrement());
-
-        StructuredGraph.Builder builder = new StructuredGraph.Builder(getTornadoRuntime().getOptions(), getDebugContext(), StructuredGraph.AllowAssumptions.YES);
+        StructuredGraph.Builder builder = new StructuredGraph.Builder(TornadoCoreRuntime.getOptions(), getDebugContext(), StructuredGraph.AllowAssumptions.YES);
         builder.method(resolvedMethod);
         builder.compilationId(id);
         builder.name("compile-kernel" + resolvedMethod.getName());

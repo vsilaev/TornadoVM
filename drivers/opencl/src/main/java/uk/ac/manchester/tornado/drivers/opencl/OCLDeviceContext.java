@@ -45,18 +45,20 @@ import uk.ac.manchester.tornado.api.common.TornadoExecutionHandler;
 import uk.ac.manchester.tornado.api.enums.TornadoExecutionStatus;
 import uk.ac.manchester.tornado.api.runtime.TornadoRuntime;
 import uk.ac.manchester.tornado.drivers.common.EventDescriptor;
+import uk.ac.manchester.tornado.drivers.common.TornadoBufferProvider;
 import uk.ac.manchester.tornado.drivers.opencl.enums.OCLDeviceType;
 import uk.ac.manchester.tornado.drivers.opencl.enums.OCLMemFlags;
 import uk.ac.manchester.tornado.drivers.opencl.graal.OCLInstalledCode;
 import uk.ac.manchester.tornado.drivers.opencl.graal.compiler.OCLCompilationResult;
 import uk.ac.manchester.tornado.drivers.opencl.mm.OCLMemoryManager;
+import uk.ac.manchester.tornado.drivers.opencl.runtime.OCLBufferProvider;
 import uk.ac.manchester.tornado.drivers.opencl.runtime.OCLTornadoDevice;
-import uk.ac.manchester.tornado.runtime.common.Initialisable;
 import uk.ac.manchester.tornado.runtime.common.Tornado;
 import uk.ac.manchester.tornado.runtime.common.TornadoLogger;
 import uk.ac.manchester.tornado.runtime.tasks.meta.TaskMetaData;
 
-public class OCLDeviceContext extends TornadoLogger implements Initialisable, OCLDeviceContextInterface {
+public class OCLDeviceContext extends TornadoLogger implements OCLDeviceContextInterface {
+    // FIXME: <REVISIT> Check the current utility of this buffer
     private static final long BUMP_BUFFER_SIZE = Long.decode(Tornado.getProperty("tornado.opencl.bump.size", "0x100000"));
     private static final String[] BUMP_DEVICES = parseDevices(Tornado.getProperty("tornado.opencl.bump.devices", "Iris Pro"));
 
@@ -64,15 +66,14 @@ public class OCLDeviceContext extends TornadoLogger implements Initialisable, OC
     private final OCLCommandQueue queue;
     private final OCLContext context;
     private final OCLMemoryManager memoryManager;
-    private final boolean needsBump;
     private final long bumpBuffer;
-
     private final OCLCodeCache codeCache;
-    private boolean wasReset;
-    private boolean useRelativeAddresses;
-    private boolean printOnce = true;
-
     private final OCLEventPool oclEventPool;
+    private boolean needsBump;
+    private boolean wasReset;
+    private boolean printOnce = true;
+    
+    private final TornadoBufferProvider bufferProvider;
 
     protected OCLDeviceContext(OCLTargetDevice device, OCLCommandQueue queue, OCLContext context) {
         this.device = device;
@@ -80,8 +81,6 @@ public class OCLDeviceContext extends TornadoLogger implements Initialisable, OC
         this.context = context;
         this.memoryManager = new OCLMemoryManager(this);
         this.codeCache = new OCLCodeCache(this);
-
-        setRelativeAddressesFlag();
 
         this.oclEventPool = new OCLEventPool(EVENT_WINDOW);
 
@@ -95,20 +94,14 @@ public class OCLDeviceContext extends TornadoLogger implements Initialisable, OC
         needsBump = checkNeedsBump;
 
         if (needsBump) {
-            bumpBuffer = context.createBuffer(OCLMemFlags.CL_MEM_READ_WRITE, BUMP_BUFFER_SIZE);
+            bumpBuffer = context.createBuffer(OCLMemFlags.CL_MEM_READ_WRITE, BUMP_BUFFER_SIZE).getBuffer();
             info("device requires bump buffer: %s", device.getDeviceName());
         } else {
             bumpBuffer = -1;
         }
+        bufferProvider = new OCLBufferProvider(this);
+        
         this.device.setDeviceContext(this);
-    }
-
-    private void setRelativeAddressesFlag() {
-        if (isPlatformFPGA() && !Tornado.OPENCL_USE_RELATIVE_ADDRESSES) {
-            useRelativeAddresses = true;
-        } else {
-            useRelativeAddresses = Tornado.OPENCL_USE_RELATIVE_ADDRESSES;
-        }
     }
     
     public ByteBuffer newDirectByteBuffer(long bytesCount) {
@@ -119,6 +112,14 @@ public class OCLDeviceContext extends TornadoLogger implements Initialisable, OC
     private static String[] parseDevices(String str) {
         return str.split(";");
     }
+    
+
+    public static String checkKernelName(String entryPoint) {
+        if (entryPoint.contains("$")) {
+            return entryPoint.replace("$", "_");
+        }
+        return entryPoint;
+    }    
 
     public OCLTargetDevice getDevice() {
         return device;
@@ -147,7 +148,13 @@ public class OCLDeviceContext extends TornadoLogger implements Initialisable, OC
     public OCLMemoryManager getMemoryManager() {
         return memoryManager;
     }
+    
+    @Override
+    public TornadoBufferProvider getBufferProvider() {
+        return bufferProvider;
+    }    
 
+    @Override
     public void sync() {
         if (Tornado.USE_SYNC_FLUSH) {
             queue.flush();
@@ -155,6 +162,7 @@ public class OCLDeviceContext extends TornadoLogger implements Initialisable, OC
         queue.finish();
     }
 
+    @Override
     public void sync(TornadoExecutionHandler handler) {
         long oclEvent = queue.enqueueMarker();
         if (oclEvent <= 0) {
@@ -563,28 +571,26 @@ public class OCLDeviceContext extends TornadoLogger implements Initialisable, OC
 
     }
 
+    @Override
     public int enqueueBarrier(int[] events) {
         long oclEvent = queue.enqueueBarrier(oclEventPool.serializeEvents(events, queue));
         return oclEvent <= 0 ? -1 : oclEventPool.registerEvent(oclEvent, EventDescriptor.DESC_SYNC_BARRIER, queue);
     }
 
+    @Override
     public int enqueueMarker(int[] events) {
         long oclEvent = queue.enqueueMarker(oclEventPool.serializeEvents(events, queue));
         return oclEvent <= 0 ? -1 : oclEventPool.registerEvent(oclEvent, EventDescriptor.DESC_SYNC_MARKER, queue);
     }
 
     @Override
-    public boolean isInitialised() {
-        return memoryManager.isInitialised();
-    }
-
     public void reset() {
         oclEventPool.reset();
-        memoryManager.reset();
         codeCache.reset();
         wasReset = true;
     }
 
+    @Override
     public OCLTornadoDevice asMapping() {
         return new OCLTornadoDevice(context.getPlatformIndex(), device.getIndex());
     }
@@ -593,10 +599,11 @@ public class OCLDeviceContext extends TornadoLogger implements Initialisable, OC
         return String.format("opencl-%d-%d", context.getPlatformIndex(), device.getIndex());
     }
 
+    @Override
     public void dumpEvents() {
         List<OCLEvent> events = oclEventPool.getEvents();
 
-        final String deviceName = "opencl-" + context.getPlatformIndex() + "-" + device.getIndex();
+        final String deviceName = "Opencl-" + context.getPlatformIndex() + "-" + device.getIndex();
         System.out.printf("Found %d events on device %s:\n", events.size(), deviceName);
         if (events.isEmpty()) {
             return;
@@ -636,16 +643,6 @@ public class OCLDeviceContext extends TornadoLogger implements Initialisable, OC
     }
 
     @Override
-    public boolean useRelativeAddresses() {
-        if (isPlatformFPGA() && !Tornado.OPENCL_USE_RELATIVE_ADDRESSES && printOnce) {
-            System.out.println("Warning: -Dtornado.opencl.userelative was set to False. TornadoVM changed it to True because it is required for FPGA execution.");
-            printOnce = false;
-        }
-
-        return useRelativeAddresses;
-    }
-
-    @Override
     public int getDeviceIndex() {
         return device.getIndex();
     }
@@ -663,6 +660,7 @@ public class OCLDeviceContext extends TornadoLogger implements Initialisable, OC
         oclEventPool.retainEvent(localEventId);
     }
 
+    @Override
     public Event resolveEvent(int event) {
         if (event == -1) {
             return OCLCommandQueue.EMPTY_EVENT;
@@ -670,6 +668,7 @@ public class OCLDeviceContext extends TornadoLogger implements Initialisable, OC
         return oclEventPool.getOCLEvent(event);
     }
 
+    @Override
     public void flush() {
         queue.flush();
     }
@@ -678,34 +677,33 @@ public class OCLDeviceContext extends TornadoLogger implements Initialisable, OC
         queue.finish();
     }
 
+    @Override
     public void flushEvents() {
         queue.flushEvents();
     }
 
+    @Override
     public boolean isKernelAvailable() {
         return codeCache.isKernelAvailable();
     }
-
+    
+    @Override
     public OCLInstalledCode installCode(OCLCompilationResult result) {
         return installCode(result.getMeta(), result.getId(), result.getName(), result.getTargetCode());
     }
 
-    public static String checkKernelName(String entryPoint) {
-        if (entryPoint.contains("$")) {
-            return entryPoint.replace("$", "_");
-        }
-        return entryPoint;
-    }
-
+    @Override
     public OCLInstalledCode installCode(TaskMetaData meta, String id, String entryPoint, byte[] code) {
         entryPoint = checkKernelName(entryPoint);
         return codeCache.installSource(meta, id, entryPoint, code);
     }
 
+    @Override
     public OCLInstalledCode installCode(String id, String entryPoint, byte[] code, boolean shouldCompile) {
         return codeCache.installFPGASource(id, entryPoint, code, shouldCompile);
     }
 
+    @Override
     public boolean isCached(String id, String entryPoint) {
         entryPoint = checkKernelName(entryPoint);
         return codeCache.isCached(id + "-" + entryPoint);
@@ -717,11 +715,13 @@ public class OCLDeviceContext extends TornadoLogger implements Initialisable, OC
         return codeCache.isCached(task.getId() + "-" + methodName);
     }
 
+    @Override
     public OCLInstalledCode getInstalledCode(String id, String entryPoint) {
         entryPoint = checkKernelName(entryPoint);
         return codeCache.getInstalledCode(id, entryPoint);
     }
 
+    @Override
     public OCLCodeCache getCodeCache() {
         return this.codeCache;
     }

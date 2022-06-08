@@ -41,14 +41,14 @@ $ clinfo
 
 ## Step 1: Update/Create the FPGA's configuration file
 
-Update the "etc/vendor_fpga.conf" file with the necessary information (i.e. fpga platform name (DEVICE_NAME), HLS compiler flags (FLAGS), HLS directory (DIRECTORY_BITSTREAM). TornadoVM will automatically load the user-defined configurations according to the vendor of the underlying FPGA device.  You can also run TornadoVM with your configuration file, by using the `-Dtornado.fpga.conf.file=FILE` flag.
+Update the "$TORNADO_SDK/etc/vendor-fpga.conf" file with the necessary information (i.e. fpga platform name (DEVICE_NAME), HLS compiler flags (FLAGS), HLS directory (DIRECTORY_BITSTREAM). TornadoVM will automatically load the user-defined configurations according to the vendor of the underlying FPGA device.  You can also run TornadoVM with your configuration file, by using the `-Dtornado.fpga.conf.file=FILE` flag.
 
 ### Example of configuration file for Intel Nallatech-A385 FPGA (Intel Arria 10 GT1150):
 
 Edit/create the configuration file fo the FPGA:
 
 ```bash
-$ vim etc/intel-fpga.conf
+$ vim $TORNADO_SDK/etc/intel-fpga.conf
 ```
 
 ```conf
@@ -65,7 +65,7 @@ DIRECTORY_BITSTREAM = fpga-source-comp/ # Specify the directory
 ### Example of configuration file for Xilinx KCU1500:
 
 ```bash
-$ vim etc/xilinx-fpga.conf
+$ vim $TORNADO_SDK/etc/xilinx-fpga.conf
 ```
 
 ```conf
@@ -110,7 +110,7 @@ source /opt/xilinx/xrt/setup.sh
 ### Example of configuration file for AWS xilinx_aws-vu9p-f1-04261818_dynamic_5_0:
 
 ```bash
-$ vim etc/xilinx-fpga.conf
+$ vim $TORNADO_SDK/etc/xilinx-fpga.conf
 ```
 
 ```conf
@@ -141,12 +141,12 @@ tornado \
     -m tornado.examples/uk.ac.manchester.tornado.examples.dynamic.DFTDynamic 1024 normal 1
 ```
 
-Note: The Full JIT mode on the Alveo U50 presents some constraints regarding the maximum allocated space on the device memory. Although the Xilinx driver reports 1GB as the maximum allocation space, the XRT layer throws an error (`[XRT] ERROR: std::bad_alloc`) when the heap size is larger than 64MB. This issue is reported to Xilinx, and it is anticipated to be fixed soon. For applications that do not require more than 64MB of heap size, the following flag can be used `-Dtornado.heap.allocation=64MB`.
+Note: The Full JIT mode on the Alveo U50 presents some constraints regarding the maximum allocated space on the device memory. Although the Xilinx driver reports 1GB as the maximum allocation space, the XRT layer throws an error (`[XRT] ERROR: std::bad_alloc`) when the heap size is larger than 64MB. This issue is reported to Xilinx, and it is anticipated to be fixed soon. For applications that do not require more than 64MB of heap size, the following flag can be used `-Dtornado.device.memory=64MB`.
 
 ```bash
 tornado \
     -Ds0.t0.device=0:1 \
-    -Dtornado.heap.allocation=64MB \
+    -Dtornado.device.memory=64MB \
     -m tornado.examples/uk.ac.manchester.tornado.examples.dynamic.DFTDynamic 1024 normal 1
 ```
 
@@ -165,12 +165,12 @@ tornado \
     -m tornado.examples/uk.ac.manchester.tornado.examples.dynamic.DFTDynamic 1024 normal 10
 ```
 
-Note: The Ahead of Time mode on the Alveo U50 presents some constraints regarding the maximum allocated space on the device memory. Although the Xilinx driver reports 1GB as the maximum allocation space, the XRT layer throws an error (`[XRT] ERROR: std::bad_alloc`) when the heap size is larger than 64MB. This issue is reported to Xilinx, and it is anticipated to be fixed soon. For applications that do not require more than 64MB of heap size, the following flag can be used `-Dtornado.heap.allocation=64MB`.
+Note: The Ahead of Time mode on the Alveo U50 presents some constraints regarding the maximum allocated space on the device memory. Although the Xilinx driver reports 1GB as the maximum allocation space, the XRT layer throws an error (`[XRT] ERROR: std::bad_alloc`) when the heap size is larger than 64MB. This issue is reported to Xilinx, and it is anticipated to be fixed soon. For applications that do not require more than 64MB of heap size, the following flag can be used `-Dtornado.device.memory=64MB`.
 
 ```bash
 tornado \
     -Ds0.t0.device=0:1 \
-    -Dtornado.heap.allocation=64MB \
+    -Dtornado.device.memory=64MB \
     -m tornado.examples/uk.ac.manchester.tornado.examples.dynamic.DFTDynamic 1024 normal 1
 ```
 

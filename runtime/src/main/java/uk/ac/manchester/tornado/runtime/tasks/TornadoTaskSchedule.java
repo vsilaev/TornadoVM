@@ -102,13 +102,11 @@ import uk.ac.manchester.tornado.api.exceptions.TornadoRuntimeException;
 import uk.ac.manchester.tornado.api.profiler.ProfilerType;
 import uk.ac.manchester.tornado.api.profiler.TornadoProfiler;
 import uk.ac.manchester.tornado.api.runtime.TornadoRuntime;
-import uk.ac.manchester.tornado.runtime.TornadoAcceleratorDriver;
 import uk.ac.manchester.tornado.runtime.TornadoCoreRuntime;
 import uk.ac.manchester.tornado.runtime.TornadoVM;
 import uk.ac.manchester.tornado.runtime.analyzer.MetaReduceCodeAnalysis;
 import uk.ac.manchester.tornado.runtime.analyzer.ReduceCodeAnalysis;
 import uk.ac.manchester.tornado.runtime.analyzer.TaskUtils;
-import uk.ac.manchester.tornado.runtime.common.CallStack;
 import uk.ac.manchester.tornado.runtime.common.DeviceObjectState;
 import uk.ac.manchester.tornado.runtime.common.Tornado;
 import uk.ac.manchester.tornado.runtime.common.TornadoAcceleratorDevice;
@@ -372,7 +370,8 @@ public class TornadoTaskSchedule implements AbstractTaskGraph {
             vm.fetchGlobalStates();
         }
 
-        // 5. Set the update data flag to true in order to create a new call stack on the device.
+        // 5. Set the update data flag to true in order to create a new wrapper
+        // on the device.
         updateData = true;
 
         // 6. Update task-parameters
@@ -420,6 +419,8 @@ public class TornadoTaskSchedule implements AbstractTaskGraph {
 
     @Override
     public void setDevice(TornadoDevice device) {
+        TornadoDevice oldDevice = meta().getLogicDevice();
+
         meta().setDevice(device);
 
         // Make sure that a sketch is available for the device.
@@ -433,6 +434,16 @@ public class TornadoTaskSchedule implements AbstractTaskGraph {
                 }
             }
         }
+
+        // Release locked buffers from the old device and lock them on the new one.
+        for (LocalObjectState localState : executionContext.getObjectStates()) {
+            final GlobalObjectState globalState = localState.getGlobalState();
+            final DeviceObjectState deviceState = globalState.getDeviceState(oldDevice);
+            if (deviceState.isLockedBuffer()) {
+                unlockObjectFromDevice(localState, oldDevice);
+                lockObjectInMemoryOnDevice(localState, device);
+            }
+        }     
     }
 
     private void triggerRecompile() {
@@ -460,12 +471,6 @@ public class TornadoTaskSchedule implements AbstractTaskGraph {
         
     }
 
-    @Override
-    public long getReturnValue(String id) {
-        CallStack stack = executionContext.getFrame(id);
-        return stack.getReturnValue();
-    }
-
     private void updateInner(int index, SchedulableTask task) {
         int driverIndex = task.meta().getDriverIndex();
         Providers providers = getTornadoRuntime().getDriver(driverIndex).getProviders();
@@ -489,9 +494,8 @@ public class TornadoTaskSchedule implements AbstractTaskGraph {
     @Override
     public void addInner(SchedulableTask task) {
         int driverIndex = task.meta().getDriverIndex();
-        TornadoAcceleratorDriver driver = getTornadoRuntime().getDriver(driverIndex); 
-        Providers providers = driver.getProviders();
-        TornadoSuitesProvider suites = driver.getSuitesProvider();
+        Providers providers = getTornadoRuntime().getDriver(driverIndex).getProviders();
+        TornadoSuitesProvider suites = getTornadoRuntime().getDriver(driverIndex).getSuitesProvider();
 
         logTaskMethodHandle(task);
 
@@ -611,7 +615,7 @@ public class TornadoTaskSchedule implements AbstractTaskGraph {
              *
              * @Parallel API and the Grid Task. The @Parallel task might need the loop bound
              * updated. TODO This check will no longer be needed once we pass the loop
-             * bounds via the call stack instead of constant folding.
+             * bounds via the call wrapper instead of constant folding.
              */
             for (TaskPackage taskPackage : taskPackages) {
                 if (!gridScheduler.contains(taskScheduleName, taskPackage.getId())) {
@@ -642,9 +646,9 @@ public class TornadoTaskSchedule implements AbstractTaskGraph {
         vm.setGridScheduler(gridScheduler);
 
         if (updateData) {
-            executionContext.newStack(true);
+            executionContext.newCallWrapper(true);
         } else {
-            executionContext.newStack(compileInfo.updateDevice);
+            executionContext.newCallWrapper(compileInfo.updateDevice);
         }
         return compileInfo.compile;
     }
@@ -898,9 +902,47 @@ public class TornadoTaskSchedule implements AbstractTaskGraph {
     }
 
     @Override
-    public void invalidateObjects() {
-        if (vm != null) {
-            vm.invalidateObjects();
+    public void lockObjectInMemory(Object object) {
+        final LocalObjectState localState = executionContext.getObjectState(object);
+        lockObjectInMemoryOnDevice(localState, meta().getLogicDevice());
+    }
+
+    private void lockObjectInMemoryOnDevice(final LocalObjectState localState, final TornadoDevice device) {
+        final GlobalObjectState globalState = localState.getGlobalState();
+        final DeviceObjectState deviceState = globalState.getDeviceState(device);
+        deviceState.setLockBuffer(true);
+    }
+
+    @Override
+    public void lockObjectsInMemory(Object[] objects) {
+        for (Object obj : objects) {
+            lockObjectInMemory(obj);
+        }
+    }
+
+    @Override
+    public void unlockObjectFromMemory(Object object) {
+        if (vm == null) {
+            return;
+        }
+
+        final LocalObjectState localState = executionContext.getObjectState(object);
+        unlockObjectFromDevice(localState, meta().getLogicDevice());
+    }
+
+    private void unlockObjectFromDevice(final LocalObjectState localState, final TornadoDevice device) {
+        final GlobalObjectState globalState = localState.getGlobalState();
+        final DeviceObjectState deviceState = globalState.getDeviceState(device);
+        deviceState.setLockBuffer(false);
+        if (deviceState.hasObjectBuffer()) {
+            device.deallocate(deviceState);
+        }
+    }
+
+    @Override
+    public void unlockObjectsFromMemory(Object[] objects) {
+        for (Object obj : objects) {
+            unlockObjectFromMemory(obj);
         }
     }
 
@@ -909,7 +951,10 @@ public class TornadoTaskSchedule implements AbstractTaskGraph {
         if (vm == null) {
             return;
         }
-        /* Clean the profiler -- avoids the possibility of reporting the execute() profiling information twice. */
+        /*
+         * Clean the profiler -- avoids the possibility of reporting the execute()
+         * profiling information twice.
+         */
         timeProfiler.clean();
 
         executionContext.sync();
@@ -921,7 +966,10 @@ public class TornadoTaskSchedule implements AbstractTaskGraph {
         final GlobalObjectState globalState = localState.getGlobalState();
         final TornadoAcceleratorDevice device = meta().getLogicDevice();
         final DeviceObjectState deviceState = globalState.getDeviceState(device);
-        return device.resolveEvent(device.streamOutBlocking(object, 0, deviceState, null));
+        if (deviceState.isLockedBuffer()) {
+            return device.resolveEvent(device.streamOutBlocking(object, 0, deviceState, null));
+        }
+        return null;
     }
 
     @Override
@@ -929,7 +977,10 @@ public class TornadoTaskSchedule implements AbstractTaskGraph {
         if (vm == null) {
             return;
         }
-        /* Clean the profiler -- avoids the possibility of reporting the execute() profiling information twice */
+        /*
+         * Clean the profiler -- avoids the possibility of reporting the execute()
+         * profiling information twice
+         */
         timeProfiler.clean();
 
         executionContext.sync();
@@ -949,20 +1000,29 @@ public class TornadoTaskSchedule implements AbstractTaskGraph {
         }
 
         for (Event e : events) {
-            e.waitOn();
+            if (e != null) {
+                e.waitOn();
+            }
         }
 
         if (TornadoOptions.isProfilerEnabled()) {
-            /* Clean the profiler -- avoids the possibility of reporting the execute() profiling information twice */
+            /*
+             * Clean the profiler -- avoids the possibility of reporting the execute()
+             * profiling information twice
+             */
             timeProfiler.clean();
             for (int i = 0; i < events.length; i++) {
+                Event event = events[i];
+                if (event == null) {
+                    continue;
+                }
                 long value = timeProfiler.getTimer(ProfilerType.COPY_OUT_TIME_SYNC);
-                events[i].waitForEvents();
-                value += events[i].getElapsedTime();
+                event.waitForEvents();
+                value += event.getElapsedTime();
                 timeProfiler.setTimer(ProfilerType.COPY_OUT_TIME_SYNC, value);
                 LocalObjectState localState = executionContext.getObjectState(objects[i]);
                 DeviceObjectState deviceObjectState = localState.getGlobalState().getDeviceState(meta().getLogicDevice());
-                timeProfiler.addValueToMetric(ProfilerType.COPY_OUT_SIZE_BYTES_SYNC, TimeProfiler.NO_TASK_NAME, deviceObjectState.getBuffer().size());
+                timeProfiler.addValueToMetric(ProfilerType.COPY_OUT_SIZE_BYTES_SYNC, TimeProfiler.NO_TASK_NAME, deviceObjectState.getObjectBuffer().size());
             }
             updateProfiler();
         }

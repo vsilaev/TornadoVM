@@ -26,7 +26,6 @@
 package uk.ac.manchester.tornado.drivers.opencl.graal.compiler;
 
 import static org.graalvm.compiler.core.common.GraalOptions.ConditionalElimination;
-import static org.graalvm.compiler.core.common.GraalOptions.ImmutableCode;
 import static org.graalvm.compiler.core.common.GraalOptions.OptConvertDeoptsToGuards;
 import static org.graalvm.compiler.core.common.GraalOptions.PartialEscapeAnalysis;
 import static org.graalvm.compiler.core.phases.HighTier.Options.Inline;
@@ -56,6 +55,7 @@ import uk.ac.manchester.tornado.drivers.opencl.graal.phases.TornadoTaskSpecialis
 import uk.ac.manchester.tornado.runtime.common.TornadoOptions;
 import uk.ac.manchester.tornado.runtime.graal.compiler.TornadoHighTier;
 import uk.ac.manchester.tornado.runtime.graal.phases.ExceptionSuppression;
+import uk.ac.manchester.tornado.runtime.graal.phases.TornadoFieldAccessFixup;
 import uk.ac.manchester.tornado.runtime.graal.phases.TornadoFullInliningPolicy;
 import uk.ac.manchester.tornado.runtime.graal.phases.TornadoInliningPolicy;
 import uk.ac.manchester.tornado.runtime.graal.phases.TornadoLocalMemoryAllocation;
@@ -66,13 +66,9 @@ import uk.ac.manchester.tornado.runtime.graal.phases.TornadoValueTypeCleanup;
 public class OCLHighTier extends TornadoHighTier {
 
     private CanonicalizerPhase createCanonicalizerPhase(OptionValues options, CanonicalizerPhase.CustomSimplification customCanonicalizer) {
-        CanonicalizerPhase canonicalizer;
-        if (ImmutableCode.getValue(options)) {
-            canonicalizer = CanonicalizerPhase.createWithoutReadCanonicalization();
-        } else {
-            canonicalizer = CanonicalizerPhase.create();
-        }
-        return canonicalizer.copyWithCustomSimplification(customCanonicalizer);
+        CanonicalizerPhase canonicalizerPhase = CanonicalizerPhase.create();
+        return canonicalizerPhase.copyWithCustomSimplification(customCanonicalizer);
+
     }
 
     public OCLHighTier(OptionValues options, TornadoDeviceContext deviceContext, CanonicalizerPhase.CustomSimplification customCanonicalizer, MetaAccessProvider metaAccessProvider) {
@@ -92,6 +88,7 @@ public class OCLHighTier extends TornadoHighTier {
         }
 
         appendPhase(new TornadoTaskSpecialisation(canonicalizer));
+        appendPhase(new TornadoFieldAccessFixup());
         appendPhase(canonicalizer);
         appendPhase(new DeadCodeEliminationPhase(Optional));
 
