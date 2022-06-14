@@ -120,8 +120,32 @@ public class OCLCodeCache {
         }
     }
 
+    private String trimFirstSpaceFromString(String string) {
+        return string.replaceFirst("\\s+", "");
+    }
+
     private boolean tokenStartsAComment(String token) {
         return token.startsWith("#");
+    }
+
+    private boolean runOnIntelFPGAWithDocker() {
+        if (System.getenv("DOCKER_FPGA_EMULATION") == null) {
+            return false;
+        } else {
+            return System.getenv("DOCKER_FPGA_EMULATION").equals("1");
+        }
+    }
+
+    private String fetchFPGAConfigurationFile() {
+        if (deviceContext.getDevice().getDeviceVendor().equalsIgnoreCase("xilinx")) {
+            return "/etc/xilinx-fpga.conf";
+        } else {
+            if (runOnIntelFPGAWithDocker()) {
+                return "/etc/intel-docker-fpga.conf";
+            } else {
+                return "/etc/intel-fpga.conf";
+            }
+        }
     }
 
     private String resolveFPGAConfigurationFileName() {
@@ -130,7 +154,7 @@ public class OCLCodeCache {
         } else {
             StringBuilder sb = new StringBuilder();
             sb.append(System.getenv("TORNADO_SDK"));
-            sb.append(deviceContext.getDevice().getDeviceVendor().equalsIgnoreCase("xilinx") ? "/etc/xilinx-fpga.conf" : "/etc/intel-fpga.conf");
+            sb.append(fetchFPGAConfigurationFile());
             return sb.toString();
         }
     }
@@ -143,6 +167,7 @@ public class OCLCodeCache {
             bufferedReader = new BufferedReader(fileReader);
             String line;
             while ((line = bufferedReader.readLine()) != null) {
+                line = trimFirstSpaceFromString(line);
                 StringTokenizer tokenizer = new StringTokenizer(line, " =");
                 while (tokenizer.hasMoreElements()) {
                     String token = tokenizer.nextToken();
@@ -348,6 +373,17 @@ public class OCLCodeCache {
         return bufferCommand.toString().split(" ");
     }
 
+    private String[] composeIntelHLSCommandForDocker(String inputFile, String outputFile) {
+        StringJoiner bufferCommand = new StringJoiner(" ");
+
+        bufferCommand.add(fpgaCompiler);
+        bufferCommand.add("--input=" + inputFile);
+        bufferCommand.add("--device=" + fpgaName + " --cmd=build");
+        bufferCommand.add("--ir=" + outputFile + ".aocx");
+
+        return bufferCommand.toString().split(" ");
+    }
+
     private String[] composeXilinxHLSCompileCommand(String inputFile, String kernelName) {
         StringJoiner bufferCommand = new StringJoiner(" ");
 
@@ -463,7 +499,11 @@ public class OCLCodeCache {
                 linkObjectFiles.add(entryPoint);
                 linkCommand = composeXilinxHLSLinkCommand(entryPoint);
             } else if (isPlatform("intel")) {
-                compilationCommand = composeIntelHLSCommand(inputFile, outputFile);
+                if (runOnIntelFPGAWithDocker()) {
+                    compilationCommand = composeIntelHLSCommandForDocker(inputFile, outputFile);
+                } else {
+                    compilationCommand = composeIntelHLSCommand(inputFile, outputFile);
+                }
             } else {
                 // Should not reach here
                 throw new TornadoRuntimeException("[ERROR] FPGA vendor not supported yet.");

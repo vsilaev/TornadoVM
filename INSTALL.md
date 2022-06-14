@@ -6,13 +6,13 @@ The following table includes the platforms that TornadoVM can be executed.
 
 | OS                         | OpenCL Backend                                             | PTX Backend | SPIR-V Backend            | 
 | -------------------------- | ---------------------------------------------------------- | ----------- | ------------------------- |
-| CentOS >= 7.3              | OpenCL for GPUs and CPUs >= 1.2, OpenCL for FPGAs >= 1.0)  |  CUDA 9.0+  | Level-Zero >= 1.1.2       |
-| Fedora >= 21               | OpenCL for GPUs and CPUs >= 1.2, OpenCL for FPGAs >= 1.0)  |  CUDA 9.0+  | Level-Zero >= 1.1.2       |
-| Ubuntu >= 16.04            | OpenCL for GPUs and CPUs >= 1.2, OpenCL for FPGAs >= 1.0)  |  CUDA 9.0+  | Level-Zero >= 1.1.2       |
-| Mac OS X Mojave 10.14.6    | OpenCL for GPUs and CPUs >= 1.2, OpenCL for FPGAs >= 1.0)  |  CUDA 9.0+  | Not supported             |
-| Mac OS X Catalina 10.15.3  | OpenCL for GPUs and CPUs >= 1.2, OpenCL for FPGAs >= 1.0)  |  CUDA 9.0+  | Not supported             |
-| Mac OS X Big Sur 11.5.1    | OpenCL for GPUs and CPUs >= 1.2, OpenCL for FPGAs >= 1.0)  |  CUDA 9.0+  | Not supported             |
-| Windows 10                 | OpenCL for GPUs and CPUs >= 1.2, OpenCL for FPGAs >= 1.0)  |  CUDA 9.0+  | Not supported/tested      |
+| CentOS >= 7.3              | OpenCL for GPUs and CPUs >= 2.1, OpenCL for FPGAs >= 1.0)  |  CUDA 9.0+  | Level-Zero >= 1.1.2       |
+| Fedora >= 21               | OpenCL for GPUs and CPUs >= 2.1, OpenCL for FPGAs >= 1.0)  |  CUDA 9.0+  | Level-Zero >= 1.1.2       |
+| Ubuntu >= 16.04            | OpenCL for GPUs and CPUs >= 2.1, OpenCL for FPGAs >= 1.0)  |  CUDA 9.0+  | Level-Zero >= 1.1.2       |
+| Mac OS X Mojave 10.14.6    | OpenCL for GPUs and CPUs >= 2.1, OpenCL for FPGAs >= 1.0)  |  CUDA 9.0+  | Not supported             |
+| Mac OS X Catalina 10.15.3  | OpenCL for GPUs and CPUs >= 2.1, OpenCL for FPGAs >= 1.0)  |  CUDA 9.0+  | Not supported             |
+| Mac OS X Big Sur 11.5.1    | OpenCL for GPUs and CPUs >= 2.1, OpenCL for FPGAs >= 1.0)  |  CUDA 9.0+  | Not supported             |
+| Windows 10                 | OpenCL for GPUs and CPUs >= 2.1, OpenCL for FPGAs >= 1.0)  |  CUDA 9.0+  | Not supported/tested      |
 
 Note: The SPIR-V backend is only supported for Linux OS. Besides, the SPIR-V backend with Level Zero runs on Intel HD Graphics (integrated GPUs). 
 
@@ -33,24 +33,29 @@ Additionally, this installation type will automatically trigger all dependencies
 Note that GraalVM Community Edition releases based on JDK8 are no longer being built for Mac OSx.
 
 ```bash
-./scripts/tornadovmInstaller.sh 
+$ ./scripts/tornadovmInstaller.sh 
 TornadoVM installer for Linux and OSx
-Usage:
-       --jdk8           : Install TornadoVM with OpenJDK 8
-       --jdk11          : Install TornadoVM with OpenJDK 11
-       --jdk17          : Install TornadoVM with OpenJDK 17
-       --graal-jdk-11   : Install TornadoVM with GraalVM and JDK 11 (GraalVM 22.1.0)
-       --graal-jdk-17   : Install TornadoVM with GraalVM and JDK 17 (GraalVM 22.1.0)
-       --corretto-11    : Install TornadoVM with Corretto JDK 11
-       --corretto-17    : Install TornadoVM with Corretto JDK 17
-       --mandrel-11     : Install TornadoVM with Mandrel 22.1.0 (JDK 11)
-       --mandrel-17     : Install TornadoVM with Mandrel 22.1.0 (JDK 17)
-       --windows-jdk-11 : Install TornadoVM with Windows JDK 11
-       --windows-jdk-17 : Install TornadoVM with Windows JDK 17
-       --opencl         : Install TornadoVM and build the OpenCL backend
-       --ptx            : Install TornadoVM and build the PTX backend
-       --spirv          : Install TornadoVM and build the SPIR-V backend
-       --help           : Print this help
+./script/tornadoVMInstaller.sh <JDK> <BACKENDS>
+JDK (select one):
+       --jdk11            : Install TornadoVM with OpenJDK 11
+       --jdk17            : Install TornadoVM with OpenJDK 17
+       --graal-jdk-11     : Install TornadoVM with GraalVM and JDK 11 (GraalVM 22.1.0)
+       --graal-jdk-17     : Install TornadoVM with GraalVM and JDK 17 (GraalVM 22.1.0)
+       --corretto-11      : Install TornadoVM with Corretto JDK 11
+       --corretto-17      : Install TornadoVM with Corretto JDK 17
+       --mandrel-11       : Install TornadoVM with Mandrel 22.1.0 (JDK 11)
+       --mandrel-17       : Install TornadoVM with Mandrel 22.1.0 (JDK 17)
+       --microsoft-jdk-11 : Install TornadoVM with Microsoft JDK 11
+       --microsoft-jdk-17 : Install TornadoVM with Microsoft JDK 17
+       --zulu-jdk-11      : Install TornadoVM with Azul Zulu JDK 11
+       --zulu-jdk-17      : Install TornadoVM with Azul Zulu JDK 17
+TornadoVM Backends:
+       --opencl           : Install TornadoVM and build the OpenCL backend
+       --ptx              : Install TornadoVM and build the PTX backend
+       --spirv            : Install TornadoVM and build the SPIR-V backend
+Help:
+       --help             : Print this help
+
 ```
 
 **NOTE** Select the desired backend:

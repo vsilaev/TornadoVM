@@ -45,33 +45,6 @@ import uk.ac.manchester.tornado.runtime.common.TornadoLogger;
 
 public class OCLContext implements OCLExecutionEnvironment {
 
-    private TornadoLogger logger = new TornadoLogger();
-
-    public static class OCLBufferResult {
-
-        private final long oclBuffer;
-        private final long address;
-        private final int result;
-
-        public OCLBufferResult(long oclBuffer, long address, int result) {
-            this.oclBuffer = oclBuffer;
-            this.address = address;
-            this.result = result;
-        }
-
-        public long getBuffer() {
-            return oclBuffer;
-        }
-
-        public long getAddress() {
-            return address;
-        }
-
-        public int getResult() {
-            return result;
-        }
-    }
-
     private final long contextID;
     private final List<OCLTargetDevice> devices;
     private final List<OCLDeviceContext> deviceContexts;
@@ -88,28 +61,28 @@ public class OCLContext implements OCLExecutionEnvironment {
         this.programs = new ArrayList<>();
     }
 
-    private native static ByteBuffer allocateNativeMemory(long size, long alignment);
+    private static native ByteBuffer allocateNativeMemory(long size, long alignment);
 
-    private native static void freeNativeMemory(ByteBuffer memory);
+    private static native void freeNativeMemory(ByteBuffer memory);
     
-    native static void clReleaseContext(long id) throws OCLException;
+    static native void clReleaseContext(long id) throws OCLException;
 
-    native static void clGetContextInfo(long id, int info, byte[] buffer) throws OCLException;
+    static native void clGetContextInfo(long id, int info, byte[] buffer) throws OCLException;
 
-    native static long clCreateCommandQueue(long contextId, long deviceId, long properties) throws OCLException;
+    static native long clCreateCommandQueue(long contextId, long deviceId, long properties) throws OCLException;
 
     // creates an empty buffer on the device
-    native static OCLBufferResult createBuffer(long contextId, long flags, long size, long hostPointer) throws OCLException;
+    static native OCLBufferResult createBuffer(long contextId, long flags, long size, long hostPointer) throws OCLException;
 
-    native static long createSubBuffer(long buffer, long flags, int createType, byte[] createInfo) throws OCLException;
+    static native long createSubBuffer(long buffer, long flags, int createType, byte[] createInfo) throws OCLException;
 
-    native static void clReleaseMemObject(long memId) throws OCLException;
+    static native void clReleaseMemObject(long memId) throws OCLException;
 
-    native static long clCreateProgramWithSource(long contextId, byte[] data, long lengths[]) throws OCLException;
+    static native long clCreateProgramWithSource(long contextId, byte[] data, long[] lengths) throws OCLException;
 
-    native static long clCreateProgramWithBinary(long contextId, long deviceId, byte[] data, long lengths[]) throws OCLException;
-    
-    native static long clCreateProgramWithIL(long contextId, byte[] spirvBinaryCode, long[] lengths) throws OCLException;
+    static native long clCreateProgramWithBinary(long contextId, long deviceId, byte[] data, long[] lengths) throws OCLException;
+
+    static native long clCreateProgramWithIL(long contextId, byte[] spirvBinaryCode, long[] lengths) throws OCLException;
 
     public int getNumDevices() {
         return devices.size();
@@ -180,18 +153,6 @@ public class OCLContext implements OCLExecutionEnvironment {
         return program;
     }
 
-    public OCLProgram createProgramWithBinary(long deviceId, byte[] binary, long[] lengths, OCLDeviceContext deviceContext) {
-        OCLProgram program = null;
-
-        try {
-            program = new OCLProgram(clCreateProgramWithBinary(contextID, deviceId, binary, lengths), deviceContext);
-        } catch (OCLException e) {
-            TornadoLogger.error(e.getMessage());
-        }
-
-        return program;
-    }
-    
     public OCLProgram createProgramWithIL(byte[] spirvBinary, long[] lengths, OCLDeviceContext deviceContext) {
         OCLProgram program = null;
 
@@ -203,7 +164,19 @@ public class OCLContext implements OCLExecutionEnvironment {
         }
 
         return program;
-    }    
+    }
+
+    public OCLProgram createProgramWithBinary(long deviceId, byte[] binary, long[] lengths, OCLDeviceContext deviceContext) {
+        OCLProgram program = null;
+
+        try {
+            program = new OCLProgram(clCreateProgramWithBinary(contextID, deviceId, binary, lengths), deviceContext);
+        } catch (OCLException e) {
+            TornadoLogger.error(e.getMessage());
+        }
+
+        return program;
+    }
 
     public void cleanup() {
 
@@ -303,5 +276,30 @@ public class OCLContext implements OCLExecutionEnvironment {
 
     public OCLPlatform getPlatform() {
         return platform;
+    }
+
+    public static class OCLBufferResult {
+
+        private final long oclBuffer;
+        private final long address;
+        private final int result;
+
+        public OCLBufferResult(long oclBuffer, long address, int result) {
+            this.oclBuffer = oclBuffer;
+            this.address = address;
+            this.result = result;
+        }
+
+        public long getBuffer() {
+            return oclBuffer;
+        }
+
+        public long getAddress() {
+            return address;
+        }
+
+        public int getResult() {
+            return result;
+        }
     }
 }

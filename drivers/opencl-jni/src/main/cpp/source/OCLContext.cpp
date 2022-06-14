@@ -23,7 +23,6 @@
  */
 #include <jni.h>
 
-#define CL_TARGET_OPENCL_VERSION 210
 #ifdef __APPLE__
 #include <OpenCL/cl.h>
 #else
@@ -165,19 +164,19 @@ JNIEXPORT void JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLContext_c
  * Signature: (J[B[J)J
  */
 JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLContext_clCreateProgramWithSource
-(JNIEnv *env, jclass clazz, jlong context_id, jbyteArray array1, jlongArray array2) {
-    jbyte *source = static_cast<jbyte *>(env->GetPrimitiveArrayCritical(array1, NULL));
-    jlong *lengths = static_cast<jlong *>(env->GetPrimitiveArrayCritical(array2, NULL));
-    jsize numLengths = env->GetArrayLength(array2);
+(JNIEnv *env, jclass clazz, jlong context_id, jbyteArray javaSourceArray, jlongArray javaSizeArray) {
+    jbyte *source = static_cast<jbyte *>(env->GetPrimitiveArrayCritical(javaSourceArray, NULL));
+    jlong *lengths = static_cast<jlong *>(env->GetPrimitiveArrayCritical(javaSizeArray, NULL));
+    jsize numLengths = env->GetArrayLength(javaSizeArray);
 
     cl_int status = CL_INVALID_PROGRAM;
     cl_program program = clCreateProgramWithSource((cl_context) context_id, (cl_uint) numLengths, (const char **) &source, (size_t*) lengths, &status);
     LOG_OCL_AND_VALIDATE("clCreateProgramWithSource", status);
     if (NULL != lengths) {
-        env->ReleasePrimitiveArrayCritical(array2, lengths, 0);
+        env->ReleasePrimitiveArrayCritical(javaSizeArray, lengths, 0);
     }
     if (NULL != source) {
-        env->ReleasePrimitiveArrayCritical(array1, source, 0);
+        env->ReleasePrimitiveArrayCritical(javaSourceArray, source, 0);
     }
     return CL_SUCCESS == status ? (jlong) program : (jlong) status;
 }
@@ -188,10 +187,10 @@ JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLContext_
  * Signature: (JJ[B[J)J
  */
 JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLContext_clCreateProgramWithBinary
-(JNIEnv *env, jclass clazz, jlong context_id, jlong device_id, jbyteArray array1, jlongArray array2) {
-    jbyte *binary = static_cast<jbyte *>(env->GetPrimitiveArrayCritical(array1, NULL));
-    jlong *lengths = static_cast<jlong *>(env->GetPrimitiveArrayCritical(array2, NULL));
-    jsize numLengths = env->GetArrayLength(array2);
+(JNIEnv *env, jclass clazz, jlong context_id, jlong device_id, jbyteArray javaSourceBinaryArray, jlongArray javaSizeArray) {
+    jbyte *binary = static_cast<jbyte *>(env->GetPrimitiveArrayCritical(javaSourceBinaryArray, NULL));
+    jlong *lengths = static_cast<jlong *>(env->GetPrimitiveArrayCritical(javaSizeArray, NULL));
+    jsize numLengths = env->GetArrayLength(javaSizeArray);
 
     cl_int status = CL_INVALID_PROGRAM;
     cl_program program;
@@ -203,10 +202,10 @@ JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLContext_
         std::cout << "[TornadoVM JNI] OCL> loading multiple binaries not supported\n";
     }
     if (NULL != lengths) {
-        env->ReleasePrimitiveArrayCritical(array2, lengths, 0);
+        env->ReleasePrimitiveArrayCritical(javaSizeArray, lengths, 0);
     }
     if (NULL != binary) {
-        env->ReleasePrimitiveArrayCritical(array1, binary, 0);
+        env->ReleasePrimitiveArrayCritical(javaSourceBinaryArray, binary, 0);
     }
 
     return CL_SUCCESS == status ? (jlong) program : (jlong) status;
@@ -219,14 +218,22 @@ JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLContext_
  */
 JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLContext_clCreateProgramWithIL
         (JNIEnv *env, jclass clazz, jlong context_id, jbyteArray javaSourceBinaryArray, jlongArray javaSizeArray) {
-    jbyte *source = static_cast<jbyte *>(env->GetPrimitiveArrayCritical(javaSourceBinaryArray, NULL));
-    jlong *lengths = static_cast<jlong *>(env->GetPrimitiveArrayCritical(javaSizeArray, NULL));
-    size_t binarySize = lengths[0];
 
-    cl_int status;
-    cl_program program = clCreateProgramWithIL((cl_context) context_id, (const void *) source, binarySize, &status);
-    LOG_OCL_AND_VALIDATE("clCreateProgramWithIL", status);
-    env->ReleasePrimitiveArrayCritical(javaSourceBinaryArray, source, 0);
-    env->ReleasePrimitiveArrayCritical(javaSizeArray, lengths, 0);
-    return (jlong) program;
+    #if CL_TARGET_OPENCL_VERSION >= 210
+        jbyte *source = static_cast<jbyte *>(env->GetPrimitiveArrayCritical(javaSourceBinaryArray, NULL));
+        jlong *lengths = static_cast<jlong *>(env->GetPrimitiveArrayCritical(javaSizeArray, NULL));
+        size_t binarySize = lengths[0];
+        cl_int status = CL_INVALID_PROGRAM;
+        cl_program program = clCreateProgramWithIL((cl_context) context_id, (const void *) source, binarySize, &status);
+        LOG_OCL_AND_VALIDATE("clCreateProgramWithIL", status);
+        if (NULL != lengths) {
+            env->ReleasePrimitiveArrayCritical(javaSizeArray, lengths, 0);
+        }
+        if (NULL != source) {
+            env->ReleasePrimitiveArrayCritical(javaSourceBinaryArray, source, 0);
+        }
+        return CL_SUCCESS == status ? (jlong) program : (jlong) status;
+    #else
+        return -1;
+    #endif
 }
