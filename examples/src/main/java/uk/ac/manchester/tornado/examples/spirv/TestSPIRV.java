@@ -240,7 +240,6 @@ public class TestSPIRV {
         final int numElements = 32;
         int[] a = new int[numElements];
         int[] b = new int[numElements];
-        int[] c = new int[numElements];
 
         for (int i = 0; i < a.length; i++) {
             b[i] = i;

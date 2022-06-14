@@ -240,7 +240,7 @@ public class OCLTornadoDevice implements TornadoAcceleratorDevice {
             profiler.registerDeviceID(ProfilerType.DEVICE_ID, taskMeta.getId(), taskMeta.getLogicDevice().getDriverIndex() + ":" + taskMeta.getDeviceIndex());
             profiler.registerDeviceName(ProfilerType.DEVICE, taskMeta.getId(), taskMeta.getLogicDevice().getPhysicalDevice().getDeviceName());
             profiler.start(ProfilerType.TASK_COMPILE_GRAAL_TIME, taskMeta.getId());
-            final OCLCompilationResult result = OCLCompiler.compileSketchForDevice(sketch, executable, providers, getBackend());
+            final OCLCompilationResult result = OCLCompiler.compileSketchForDevice(sketch, executable, providers, getBackend(), executable.getProfiler());
 
             // Update atomics buffer for inner methods that are not inlined
             ResolvedJavaMethod[] methods = result.getMethods();
@@ -504,7 +504,7 @@ public class OCLTornadoDevice implements TornadoAcceleratorDevice {
             }
         } else if (!type.isPrimitive()) {
             if (object instanceof AtomicInteger) {
-                result = new AtomicsBuffer(new int[]{}, deviceContext);
+                result = new AtomicsBuffer(new int[] {}, deviceContext);
             } else if (object.getClass().getAnnotation(Vector.class) != null) {
                 result = new OCLVectorWrapper(deviceContext, object, batchSize);
             } else {

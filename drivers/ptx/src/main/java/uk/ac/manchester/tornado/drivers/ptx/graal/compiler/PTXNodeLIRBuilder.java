@@ -496,6 +496,7 @@ public class PTXNodeLIRBuilder extends NodeLIRBuilder {
             append(new AssignStmt(pred, new PTXBinary.Expr(PTXBinaryOp.SETP_LT, intLirKind, x, y)));
         } else if (node instanceof IsNullNode) {
             final IsNullNode condition = (IsNullNode) node;
+            @SuppressWarnings("unused")
             final Value value = operand(condition.getValue());
             unimplemented("Logic: IsNullNode");
         } else if (node instanceof IntegerTestNode) {

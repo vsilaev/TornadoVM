@@ -41,6 +41,7 @@ public class OCLReturnSlot extends AllocatableValue {
     }
 
     public void emit(OCLCompilationResultBuilder crb, OCLAssembler asm) {
+        @SuppressWarnings("unused")
         OCLKind type = ((OCLKind) getPlatformKind());
         asm.emit("%s[%d]", FRAME_REF_NAME, RETURN_VALUE_INDEX);
     }
