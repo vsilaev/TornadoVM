@@ -56,6 +56,8 @@ public class TimeProfiler implements TornadoProfiler {
     private final Map<String, Map<ProfilerType, String>> taskDeviceIdentifiers = new ConcurrentHashMap<>();;
     private final Map<String, Map<ProfilerType, String>> taskMethodNames = new ConcurrentHashMap<>();
 
+    private Map<String, Map<ProfilerType, String>> taskBackends = new ConcurrentHashMap<>();
+    
     private StringBuffer indent;
 
     public TimeProfiler() {
@@ -88,15 +90,21 @@ public class TimeProfiler implements TornadoProfiler {
     }
 
     @Override
-    public void registerDeviceName(ProfilerType type, String taskName, String deviceInfo) {
+    public void registerDeviceName(String taskName, String deviceInfo) {
         Map<ProfilerType, String> profilerType = taskDeviceIdentifiers.computeIfAbsent(taskName, NEW_SAFE_MAP_STRING);
-        profilerType.put(type, deviceInfo);
+        profilerType.put(ProfilerType.DEVICE, deviceInfo);
+    }
+    
+    @Override
+    public void registerBackend(String taskName, String backend) {
+        Map<ProfilerType, String> profilerType = taskBackends.computeIfAbsent(taskName, NEW_SAFE_MAP_STRING);
+        profilerType.put(ProfilerType.BACKEND, backend);
     }
 
     @Override
-    public void registerDeviceID(ProfilerType type, String taskName, String deviceID) {
+    public void registerDeviceID(String taskName, String deviceID) {
         Map<ProfilerType, String> profilerType = taskDeviceIdentifiers.computeIfAbsent(taskName, NEW_SAFE_MAP_STRING);
-        profilerType.put(type, deviceID);
+        profilerType.put(ProfilerType.DEVICE_ID, deviceID);
     }
 
     @Override
@@ -186,6 +194,7 @@ public class TimeProfiler implements TornadoProfiler {
             if (TornadoOptions.LOG_IP) {
                 json.append(indent.toString() + "\"" + "IP" + "\"" + ": " + "\"" + RuntimeUtilities.getTornadoInstanceIP() + "\",\n");
             }
+            json.append(indent.toString() + "\"" + ProfilerType.BACKEND + "\"" + ": " + "\"" + taskBackends.get(p).get(ProfilerType.BACKEND) + "\",\n");
             json.append(indent.toString() + "\"" + ProfilerType.METHOD + "\"" + ": " + "\"" + taskMethodNames.get(p).get(ProfilerType.METHOD) + "\",\n");
             json.append(indent.toString() + "\"" + ProfilerType.DEVICE_ID + "\"" + ": " + "\"" + taskDeviceIdentifiers.get(p).get(ProfilerType.DEVICE_ID) + "\",\n");
             json.append(indent.toString() + "\"" + ProfilerType.DEVICE + "\"" + ": " + "\"" + taskDeviceIdentifiers.get(p).get(ProfilerType.DEVICE) + "\",\n");
