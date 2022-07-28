@@ -69,17 +69,17 @@ public class PTXDevice implements TornadoTargetDevice {
         maxAllocationSize = cuMemGetInfo();
     }
 
-    private native static long cuDeviceGet(int deviceId);
+    private static native long cuDeviceGet(int deviceId);
 
-    private native static String cuDeviceGetName(long cuDevice);
+    private static native String cuDeviceGetName(long cuDevice);
 
-    private native static int cuDeviceGetAttribute(long cuDevice, int attribute);
+    private static native int cuDeviceGetAttribute(long cuDevice, int attribute);
 
-    private native static long cuDeviceTotalMem(long cuDevice);
+    private static native long cuDeviceTotalMem(long cuDevice);
 
-    private native static long cuMemGetInfo();
+    private static native long cuMemGetInfo();
 
-    private native static int cuDriverGetVersion();
+    private static native int cuDriverGetVersion();
 
     @Override
     public String getDeviceName() {
