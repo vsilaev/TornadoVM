@@ -57,7 +57,7 @@ import jdk.vm.ci.meta.ResolvedJavaMethod;
 import jdk.vm.ci.runtime.JVMCI;
 import jdk.vm.ci.runtime.JVMCIBackend;
 import uk.ac.manchester.tornado.api.TornadoDriver;
-import uk.ac.manchester.tornado.api.TornadoRuntimeCI;
+import uk.ac.manchester.tornado.api.TornadoRuntimeInterface;
 import uk.ac.manchester.tornado.api.enums.TornadoVMBackendType;
 import uk.ac.manchester.tornado.runtime.common.Tornado;
 import uk.ac.manchester.tornado.runtime.common.TornadoAcceleratorDevice;
@@ -67,7 +67,7 @@ import uk.ac.manchester.tornado.runtime.common.enums.TornadoDrivers;
 import uk.ac.manchester.tornado.runtime.graal.compiler.TornadoSnippetReflectionProvider;
 import uk.ac.manchester.tornado.runtime.tasks.GlobalObjectState;
 
-public class TornadoCoreRuntime extends TornadoLogger implements TornadoRuntimeCI {
+public class TornadoCoreRuntime extends TornadoLogger implements TornadoRuntimeInterface {
 
     private static final ThreadFactory executorThreadFactory = new ThreadFactory() {
         private final AtomicInteger threadId = new AtomicInteger(0);
@@ -249,10 +249,5 @@ public class TornadoCoreRuntime extends TornadoLogger implements TornadoRuntimeC
     @Override
     public TornadoAcceleratorDevice getDefaultDevice() {
         return (tornadoVMDrivers == null || tornadoVMDrivers[DEFAULT_DRIVER] == null) ? JVM : (TornadoAcceleratorDevice) tornadoVMDrivers[DEFAULT_DRIVER].getDefaultDevice();
-    }
-
-    @Override
-    public TornadoRuntimeCI callRuntime() {
-        return runtime;
     }
 }
