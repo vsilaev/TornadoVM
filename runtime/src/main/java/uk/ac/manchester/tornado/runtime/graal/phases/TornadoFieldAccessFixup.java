@@ -21,6 +21,8 @@
  */
 package uk.ac.manchester.tornado.runtime.graal.phases;
 
+import java.util.ArrayDeque;
+
 import org.graalvm.compiler.nodes.ParameterNode;
 import org.graalvm.compiler.nodes.PiNode;
 import org.graalvm.compiler.nodes.StructuredGraph;
@@ -30,10 +32,9 @@ import org.graalvm.compiler.nodes.java.AccessIndexedNode;
 import org.graalvm.compiler.nodes.java.LoadFieldNode;
 import org.graalvm.compiler.nodes.java.StoreFieldNode;
 import org.graalvm.compiler.phases.BasePhase;
+
 import uk.ac.manchester.tornado.api.exceptions.TornadoInternalError;
 import uk.ac.manchester.tornado.runtime.graal.nodes.calc.TornadoAddressArithmeticNode;
-
-import java.util.ArrayDeque;
 
 public class TornadoFieldAccessFixup extends BasePhase<TornadoHighTierContext> {
 

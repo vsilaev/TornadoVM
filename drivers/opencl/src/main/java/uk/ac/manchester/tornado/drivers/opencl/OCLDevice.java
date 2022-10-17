@@ -53,7 +53,7 @@ public class OCLDevice implements OCLTargetDevice {
     private long localMemorySize;
     private int maxWorkItemDimensions;
     private long[] maxWorkItemSizes;
-    private long maxWorkGroupSize;
+    private int maxWorkGroupSize;
     private long maxConstantBufferSize;
     private long doubleFPConfig;
     private long singleFPConfig;
@@ -121,6 +121,7 @@ public class OCLDevice implements OCLTargetDevice {
         getDeviceSingleFPConfig();
         getDeviceMemoryBaseAlignment();
         getDeviceMaxWorkItemSizes();
+        getDeviceMaxWorkGroupSize();
         getDeviceName();
         getDeviceVersion();
         getDeviceType();
@@ -134,8 +135,8 @@ public class OCLDevice implements OCLTargetDevice {
         getDeviceVendorId();
     }
 
-    native static void clGetDeviceInfo(long id, int info, byte[] buffer);
-    native static ByteBuffer clGetDeviceInfo(long id, int info);
+    static native void clGetDeviceInfo(long id, int info, byte[] buffer);
+    static native ByteBuffer clGetDeviceInfo(long id, int info);
 
     public long getId() {
         return id;
@@ -298,9 +299,14 @@ public class OCLDevice implements OCLTargetDevice {
     @Override
     public long[] getDeviceMaxWorkGroupSize() {
         if (maxWorkGroupSize < 0) {
-            maxWorkGroupSize = queryLongValue(OCLDeviceInfo.CL_DEVICE_MAX_WORK_GROUP_SIZE);
+            maxWorkGroupSize = (int)queryLongValue(OCLDeviceInfo.CL_DEVICE_MAX_WORK_GROUP_SIZE);
         }
         return new long[] { maxWorkGroupSize };
+    }
+    
+    @Override
+    public int getMaxThreadsPerBlock() {
+        return maxWorkGroupSize;
     }
 
     @Override

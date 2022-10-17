@@ -71,7 +71,6 @@ public class OCLDeviceContext extends TornadoLogger implements OCLDeviceContextI
     private final OCLEventPool oclEventPool;
     private boolean needsBump;
     private boolean wasReset;
-    private boolean printOnce = true;
     
     private final TornadoBufferProvider bufferProvider;
 

@@ -25,11 +25,11 @@
  */
 package uk.ac.manchester.tornado.runtime.utils;
 
-import uk.ac.manchester.tornado.api.enums.TornadoDeviceType;
-import uk.ac.manchester.tornado.api.exceptions.TornadoRuntimeException;
-
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+
+import uk.ac.manchester.tornado.api.enums.TornadoDeviceType;
+import uk.ac.manchester.tornado.api.exceptions.TornadoRuntimeException;
 
 public class TornadoUtils {
 

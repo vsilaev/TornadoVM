@@ -113,7 +113,7 @@ public class TornadoApiReplacement extends BasePhase<TornadoSketchTierContext> {
 
         if (graph.hasLoops()) {
             final LoopsData data = new TornadoLoopsData(graph);
-            data.detectedCountedLoops();
+            data.detectCountedLoops();
             int loopIndex = 0;
             final List<LoopEx> loops = data.outerFirst();
             if (TORNADO_LOOPS_REVERSE) {

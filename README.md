@@ -12,7 +12,7 @@ GPUs (NVIDIA, AMD), integrated GPUs (Intel HD Graphics and ARM Mali), and FPGAs 
 
 For a quick introduction please read the following [FAQ](assembly/src/docs/15_FAQ.md).
 
-**Current Release:** TornadoVM 0.14 - 15/06/2022 : See [CHANGELOG](assembly/src/docs/CHANGELOG.md#tornadovm-0.14)
+**Current Release:** TornadoVM 0.14.1 - 29/09/2022 : See [CHANGELOG](assembly/src/docs/CHANGELOG.md#tornadovm-0.14.1)
 
 Previous Releases can be found [here](assembly/src/docs/Releases.md)
 
@@ -22,16 +22,16 @@ In Linux and Mac OSx, TornadoVM can be installed automatically with the [install
 ```bash
 $ ./scripts/tornadovmInstaller.sh 
 TornadoVM installer for Linux and OSx
-./scripts/tornadoVMInstaller.sh <JDK> <BACKENDS>
+$ ./scripts/tornadoVMInstaller.sh <JDK> <BACKENDS>
 JDK (select one):
        --jdk11            : Install TornadoVM with OpenJDK 11
        --jdk17            : Install TornadoVM with OpenJDK 17
-       --graal-jdk-11     : Install TornadoVM with GraalVM and JDK 11 (GraalVM 22.1.0)
-       --graal-jdk-17     : Install TornadoVM with GraalVM and JDK 17 (GraalVM 22.1.0)
+       --graal-jdk-11     : Install TornadoVM with GraalVM and JDK 11 (GraalVM 22.2.0)
+       --graal-jdk-17     : Install TornadoVM with GraalVM and JDK 17 (GraalVM 22.2.0)
        --corretto-11      : Install TornadoVM with Corretto JDK 11
        --corretto-17      : Install TornadoVM with Corretto JDK 17
-       --mandrel-11       : Install TornadoVM with Mandrel 22.1.0 (JDK 11)
-       --mandrel-17       : Install TornadoVM with Mandrel 22.1.0 (JDK 17)
+       --mandrel-11       : Install TornadoVM with Mandrel 22.2.0 (JDK 11)
+       --mandrel-17       : Install TornadoVM with Mandrel 22.2.0 (JDK 17)
        --microsoft-jdk-11 : Install TornadoVM with Microsoft JDK 11
        --microsoft-jdk-17 : Install TornadoVM with Microsoft JDK 17
        --zulu-jdk-11      : Install TornadoVM with Azul Zulu JDK 11
@@ -42,7 +42,6 @@ TornadoVM Backends:
        --spirv            : Install TornadoVM and build the SPIR-V backend
 Help:
        --help             : Print this help
-
 ```
 
 **NOTE** Select the desired backend:
@@ -206,12 +205,12 @@ You can import the API and start using TornadoVM. Set this in the `pom.xml` file
 <dependency>
     <groupId>tornado</groupId>
     <artifactId>tornado-api</artifactId>
-    <version>0.14</version>
+    <version>0.14.1</version>
 </dependency>
 <dependency>
     <groupId>tornado</groupId>
     <artifactId>tornado-matrices</artifactId>
-    <version>0.14</version>
+    <version>0.14.1</version>
 </dependency>
 </dependencies>
 ```
@@ -304,13 +303,13 @@ Each TornadoVM module is licensed as follows:
 
 |  Module | License  |
 |---|---|
-| Tornado-API       |  [![License: GPL v2](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](https://github.com/beehive-lab/TornadoVM/blob/master/LICENSE_GPLv2CEl) + CLASSPATH Exception |
+| Tornado-API       |  [![License: GPL v2](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html) + CLASSPATH Exception |
 | Tornado-Runtime   |  [![License: GPL v2](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)   |
 | Tornado-Assembly  |  [![License: GPL v2](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)  |
 | Tornado-Drivers   |  [![License: GPL v2](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)   |
-| Tornado-Drivers-OpenCL-Headers |  [![License: MIT](https://img.shields.io/badge/License-MIT%20-orange.svg)](https://github.com/KhronosGroup/OpenCL-Headers/blob/master/LICENSE) |
+| Tornado-Drivers-OpenCL-Headers |  [![License](https://img.shields.io/badge/License-Apache%202.0-red.svg)](https://github.com/KhronosGroup/OpenCL-Headers/blob/master/LICENSE) |
 | Tornado-scripts   |  [![License: GPL v2](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)   |
-| Tornado-Annotation|  [![License](https://img.shields.io/badge/License-Apache%202.0-red.svg)](hhttps://github.com/beehive-lab/TornadoVM/blob/master/LICENSE_APACHE2) |
+| Tornado-Annotation|  [![License](https://img.shields.io/badge/License-Apache%202.0-red.svg)](https://github.com/beehive-lab/TornadoVM/blob/master/LICENSE_APACHE2) |
 | Tornado-Unittests |  [![License](https://img.shields.io/badge/License-Apache%202.0-red.svg)](https://github.com/beehive-lab/TornadoVM/blob/master/LICENSE_APACHE2)  |
 | Tornado-Benchmarks|  [![License](https://img.shields.io/badge/License-Apache%202.0-red.svg)](https://github.com/beehive-lab/TornadoVM/blob/master/LICENSE_APACHE2)  |
 | Tornado-Examples  |  [![License](https://img.shields.io/badge/License-Apache%202.0-red.svg)](https://github.com/beehive-lab/TornadoVM/blob/master/LICENSE_APACHE2)   |
