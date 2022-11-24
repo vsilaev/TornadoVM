@@ -1,5 +1,5 @@
 /etc/tornado.env
-/target/
+**/target/
 /dist/
 .project
 .classpath
@@ -66,3 +66,5 @@ level-zero/
 spirv-beehive-toolkit/
 etc/dependencies/*
 
+/.metadata/
+/.recommenders/
