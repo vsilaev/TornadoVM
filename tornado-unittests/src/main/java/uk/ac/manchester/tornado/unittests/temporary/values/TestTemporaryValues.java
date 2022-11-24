@@ -19,7 +19,7 @@
 package uk.ac.manchester.tornado.unittests.temporary.values;
 
 import org.junit.Test;
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.unittests.common.TornadoTestBase;
 
@@ -58,7 +58,7 @@ public class TestTemporaryValues extends TornadoTestBase {
             bJava[idx] = bTornado[idx];
         });
 
-        TaskSchedule s0 = new TaskSchedule("s0") //
+        TaskGraph s0 = new TaskGraph("s0") //
                 .streamIn(aTornado, bTornado) //
                 .task("t0", TestTemporaryValues::computeWithTemporaryValues, aTornado, bTornado, cTornado) //
                 .streamOut(aTornado, bTornado, cTornado);

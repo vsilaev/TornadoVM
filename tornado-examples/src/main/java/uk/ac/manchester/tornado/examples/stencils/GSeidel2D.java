@@ -17,7 +17,7 @@
  */
 package uk.ac.manchester.tornado.examples.stencils;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 
 /**
@@ -113,7 +113,7 @@ public class GSeidel2D {
         }
 
         // @formatter:off
-        final TaskSchedule graph = new TaskSchedule("s0")
+        final TaskGraph graph = new TaskGraph("s0")
                 .streamIn(a, size)
                 .task("t0", GSeidel2D::run2DseidelTornado, a, size)
                 .streamOut(a);

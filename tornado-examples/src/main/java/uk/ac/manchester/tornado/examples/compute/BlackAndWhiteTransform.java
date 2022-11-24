@@ -30,7 +30,7 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 
 /**
@@ -61,7 +61,7 @@ public class BlackAndWhiteTransform {
 
         private static final String IMAGE_FILE = "/tmp/image.jpg";
 
-        private static TaskSchedule tornadoTask;
+        private static TaskGraph tornadoTask;
 
         LoadImage() {
             try {
@@ -129,7 +129,7 @@ public class BlackAndWhiteTransform {
                 }
 
                 if (tornadoTask == null) {
-                    tornadoTask = new TaskSchedule("s0");
+                    tornadoTask = new TaskGraph("s0");
                     tornadoTask.streamIn(imageRGB).task("t0", LoadImage::compute, imageRGB, w, s).streamOut(imageRGB);
 
                 }

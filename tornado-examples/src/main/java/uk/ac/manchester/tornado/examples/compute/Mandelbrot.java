@@ -30,7 +30,7 @@ import java.io.File;
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 
 public class Mandelbrot {
@@ -137,7 +137,7 @@ public class Mandelbrot {
                 this.image = writeFile(mandelbrotSequential, SIZE);
             } else {
                 short[] result = new short[SIZE * SIZE];
-                TaskSchedule s0 = new TaskSchedule("s0");
+                TaskGraph s0 = new TaskGraph("s0");
 
                 s0.task("t0", MandelbrotImage::mandelbrotTornado, SIZE, result);
                 s0.streamOut(result).execute();

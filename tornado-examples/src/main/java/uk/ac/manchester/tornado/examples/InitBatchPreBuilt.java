@@ -21,7 +21,7 @@ package uk.ac.manchester.tornado.examples;
 import java.math.BigDecimal;
 import java.util.stream.IntStream;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.common.Access;
 import uk.ac.manchester.tornado.api.common.TornadoDevice;
@@ -68,7 +68,7 @@ public class InitBatchPreBuilt {
         TornadoDevice defaultDevice = TornadoRuntime.getTornadoRuntime().getDefaultDevice();
 
         // @formatter:off
-        new TaskSchedule("s0")
+        new TaskGraph("s0")
             .batch("100MB")
             .prebuiltTask("t0", 
                         "compute", 

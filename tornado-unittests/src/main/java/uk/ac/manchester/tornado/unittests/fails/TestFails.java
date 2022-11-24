@@ -20,7 +20,7 @@ package uk.ac.manchester.tornado.unittests.fails;
 
 import org.junit.Test;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.TornadoDriver;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.exceptions.TornadoFailureException;
@@ -57,7 +57,7 @@ public class TestFails extends TornadoTestBase {
         float[] x = new float[100];
         float[] y = new float[100];
 
-        TaskSchedule ts = new TaskSchedule("s0").streamIn(x).task("s0", (a, b) -> {
+        TaskGraph ts = new TaskGraph("s0").streamIn(x).task("s0", (a, b) -> {
             for (int i = 0; i < 100; i++) {
 
             }
@@ -84,7 +84,7 @@ public class TestFails extends TornadoTestBase {
         float[] y = new float[100];
 
         // @formatter:off
-        TaskSchedule ts = new TaskSchedule("s0")
+        TaskGraph ts = new TaskGraph("s0")
                 .streamIn(x)
                 .task("s0", TestFails::kernel, x, y)
                 .streamOut(y);

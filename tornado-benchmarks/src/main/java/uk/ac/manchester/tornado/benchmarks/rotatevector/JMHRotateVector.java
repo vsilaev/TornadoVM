@@ -39,7 +39,7 @@ import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.collections.types.Float3;
 import uk.ac.manchester.tornado.api.collections.types.Matrix4x4Float;
 import uk.ac.manchester.tornado.api.collections.types.VectorFloat3;
@@ -53,7 +53,7 @@ public class JMHRotateVector {
         private VectorFloat3 input;
         private VectorFloat3 output;
         private Matrix4x4Float m;
-        private TaskSchedule ts;
+        private TaskGraph ts;
 
         @Setup(Level.Trial)
         public void doSetup() {
@@ -68,7 +68,7 @@ public class JMHRotateVector {
                 input.set(i, value);
             }
 
-            ts = new TaskSchedule("benchmark") //
+            ts = new TaskGraph("benchmark") //
                     .streamIn(input) //
                     .task("rotateVector", GraphicsKernels::rotateVector, output, m, input) //
                     .streamOut(output);
@@ -93,7 +93,7 @@ public class JMHRotateVector {
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     @Fork(1)
     public void rotateVectorTornado(BenchmarkSetup state, Blackhole blackhole) {
-        TaskSchedule t = state.ts;
+        TaskGraph t = state.ts;
         t.execute();
         blackhole.consume(t);
     }

@@ -25,7 +25,7 @@ import java.util.stream.IntStream;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.common.TornadoDevice;
 import uk.ac.manchester.tornado.api.enums.TornadoDeviceType;
@@ -96,7 +96,7 @@ public class CodeGen extends TornadoTestBase {
     @Test
     public void test01() {
 
-        TaskSchedule ts = new TaskSchedule("foo");
+        TaskGraph ts = new TaskGraph("foo");
 
         int imageWidth = 512;
         int imageHeight = 512;
@@ -121,7 +121,7 @@ public class CodeGen extends TornadoTestBase {
         if (isRunningOnCPU()) {
             return;
         }
-        TaskSchedule ts = new TaskSchedule("s0") //
+        TaskGraph ts = new TaskGraph("s0") //
                 .task("t0", CodeGen::badCascadeKernel2);
         ts.warmup();
     }
@@ -132,7 +132,7 @@ public class CodeGen extends TornadoTestBase {
         if (isRunningOnCPU()) {
             return;
         }
-        TaskSchedule ts = new TaskSchedule("s0") //
+        TaskGraph ts = new TaskGraph("s0") //
                 .task("t0", CodeGen::badCascadeKernel3);
         ts.warmup();
     }
@@ -143,7 +143,7 @@ public class CodeGen extends TornadoTestBase {
         if (isRunningOnCPU()) {
             return;
         }
-        TaskSchedule ts = new TaskSchedule("s0") //
+        TaskGraph ts = new TaskGraph("s0") //
                 .task("t0", CodeGen::badCascadeKernel4);
         ts.warmup();
     }
@@ -157,7 +157,7 @@ public class CodeGen extends TornadoTestBase {
         int[] serial = Arrays.copyOf(a, a.length);
         breakStatement(serial);
 
-        new TaskSchedule("break") //
+        new TaskGraph("break") //
                 .task("task", CodeGen::breakStatement, a) //
                 .streamOut(a) //
                 .execute(); //

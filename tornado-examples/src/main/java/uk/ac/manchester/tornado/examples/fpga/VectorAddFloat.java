@@ -20,7 +20,7 @@ package uk.ac.manchester.tornado.examples.fpga;
 
 import java.util.Arrays;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 
 public class VectorAddFloat {
@@ -43,7 +43,7 @@ public class VectorAddFloat {
         Arrays.fill(b, 20f);
 
         //@formatter:off
-        TaskSchedule graph = new TaskSchedule("s0")
+        TaskGraph graph = new TaskGraph("s0")
                 .task("t0", VectorAddFloat::vectorAdd, a, b, c)
         .streamOut(c);
         //@formatter:on

@@ -20,7 +20,7 @@ package uk.ac.manchester.tornado.examples.dynamic;
 import java.util.Arrays;
 
 import uk.ac.manchester.tornado.api.Policy;
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 
 public class VectorAddIntMT {
@@ -89,7 +89,7 @@ public class VectorAddIntMT {
         Arrays.fill(a, 10);
         Arrays.fill(b, 20);
 
-        TaskSchedule graph = new TaskSchedule("s0");
+        TaskGraph graph = new TaskGraph("s0");
         if (executionType.equals("multi") || executionType.equals("sequential")) {
             ;
         } else {

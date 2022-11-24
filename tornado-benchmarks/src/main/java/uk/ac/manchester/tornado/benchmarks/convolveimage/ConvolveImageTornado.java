@@ -20,7 +20,7 @@ package uk.ac.manchester.tornado.benchmarks.convolveimage;
 import static uk.ac.manchester.tornado.benchmarks.BenchmarkUtils.createFilter;
 import static uk.ac.manchester.tornado.benchmarks.BenchmarkUtils.createImage;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.collections.types.FloatOps;
 import uk.ac.manchester.tornado.api.collections.types.ImageFloat;
 import uk.ac.manchester.tornado.api.common.TornadoDevice;
@@ -54,7 +54,7 @@ public class ConvolveImageTornado extends BenchmarkDriver {
         createImage(input);
         createFilter(filter);
 
-        ts = new TaskSchedule("benchmark");
+        ts = new TaskGraph("benchmark");
         ts.streamIn(input);
         ts.task("convolveImage", GraphicsKernels::convolveImage, input, filter, output);
         ts.streamOut(output);

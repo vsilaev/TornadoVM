@@ -34,7 +34,7 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.collections.graphics.GraphicsMath;
 import uk.ac.manchester.tornado.api.collections.graphics.ImagingOps;
@@ -101,7 +101,7 @@ public class GraphicsTests extends TornadoTestBase {
         ImagingOps.mm2metersKernel(destSeq, src, scaleFactor);
 
         // @formatter:off
-        new TaskSchedule("s0")
+        new TaskGraph("s0")
                 .task("t0", ImagingOps::mm2metersKernel, dest, src, scaleFactor)
                 .streamOut(dest)
                 .execute();
@@ -144,7 +144,7 @@ public class GraphicsTests extends TornadoTestBase {
         ImagingOps.bilateralFilter(destSeq, src, gaussian, e_delta, radius);
 
         // @formatter:off
-        new TaskSchedule("s0")
+        new TaskGraph("s0")
                 .task("t0", ImagingOps::bilateralFilter, dest, src, gaussian, e_delta, radius)
                 .streamOut(dest)
                 .execute();
@@ -180,7 +180,7 @@ public class GraphicsTests extends TornadoTestBase {
         ImagingOps.resizeImage6(destSeq, src, scaleFactor, e_delta * 3, radius);
 
         // @formatter:off
-        new TaskSchedule("s0")
+        new TaskGraph("s0")
                 .task("t0", ImagingOps::resizeImage6, dest, src, scaleFactor, e_delta * 3, radius)
                 .streamOut(dest)
                 .execute();
@@ -226,7 +226,7 @@ public class GraphicsTests extends TornadoTestBase {
         testRotate(matrix4, vector3, sequential);
 
         // @formatter:off
-        new TaskSchedule("s0")
+        new TaskGraph("s0")
             .task("t0", GraphicsTests::testRotate, matrix4, vector3, result)
             .streamOut(result)
             .execute();        
@@ -270,7 +270,7 @@ public class GraphicsTests extends TornadoTestBase {
         GraphicsMath.depth2vertex(sequential, depth, matrix4);
 
         // @formatter:off
-        new TaskSchedule("s0")
+        new TaskGraph("s0")
             .task("t0", GraphicsMath::depth2vertex, vertext, depth, matrix4)
             .streamOut(vertext)
             .execute();        
@@ -306,7 +306,7 @@ public class GraphicsTests extends TornadoTestBase {
         GraphicsMath.vertex2normal(sequentialNormals, pyramidVertices);
 
         // @formatter:off
-        new TaskSchedule("s0")
+        new TaskGraph("s0")
                 .task("t0", GraphicsMath::vertex2normal, pyramidNormals, pyramidVertices)
                 .streamOut(pyramidNormals)
                 .execute();
@@ -461,7 +461,7 @@ public class GraphicsTests extends TornadoTestBase {
         trackPose(sequantialPyramidTrackingResults, pyramidVertices, pyramidNormals, referenceViewVertices, referenceViewNormals, pyramidPose, projectReference, distanceThreshold, normalThreshold);
 
         // @formatter:off
-        new TaskSchedule("s0")
+        new TaskGraph("s0")
                 .task("t0", GraphicsTests::trackPose, pyramidTrackingResults, pyramidVertices, pyramidNormals,
                         referenceViewVertices, referenceViewNormals, pyramidPose,
                         projectReference, distanceThreshold, normalThreshold)
@@ -512,7 +512,7 @@ public class GraphicsTests extends TornadoTestBase {
         GraphicsTests.testPhiNode(verticesSeq, depth, matrix4);
 
         // @formatter:off
-        new TaskSchedule("s0")
+        new TaskGraph("s0")
             .task("t0", GraphicsTests::testPhiNode, vertices, depth, matrix4)
             .streamOut(vertices)
             .execute();        
@@ -553,7 +553,7 @@ public class GraphicsTests extends TornadoTestBase {
         GraphicsTests.testPhiNode2(verticesSeq, depth, matrix4);
 
         // @formatter:off
-        new TaskSchedule("s0")
+        new TaskGraph("s0")
             .task("t0", GraphicsTests::testPhiNode2, vertices, depth, matrix4)
             .streamOut(vertices)
             .execute();        
@@ -599,7 +599,7 @@ public class GraphicsTests extends TornadoTestBase {
         computeRigidTransform(matrix4, point, sequential);
 
         // @formatter:off
-        new TaskSchedule("s0")
+        new TaskGraph("s0")
             .task("t0", GraphicsTests::computeRigidTransform, matrix4, point, output)
             .streamOut(output)
             .execute();        
@@ -644,7 +644,7 @@ public class GraphicsTests extends TornadoTestBase {
         testNormaliseFunction(input, outSeq);
 
         // @formatter:off
-        new TaskSchedule("s0")
+        new TaskGraph("s0")
                 .task("t0", GraphicsTests::testNormaliseFunction, input, out)
                 .streamOut(out)
                 .execute();
@@ -733,7 +733,7 @@ public class GraphicsTests extends TornadoTestBase {
         GraphicsTests.raycast(verticiesSequential, normalsSequential, volume, volumeDims, view, nearPlane, farPlane, largeStep, smallStep);
 
         // @formatter:off
-        new TaskSchedule("s0")
+        new TaskGraph("s0")
             .task("t0", GraphicsTests::raycast, verticies, normals, volume, volumeDims, view, nearPlane, farPlane, largeStep, smallStep)
             .streamOut(verticies, normals)
             .execute();        
@@ -807,7 +807,7 @@ public class GraphicsTests extends TornadoTestBase {
         GraphicsTests.testRayCastPointIsolation(outputSeq, verticies, volume, volumeDims, view, nearPlane, farPlane, largeStep, smallStep);
 
         // @formatter:off
-        new TaskSchedule("s0")
+        new TaskGraph("s0")
             .task("t0", GraphicsTests::testRayCastPointIsolation, output, verticies, volume, volumeDims, view, nearPlane, farPlane, largeStep, smallStep)
             .streamOut(output)
             .execute();        
@@ -937,7 +937,7 @@ public class GraphicsTests extends TornadoTestBase {
         integrate(filteredDepthImage, invTrack, m2, volumeDims, sequential, mu, maxW);
 
         // @formatter:off
-        TaskSchedule task = new TaskSchedule("s0")
+        TaskGraph task = new TaskGraph("s0")
             .task("t0", GraphicsTests::integrate, filteredDepthImage, invTrack, m2, volumeDims, volume, mu, maxW)
             .streamOut(volume);        
         // @formatter:on
@@ -978,7 +978,7 @@ public class GraphicsTests extends TornadoTestBase {
         Renderer.renderTrack(sequential, track);
 
         // @formatter:off
-        new TaskSchedule("s0")
+        new TaskGraph("s0")
             .task("t0", Renderer::renderTrack, output, track)
             .streamOut(output)
             .execute();        
@@ -1028,7 +1028,7 @@ public class GraphicsTests extends TornadoTestBase {
         GraphicsTests.volumeOps(outputSeq, volume, dim, point);
 
         // @formatter:off
-        new TaskSchedule("s0")
+        new TaskGraph("s0")
             .task("t0", GraphicsTests::volumeOps, output, volume, dim, point)
             .streamOut(output)
             .execute();
@@ -1081,7 +1081,7 @@ public class GraphicsTests extends TornadoTestBase {
         GraphicsTests.getCameraMatrix(f, seq);
 
         // @formatter:off
-        new TaskSchedule("s0")
+        new TaskGraph("s0")
             .task("t0", GraphicsTests::getCameraMatrix, f, m)
             .streamOut(m)
             .execute();        
@@ -1141,7 +1141,7 @@ public class GraphicsTests extends TornadoTestBase {
         Renderer.renderVolume(outputSeq, volumeSeq, volumeDimsSeq, scenePoseSeq, nearPlane, farPlane * 2f, smallStep, largeStep, light, ambient);
 
         // @formatter:off
-        new TaskSchedule("s0")
+        new TaskGraph("s0")
             .task("t0", Renderer::renderVolume, output, volume, volumeDims, scenePose, nearPlane, farPlane * 2f, smallStep, largeStep, light, ambient)
             .streamOut(output)
             .execute();        
@@ -1280,7 +1280,7 @@ public class GraphicsTests extends TornadoTestBase {
         GraphicsTests.mapReduce(outputSeq, image);
 
         // @formatter:off
-        new TaskSchedule("s0")
+        new TaskGraph("s0")
             .task("t0", GraphicsTests::mapReduce, output, image)
             .streamOut(output)
             .execute();        
@@ -1307,7 +1307,7 @@ public class GraphicsTests extends TornadoTestBase {
         GraphicsTests.mapReduce2(outputSeq, image);
 
         // @formatter:off
-        TaskSchedule ts = new TaskSchedule("s0")
+        TaskGraph ts = new TaskGraph("s0")
             .task("t0", GraphicsTests::mapReduce2, output, image)
             .streamOut(output);
         // @formatter:on
@@ -1331,7 +1331,7 @@ public class GraphicsTests extends TornadoTestBase {
         }
 
         // @formatter:off
-        new TaskSchedule("s0")
+        new TaskGraph("s0")
             .task("t0", GraphicsTests::mapReduce3, output, input)
             .streamOut(output)
             .execute();        
@@ -1374,7 +1374,7 @@ public class GraphicsTests extends TornadoTestBase {
         testVSKernel(x, y, z, volume, seq);
 
         // @formatter:off
-        new TaskSchedule("s0")
+        new TaskGraph("s0")
             .task("t0", GraphicsTests::testVSKernel, x, y, z, volume, output)
             .streamOut(output)
             .execute();        

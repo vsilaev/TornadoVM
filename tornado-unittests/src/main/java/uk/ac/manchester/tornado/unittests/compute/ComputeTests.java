@@ -32,7 +32,7 @@ import javax.imageio.ImageIO;
 import org.junit.Test;
 
 import uk.ac.manchester.tornado.api.GridScheduler;
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.WorkerGrid;
 import uk.ac.manchester.tornado.api.WorkerGrid1D;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
@@ -386,7 +386,7 @@ public class ComputeTests extends TornadoTestBase {
         workerGrid.setGlobalWork(numBodies, 1, 1);
         workerGrid.setLocalWork(32, 1, 1);
 
-        new TaskSchedule("s0") //
+        new TaskGraph("s0") //
                 .task("t0", ComputeTests::nBody, numBodies, posTornadoVM, velTornadoVM) //
                 .streamOut(posTornadoVM, velTornadoVM) //
                 .execute(gridScheduler);
@@ -421,7 +421,7 @@ public class ComputeTests extends TornadoTestBase {
         workerGrid.setGlobalWork(numBodies, 1, 1);
         workerGrid.setLocalWork(32, 1, 1);
 
-        new TaskSchedule("s0") //
+        new TaskGraph("s0") //
                 .task("t0", ComputeTests::nBody, numBodies, posTornadoVM, velTornadoVM) //
                 .streamOut(posTornadoVM, velTornadoVM) //
                 .execute(gridScheduler);
@@ -451,7 +451,7 @@ public class ComputeTests extends TornadoTestBase {
         // Run Sequential
         nBody(numBodies, posSeq, velSeq);
 
-        new TaskSchedule("compute") //
+        new TaskGraph("compute") //
                 .task("nbody", ComputeTests::nBody, numBodies, posTornadoVM, velTornadoVM) //
                 .streamOut(posTornadoVM, velTornadoVM) //
                 .execute();
@@ -472,7 +472,7 @@ public class ComputeTests extends TornadoTestBase {
     @Test
     public void testDFTDouble() {
         final int size = 4096;
-        TaskSchedule graph;
+        TaskGraph graph;
         float[] inReal = new float[size];
         float[] inImag = new float[size];
         float[] outReal = new float[size];
@@ -483,7 +483,7 @@ public class ComputeTests extends TornadoTestBase {
             inImag[i] = 1 / (float) (i + 2);
         }
 
-        graph = new TaskSchedule("s0") //
+        graph = new TaskGraph("s0") //
                 .task("t0", ComputeTests::computeDFT, inReal, inImag, outReal, outImag) //
                 .streamOut(outReal, outImag);
         graph.execute();
@@ -494,7 +494,7 @@ public class ComputeTests extends TornadoTestBase {
     @Test
     public void testDFTFloat() {
         final int size = 4096;
-        TaskSchedule graph;
+        TaskGraph graph;
         float[] inReal = new float[size];
         float[] inImag = new float[size];
         float[] outReal = new float[size];
@@ -505,7 +505,7 @@ public class ComputeTests extends TornadoTestBase {
             inImag[i] = 1 / (float) (i + 2);
         }
 
-        graph = new TaskSchedule("s0") //
+        graph = new TaskGraph("s0") //
                 .task("t0", ComputeTests::computeDFTFloat, inReal, inImag, outReal, outImag) //
                 .streamOut(outReal, outImag);
         graph.execute();
@@ -516,7 +516,7 @@ public class ComputeTests extends TornadoTestBase {
     @Test
     public void testHilbert() {
         float[] output = new float[NROWS * NCOLS];
-        TaskSchedule s0 = new TaskSchedule("s0") //
+        TaskGraph s0 = new TaskGraph("s0") //
                 .task("t0", ComputeTests::hilbertComputation, output, NROWS, NCOLS) //
                 .streamOut(output);
         s0.execute();
@@ -541,7 +541,7 @@ public class ComputeTests extends TornadoTestBase {
 
         IntStream.range(0, size).forEach(i -> input[i] = random.nextFloat());
 
-        TaskSchedule graph = new TaskSchedule("s0") //
+        TaskGraph graph = new TaskGraph("s0") //
                 .streamIn(input) //
                 .task("t0", ComputeTests::blackScholesKernel, input, callPrice, putPrice) //
                 .streamOut(callPrice, putPrice);
@@ -561,7 +561,7 @@ public class ComputeTests extends TornadoTestBase {
         float[] output = new float[size];
         float[] seq = new float[size];
 
-        TaskSchedule t0 = new TaskSchedule("s0") //
+        TaskGraph t0 = new TaskGraph("s0") //
                 .task("t0", ComputeTests::computeMontecarlo, output, size) //
                 .streamOut(output);
 
@@ -600,7 +600,7 @@ public class ComputeTests extends TornadoTestBase {
         final int size = 512;
         short[] output = new short[size * size];
 
-        TaskSchedule t0 = new TaskSchedule("s0") //
+        TaskGraph t0 = new TaskGraph("s0") //
                 .task("t0", ComputeTests::mandelbrotFractal, size, output) //
                 .streamOut(output);
 
@@ -627,7 +627,7 @@ public class ComputeTests extends TornadoTestBase {
         long[] outputD = new long[size];
         long[] outputE = new long[size];
 
-        TaskSchedule ts = new TaskSchedule("s0") //
+        TaskGraph ts = new TaskGraph("s0") //
                 .streamIn(input) //
                 .task("s0", ComputeTests::euler, size, input, outputA, outputB, outputC, outputD, outputE) //
                 .streamOut(outputA, outputB, outputC, outputD, outputE);
@@ -666,7 +666,7 @@ public class ComputeTests extends TornadoTestBase {
             }
         }
 
-        TaskSchedule task = new TaskSchedule("s0") //
+        TaskGraph task = new TaskGraph("s0") //
                 .task("t0", ComputeTests::renderTrack, outputTornadoVM, input) //
                 .streamOut(outputTornadoVM);
 
@@ -689,7 +689,7 @@ public class ComputeTests extends TornadoTestBase {
         float[] brightness = new float[size * size];
         int[] result = new int[size * size];
 
-        TaskSchedule ts = new TaskSchedule("s0") //
+        TaskGraph ts = new TaskGraph("s0") //
                 .task("t0", ComputeTests::juliaSetTornado, size, hue, brightness) //
                 .streamOut(hue, brightness);
 
@@ -750,7 +750,7 @@ public class ComputeTests extends TornadoTestBase {
             matrix2DFloat.set(idx, jdx, r.nextFloat());
         }));
 
-        TaskSchedule ts = new TaskSchedule("la") //
+        TaskGraph ts = new TaskGraph("la") //
                 .streamIn(matrix2DFloat, vectorFloat) //
                 .lockObjectsInMemory(matrix2DFloat, vectorFloat, result) //
                 .task("mv", ComputeTests::computeMatrixVector, matrix2DFloat, vectorFloat, result) //

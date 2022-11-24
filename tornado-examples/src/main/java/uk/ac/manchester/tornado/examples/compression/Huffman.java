@@ -31,7 +31,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.PriorityQueue;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 
 public class Huffman {
 
@@ -113,7 +113,7 @@ public class Huffman {
     private static void decodeTornado(byte[] input, int[] frequencies, int[] data, int[] left, int[] right, int[] message, ArrayList<Integer> inputData) {
 
         // @formatter:off
-        new TaskSchedule("s0") 
+        new TaskGraph("s0") 
               .task("t0", Huffman::decodeTornadoKernel, input, frequencies, data, left, right, message)
               .streamOut(message)
               .execute();

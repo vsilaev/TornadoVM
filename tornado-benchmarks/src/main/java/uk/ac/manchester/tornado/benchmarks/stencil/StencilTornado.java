@@ -24,7 +24,7 @@ import static uk.ac.manchester.tornado.benchmarks.stencil.Stencil.stencil3d;
 import java.util.Arrays;
 import java.util.Random;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.common.TornadoDevice;
 import uk.ac.manchester.tornado.benchmarks.BenchmarkDriver;
 
@@ -60,7 +60,7 @@ public class StencilTornado extends BenchmarkDriver {
             }
         }
         copy(sz, ainit, a0);
-        ts = new TaskSchedule("benchmark") //
+        ts = new TaskGraph("benchmark") //
                 .streamIn(a0, a1) //
                 .task("stencil", Stencil::stencil3d, n, sz, a0, a1, FAC) //
                 .task("copy", Stencil::copy, sz, a1, a0) //

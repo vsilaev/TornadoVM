@@ -24,7 +24,7 @@ import java.util.stream.IntStream;
 
 import org.junit.Test;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.annotations.Reduce;
 import uk.ac.manchester.tornado.unittests.common.TornadoTestBase;
@@ -61,7 +61,7 @@ public class InstanceReduction extends TornadoTestBase {
         ReduceTest rd = new ReduceTest();
 
         // @formatter:off
-        new TaskSchedule("ts")
+        new TaskGraph("ts")
                 .streamIn(input)
                 .task("reduce", rd::reduce, input, result)
                 .streamOut(result)

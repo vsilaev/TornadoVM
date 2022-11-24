@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.Random;
 import java.util.stream.IntStream;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.annotations.Reduce;;
 
@@ -45,7 +45,7 @@ public class ReductionAddFloats {
         });
 
         //@formatter:off
-        TaskSchedule task = new TaskSchedule("s0")
+        TaskGraph task = new TaskGraph("s0")
             .streamIn(input)
             .task("t0", ReductionAddFloats::reductionAddFloats, input, result)
             .streamOut(result);

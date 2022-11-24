@@ -25,7 +25,7 @@ import org.junit.Test;
 
 import uk.ac.manchester.tornado.api.GridScheduler;
 import uk.ac.manchester.tornado.api.KernelContext;
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.WorkerGrid;
 import uk.ac.manchester.tornado.api.WorkerGrid1D;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
@@ -165,7 +165,7 @@ public class TestCombinedTaskSchedule extends TornadoTestBase {
         WorkerGrid worker = new WorkerGrid1D(size);
         GridScheduler gridScheduler = new GridScheduler("s01.t0", worker);
 
-        TaskSchedule s01 = new TaskSchedule("s01") //
+        TaskGraph s01 = new TaskGraph("s01") //
                 .streamIn(a, b) //
                 .task("t0", TestCombinedTaskSchedule::vectorAddV1, a, b, cTornado) //
                 .task("t1", TestCombinedTaskSchedule::vectorMulV1, cTornado, b, cTornado) //
@@ -208,7 +208,7 @@ public class TestCombinedTaskSchedule extends TornadoTestBase {
         gridScheduler.setWorkerGrid("s02.t2", worker);
         KernelContext context = new KernelContext();
 
-        TaskSchedule s02 = new TaskSchedule("s02") //
+        TaskGraph s02 = new TaskGraph("s02") //
                 .streamIn(a, b) //
                 .task("t0", TestCombinedTaskSchedule::vectorAddV2, context, a, b, cTornado) //
                 .task("t1", TestCombinedTaskSchedule::vectorMulV2, context, cTornado, b, cTornado) //
@@ -247,7 +247,7 @@ public class TestCombinedTaskSchedule extends TornadoTestBase {
         gridScheduler.setWorkerGrid("s03.t2", worker);
         KernelContext context = new KernelContext();
 
-        TaskSchedule s03 = new TaskSchedule("s03") //
+        TaskGraph s03 = new TaskGraph("s03") //
                 .streamIn(a, b) //
                 .task("t0", TestCombinedTaskSchedule::vectorAddV1, a, b, cTornado) //
                 .task("t1", TestCombinedTaskSchedule::vectorMulV2, context, cTornado, b, cTornado) //
@@ -286,7 +286,7 @@ public class TestCombinedTaskSchedule extends TornadoTestBase {
         gridScheduler.setWorkerGrid("s04.t1", worker);
         KernelContext context = new KernelContext();
 
-        TaskSchedule s04 = new TaskSchedule("s04") //
+        TaskGraph s04 = new TaskGraph("s04") //
                 .streamIn(a, b) //
                 .task("t0", TestCombinedTaskSchedule::vectorAddV2, context, a, b, cTornado) //
                 .task("t1", TestCombinedTaskSchedule::vectorMulV2, context, cTornado, b, cTornado) //
@@ -326,7 +326,7 @@ public class TestCombinedTaskSchedule extends TornadoTestBase {
         gridScheduler.setWorkerGrid("s05.t1", workerT1);
         KernelContext context = new KernelContext();
 
-        TaskSchedule s05 = new TaskSchedule("s05") //
+        TaskGraph s05 = new TaskGraph("s05") //
                 .streamIn(a, b) //
                 .task("t0", TestCombinedTaskSchedule::vectorAddV2, context, a, b, cTornado) //
                 .task("t1", TestCombinedTaskSchedule::vectorMulV2, context, cTornado, b, cTornado) //

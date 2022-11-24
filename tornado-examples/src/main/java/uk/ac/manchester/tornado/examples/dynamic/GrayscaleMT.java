@@ -30,7 +30,7 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 
 /**
@@ -58,7 +58,7 @@ public class GrayscaleMT {
         private static final boolean PARALLEL_COMPUTATION = true;
         private static final boolean MT = true;
 
-        private static TaskSchedule tornadoTask;
+        private static TaskGraph tornadoTask;
 
         public LoadImage(String imageFile) {
             try {
@@ -115,7 +115,7 @@ public class GrayscaleMT {
             }
 
             if (tornadoTask == null) {
-                tornadoTask = new TaskSchedule("s0");
+                tornadoTask = new TaskGraph("s0");
                 tornadoTask.streamIn(imageRGB).task("t0", LoadImage::compute1D, imageRGB, w, s).streamOut(imageRGB);
 
             }

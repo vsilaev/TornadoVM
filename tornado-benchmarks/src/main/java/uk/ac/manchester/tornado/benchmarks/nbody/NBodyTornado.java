@@ -23,7 +23,7 @@ import static uk.ac.manchester.tornado.benchmarks.ComputeKernels.nBody;
 
 import java.util.Arrays;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.common.TornadoDevice;
 import uk.ac.manchester.tornado.benchmarks.BenchmarkDriver;
 import uk.ac.manchester.tornado.benchmarks.ComputeKernels;
@@ -65,7 +65,7 @@ public class NBodyTornado extends BenchmarkDriver {
             System.arraycopy(auxVelocityZero, 0, velSeq, 0, auxVelocityZero.length);
         }
 
-        ts = new TaskSchedule("benchmark");
+        ts = new TaskGraph("benchmark");
         ts.streamIn(velSeq, posSeq) //
                 .task("t0", ComputeKernels::nBody, numBodies, posSeq, velSeq, delT, espSqr);
         ts.warmup();
@@ -111,7 +111,7 @@ public class NBodyTornado extends BenchmarkDriver {
             velSeq[i] = auxVelocityZero[i];
             velSeqSeq[i] = auxVelocityZero[i];
         }
-        ts = new TaskSchedule("benchmark");
+        ts = new TaskGraph("benchmark");
         ts.task("t0", ComputeKernels::nBody, numBodies, posSeq, velSeq, delT, espSqr);
         ts.mapAllTo(device);
         ts.warmup();

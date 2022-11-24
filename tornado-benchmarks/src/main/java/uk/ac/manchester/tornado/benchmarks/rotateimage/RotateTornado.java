@@ -20,7 +20,7 @@ package uk.ac.manchester.tornado.benchmarks.rotateimage;
 import static uk.ac.manchester.tornado.api.collections.types.FloatOps.findMaxULP;
 import static uk.ac.manchester.tornado.benchmarks.GraphicsKernels.rotateImage;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.collections.types.Float3;
 import uk.ac.manchester.tornado.api.collections.types.ImageFloat3;
 import uk.ac.manchester.tornado.api.collections.types.Matrix4x4Float;
@@ -58,7 +58,7 @@ public class RotateTornado extends BenchmarkDriver {
             }
         }
 
-        ts = new TaskSchedule("benchmark");
+        ts = new TaskGraph("benchmark");
         ts.streamIn(input);
         ts.task("rotateImage", GraphicsKernels::rotateImage, output, m, input);
         ts.streamOut(output);

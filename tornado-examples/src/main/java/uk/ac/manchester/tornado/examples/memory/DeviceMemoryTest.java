@@ -18,7 +18,7 @@
 
 package uk.ac.manchester.tornado.examples.memory;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.common.TornadoDevice;
 import uk.ac.manchester.tornado.api.mm.TornadoMemoryProvider;
@@ -50,7 +50,7 @@ public class DeviceMemoryTest {
 
         final int[] data = new int[numWords];
 
-        final TaskSchedule schedule = new TaskSchedule("s0").streamIn(data).task("t0", DeviceMemoryTest::fill, data).streamOut(data);
+        final TaskGraph schedule = new TaskGraph("s0").streamIn(data).task("t0", DeviceMemoryTest::fill, data).streamOut(data);
 
         schedule.warmup();
 

@@ -20,7 +20,7 @@ package uk.ac.manchester.tornado.examples.arrays;
 
 import java.util.Arrays;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.collections.math.SimpleMath;
 
 public class ArrayAddFloat {
@@ -57,7 +57,7 @@ public class ArrayAddFloat {
         Arrays.fill(c, 0);
 
         //@formatter:off
-        final TaskSchedule schedule = new TaskSchedule("s0")
+        final TaskGraph schedule = new TaskGraph("s0")
                 .task("t0", SimpleMath::vectorAdd, a, b, c)
                 .streamOut(c);
         //@formatter:on

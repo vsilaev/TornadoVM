@@ -20,7 +20,7 @@ package uk.ac.manchester.tornado.benchmarks.blurFilter;
 
 import java.util.Random;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.common.TornadoDevice;
 import uk.ac.manchester.tornado.benchmarks.BenchmarkDriver;
 import uk.ac.manchester.tornado.benchmarks.ComputeKernels;
@@ -75,7 +75,7 @@ public class BlurFilterTornado extends BenchmarkDriver {
             }
         }
 
-        ts = new TaskSchedule("benchmark") //
+        ts = new TaskGraph("benchmark") //
                 .streamIn(redChannel, greenChannel, blueChannel) //
                 .task("blurRed", ComputeKernels::channelConvolution, redChannel, redFilter, w, h, filter, FILTER_WIDTH) //
                 .task("blurGreen", ComputeKernels::channelConvolution, greenChannel, greenFilter, w, h, filter, FILTER_WIDTH) //
@@ -134,7 +134,7 @@ public class BlurFilterTornado extends BenchmarkDriver {
             }
         }
 
-        TaskSchedule parallelFilter = new TaskSchedule("blur") //
+        TaskGraph parallelFilter = new TaskGraph("blur") //
                 .streamIn(redChannel, greenChannel, blueChannel) //
                 .task("red", ComputeKernels::channelConvolution, redChannel, redFilter, w, h, filter, FILTER_WIDTH) //
                 .task("green", ComputeKernels::channelConvolution, greenChannel, greenFilter, w, h, filter, FILTER_WIDTH) //

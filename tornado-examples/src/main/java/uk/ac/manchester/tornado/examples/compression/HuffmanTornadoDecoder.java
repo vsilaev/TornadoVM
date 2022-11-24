@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashMap;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.TornadoDriver;
 import uk.ac.manchester.tornado.api.runtime.TornadoRuntime;
 
@@ -78,7 +78,7 @@ public class HuffmanTornadoDecoder {
      */
     public void engineExploration(KernelPackage kernelPackage) {
 
-        ArrayList<TaskSchedule> tasks = new ArrayList<>();
+        ArrayList<TaskGraph> tasks = new ArrayList<>();
         HashMap<String, String> tasksLocation = new HashMap<>();
         ArrayList<String> tasksKey = new ArrayList<>();
 
@@ -88,7 +88,7 @@ public class HuffmanTornadoDecoder {
             String taskID = "x0.t" + i + ".device";
             String location = "0:" + i;
 
-            TaskSchedule s0 = new TaskSchedule("x0");
+            TaskGraph s0 = new TaskGraph("x0");
             s0.task("t" + i, HuffmanTornadoDecoder::decodeTornadoKernel, kernelPackage.input, kernelPackage.frequencies, kernelPackage.data, kernelPackage.left, kernelPackage.right,
                     kernelPackage.output);
             s0.streamOut(kernelPackage);
@@ -101,7 +101,7 @@ public class HuffmanTornadoDecoder {
 
         // Tasks Execution
         for (int i = 0; i < tasks.size(); i++) {
-            TaskSchedule t0 = tasks.get(i);
+            TaskGraph t0 = tasks.get(i);
             String key = tasksKey.get(i);
             String locX = tasksLocation.get(key);
             System.out.println(key + "=" + locX);

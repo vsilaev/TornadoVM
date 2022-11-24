@@ -20,7 +20,7 @@ package uk.ac.manchester.tornado.examples.compute;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.collections.types.Matrix2DFloat;
 
@@ -68,7 +68,7 @@ public class MatrixMultiplicationAsync2D {
         }
 
         //@formatter:off
-        TaskSchedule t = new TaskSchedule("s0")
+        TaskGraph t = new TaskGraph("s0")
                 .task("t0", MatrixMultiplicationAsync2D::matrixMultiplication, matrixA, matrixB, matrixC, size)
                 .streamIn(matrixA)  
                 .streamIn(matrixB)

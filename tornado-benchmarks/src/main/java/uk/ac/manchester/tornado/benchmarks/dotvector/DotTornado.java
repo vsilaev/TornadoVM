@@ -22,7 +22,7 @@ import static uk.ac.manchester.tornado.api.collections.math.TornadoMath.findULPD
 import java.util.Random;
 import java.util.stream.IntStream;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.collections.types.Float3;
 import uk.ac.manchester.tornado.api.collections.types.VectorFloat3;
 import uk.ac.manchester.tornado.api.common.TornadoDevice;
@@ -59,7 +59,7 @@ public class DotTornado extends BenchmarkDriver {
             b.set(i, new Float3(rb));
         }
 
-        ts = new TaskSchedule("benchmark");
+        ts = new TaskGraph("benchmark");
         ts.streamIn(a, b);
         ts.task("dotVector", GraphicsKernels::dotVector, a, b, c);
         ts.streamOut(c);

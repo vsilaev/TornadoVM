@@ -25,7 +25,7 @@ import java.util.stream.IntStream;
 
 import org.junit.Test;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.unittests.common.TornadoTestBase;
 
@@ -44,7 +44,7 @@ public class TestLambdas extends TornadoTestBase {
         });
 
         //@formatter:off
-        new TaskSchedule("s0")
+        new TaskGraph("s0")
             .task("t0", (x, y, z) -> {	 
                 // Computation in a lambda expression
                 for (@Parallel int i = 0; i < z.length; i++) {
@@ -75,7 +75,7 @@ public class TestLambdas extends TornadoTestBase {
         });
 
         //@formatter:off
-        new TaskSchedule("s0")
+        new TaskGraph("s0")
             .task("t0", (x, y, z) -> {   
                 // Computation in a lambda expression
                 for (@Parallel int i = 0; i < z.length; i++) {
@@ -106,7 +106,7 @@ public class TestLambdas extends TornadoTestBase {
         });
 
         //@formatter:off
-        new TaskSchedule("s0")
+        new TaskGraph("s0")
                 .task("t0", (x, y, z) -> {
                     // Computation in a lambda expression
                     for (@Parallel int i = 0; i < z.length; i++) {

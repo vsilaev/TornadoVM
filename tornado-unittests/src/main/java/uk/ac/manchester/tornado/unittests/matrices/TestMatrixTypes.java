@@ -25,7 +25,7 @@ import java.util.Random;
 
 import org.junit.Test;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.collections.types.Float4;
 import uk.ac.manchester.tornado.api.collections.types.Matrix2DDouble;
@@ -138,7 +138,7 @@ public class TestMatrixTypes extends TornadoTestBase {
             }
         }
 
-        TaskSchedule ts = new TaskSchedule("s0");
+        TaskGraph ts = new TaskGraph("s0");
         ts.task("t0", TestMatrixTypes::computeMatrixSum, matrixA, matrixB, N);
         ts.streamOut(matrixB);
         ts.execute();
@@ -162,7 +162,7 @@ public class TestMatrixTypes extends TornadoTestBase {
         }
         Matrix2DFloat matrixA = new Matrix2DFloat(a);
         Matrix2DFloat matrixB = new Matrix2DFloat(N, N);
-        TaskSchedule ts = new TaskSchedule("s0");
+        TaskGraph ts = new TaskGraph("s0");
         ts.task("t0", TestMatrixTypes::computeMatrixSum, matrixA, matrixB, N);
         ts.streamOut(matrixB);
         ts.execute();
@@ -189,7 +189,7 @@ public class TestMatrixTypes extends TornadoTestBase {
             }
         }
 
-        TaskSchedule ts = new TaskSchedule("s0");
+        TaskGraph ts = new TaskGraph("s0");
         ts.task("t0", TestMatrixTypes::computeMatrixMultiplication, matrixA, matrixB, matrixC);
         ts.streamOut(matrixC);
         ts.execute();
@@ -217,7 +217,7 @@ public class TestMatrixTypes extends TornadoTestBase {
             }
         }
 
-        TaskSchedule ts = new TaskSchedule("s0");
+        TaskGraph ts = new TaskGraph("s0");
         ts.task("t0", TestMatrixTypes::computeMatrixSum, matrixA, matrixB, N);
         ts.streamOut(matrixB);
         ts.execute();
@@ -245,7 +245,7 @@ public class TestMatrixTypes extends TornadoTestBase {
             }
         }
 
-        TaskSchedule ts = new TaskSchedule("s0");
+        TaskGraph ts = new TaskGraph("s0");
         ts.task("t0", TestMatrixTypes::computeMatrixSum, matrixA, matrixB, X, Y);
         ts.streamOut(matrixB);
         ts.execute();
@@ -302,7 +302,7 @@ public class TestMatrixTypes extends TornadoTestBase {
             }
         }
 
-        TaskSchedule ts = new TaskSchedule("s0");
+        TaskGraph ts = new TaskGraph("s0");
         ts.task("t0", TestMatrixTypes::computeMatrixSum, matrixA, matrixB, X, Y, Z);
         ts.streamOut(matrixB);
         ts.execute();
@@ -365,7 +365,7 @@ public class TestMatrixTypes extends TornadoTestBase {
             }
         }
 
-        TaskSchedule ts = new TaskSchedule("s0");
+        TaskGraph ts = new TaskGraph("s0");
         ts.task("t0", TestMatrixTypes::computeMatrixSum, matrixA, matrixB, SMALL_SIZE, SMALL_SIZE, SMALL_SIZE);
         ts.streamOut(matrixB);
         ts.execute();
@@ -401,7 +401,7 @@ public class TestMatrixTypes extends TornadoTestBase {
         }
         Matrix3DFloat matrixA = new Matrix3DFloat(a);
         Matrix3DFloat matrixB = new Matrix3DFloat(X, Y, Z);
-        TaskSchedule ts = new TaskSchedule("s0");
+        TaskGraph ts = new TaskGraph("s0");
         ts.task("t0", TestMatrixTypes::computeMatrixSum, matrixA, matrixB, X, Y, Z);
         ts.streamOut(matrixB);
         ts.execute();
@@ -425,7 +425,7 @@ public class TestMatrixTypes extends TornadoTestBase {
         }
         Matrix2DFloat matrixA = new Matrix2DFloat(a);
         Matrix2DFloat matrixB = new Matrix2DFloat(X, Y);
-        TaskSchedule ts = new TaskSchedule("s0");
+        TaskGraph ts = new TaskGraph("s0");
         ts.task("t0", TestMatrixTypes::computeMatrixSum, matrixA, matrixB, X, Y);
         ts.streamOut(matrixB);
         ts.execute();
@@ -467,7 +467,7 @@ public class TestMatrixTypes extends TornadoTestBase {
         }
         Matrix2DInt matrixA = new Matrix2DInt(a);
         Matrix2DInt matrixB = new Matrix2DInt(X, Y);
-        TaskSchedule ts = new TaskSchedule("s0");
+        TaskGraph ts = new TaskGraph("s0");
         ts.task("t0", TestMatrixTypes::computeMatrixSum, matrixA, matrixB, X, Y);
         ts.streamOut(matrixB);
         ts.execute();
@@ -504,7 +504,7 @@ public class TestMatrixTypes extends TornadoTestBase {
         }
         Matrix2DDouble matrixA = new Matrix2DDouble(a);
         Matrix2DDouble matrixB = new Matrix2DDouble(X, Y);
-        TaskSchedule ts = new TaskSchedule("s0");
+        TaskGraph ts = new TaskGraph("s0");
         ts.task("t0", TestMatrixTypes::computeMatrixSum, matrixA, matrixB, X, Y);
         ts.streamOut(matrixB);
         ts.execute();
@@ -545,7 +545,7 @@ public class TestMatrixTypes extends TornadoTestBase {
         }
         Matrix2DFloat matrixA = new Matrix2DFloat(a);
         Matrix2DFloat matrixB = new Matrix2DFloat(X, Y);
-        TaskSchedule ts = new TaskSchedule("s0");
+        TaskGraph ts = new TaskGraph("s0");
         ts.task("t0", TestMatrixTypes::computeMatrixSum, matrixA, matrixB, X, Y);
         ts.streamOut(matrixB);
         ts.execute();
@@ -571,7 +571,7 @@ public class TestMatrixTypes extends TornadoTestBase {
         }
         Matrix2DFloat matrixA = new Matrix2DFloat(a);
         Matrix2DFloat matrixB = new Matrix2DFloat(X, Y);
-        TaskSchedule ts = new TaskSchedule("s0");
+        TaskGraph ts = new TaskGraph("s0");
         ts.task("t0", TestMatrixTypes::computeMatrixSum, matrixA, matrixB, X, Y);
         ts.streamOut(matrixB);
         ts.execute();

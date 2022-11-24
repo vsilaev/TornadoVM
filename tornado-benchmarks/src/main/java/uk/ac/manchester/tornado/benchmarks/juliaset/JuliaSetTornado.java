@@ -17,7 +17,7 @@
  */
 package uk.ac.manchester.tornado.benchmarks.juliaset;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.common.TornadoDevice;
 import uk.ac.manchester.tornado.benchmarks.BenchmarkDriver;
 import uk.ac.manchester.tornado.benchmarks.GraphicsKernels;
@@ -41,7 +41,7 @@ public class JuliaSetTornado extends BenchmarkDriver {
         hue = new float[size * size];
         brightness = new float[size * size];
 
-        ts = new TaskSchedule("benchmark") //
+        ts = new TaskGraph("benchmark") //
                 .task("juliaSet", GraphicsKernels::juliaSetTornado, size, hue, brightness) //
                 .streamOut(hue, brightness);
         ts.warmup();
@@ -82,7 +82,7 @@ public class JuliaSetTornado extends BenchmarkDriver {
     }
 
     @Override
-    public TaskSchedule getTaskSchedule() {
+    public TaskGraph getTaskSchedule() {
         return ts;
     }
 

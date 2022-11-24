@@ -2,7 +2,7 @@ package uk.ac.manchester.tornado.examples.spirv;
 
 import java.util.Arrays;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.common.Access;
 import uk.ac.manchester.tornado.api.common.TornadoDevice;
 import uk.ac.manchester.tornado.api.runtime.TornadoRuntime;
@@ -69,7 +69,7 @@ public class TestPrecompiledSPIRV {
         String filePath = "/tmp/testCopy.spv";
 
         // @formatter:off
-        TaskSchedule ts = new TaskSchedule("s0")
+        TaskGraph ts = new TaskGraph("s0")
                 .streamIn(a)
                 .prebuiltTask("t0",
                         "copyTest",

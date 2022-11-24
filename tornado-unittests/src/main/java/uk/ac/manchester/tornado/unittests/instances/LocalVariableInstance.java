@@ -22,7 +22,7 @@ import static org.junit.Assert.assertArrayEquals;
 
 import org.junit.Test;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 
 /**
@@ -94,7 +94,7 @@ public class LocalVariableInstance {
         MapSkeleton msk = new MapSkeleton((MiddleMap) mm);
 
         // @formatter:off
-        TaskSchedule task = new TaskSchedule("s0")
+        TaskGraph task = new TaskGraph("s0")
                 .streamIn(in)
                 .task("t0", msk::map, in, out)
                 .streamOut(out);

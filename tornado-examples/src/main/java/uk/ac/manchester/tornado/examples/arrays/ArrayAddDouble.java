@@ -20,7 +20,7 @@ package uk.ac.manchester.tornado.examples.arrays;
 
 import java.util.Arrays;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 
 public class ArrayAddDouble {
@@ -43,7 +43,7 @@ public class ArrayAddDouble {
         Arrays.fill(c, 0);
 
         //@formatter:off
-        new TaskSchedule("s0")
+        new TaskGraph("s0")
                 .task("t0", ArrayAddDouble::add, a, b, c)
                 .streamOut(c)
                 .execute();

@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.stream.IntStream;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.annotations.Reduce;
 
@@ -41,7 +41,7 @@ public class PiComputation {
         Arrays.fill(result, 0.0f);
 
         //@formatter:off
-        TaskSchedule task = new TaskSchedule("s0")
+        TaskGraph task = new TaskGraph("s0")
             .streamIn(input)
             .task("t0", PiComputation::computePi, input, result)
             .streamOut(result);

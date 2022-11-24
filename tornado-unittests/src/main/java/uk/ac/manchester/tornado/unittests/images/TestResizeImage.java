@@ -26,7 +26,7 @@ import java.util.stream.IntStream;
 
 import org.junit.Test;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.collections.math.TornadoMath;
 import uk.ac.manchester.tornado.api.collections.types.ImageFloat;
@@ -65,7 +65,7 @@ public class TestResizeImage extends TornadoTestBase {
             }
         }
 
-        final TaskSchedule schedule = new TaskSchedule("s0").task("t0", TestResizeImage::resize, image2, image1, 2).streamOut(image2);
+        final TaskGraph schedule = new TaskGraph("s0").task("t0", TestResizeImage::resize, image2, image1, 2).streamOut(image2);
 
         schedule.warmup();
 

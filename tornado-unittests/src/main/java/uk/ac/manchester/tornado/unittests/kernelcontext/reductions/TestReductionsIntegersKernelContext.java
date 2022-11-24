@@ -26,7 +26,7 @@ import org.junit.Test;
 
 import uk.ac.manchester.tornado.api.GridScheduler;
 import uk.ac.manchester.tornado.api.KernelContext;
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.WorkerGrid;
 import uk.ac.manchester.tornado.api.WorkerGrid1D;
 import uk.ac.manchester.tornado.api.collections.math.TornadoMath;
@@ -84,7 +84,7 @@ public class TestReductionsIntegersKernelContext extends TornadoTestBase {
         GridScheduler gridScheduler = new GridScheduler("s0.t0", worker);
         KernelContext context = new KernelContext();
 
-        TaskSchedule s0 = new TaskSchedule("s0") //
+        TaskGraph s0 = new TaskGraph("s0") //
                 .streamIn(input, localSize) //
                 .task("t0", TestReductionsIntegersKernelContext::basicAccessThreadIds, context, input) //
                 .streamOut(input);
@@ -123,7 +123,7 @@ public class TestReductionsIntegersKernelContext extends TornadoTestBase {
         GridScheduler gridScheduler = new GridScheduler("s0.t0", worker);
         KernelContext context = new KernelContext();
 
-        TaskSchedule s0 = new TaskSchedule("s0") //
+        TaskGraph s0 = new TaskGraph("s0") //
                 .streamIn(input, localSize) //
                 .task("t0", TestReductionsIntegersKernelContext::basicAccessThreadIds02, context, input, output) //
                 .streamOut(output);
@@ -163,7 +163,7 @@ public class TestReductionsIntegersKernelContext extends TornadoTestBase {
         GridScheduler gridScheduler = new GridScheduler("s0.t0", worker);
         KernelContext context = new KernelContext();
 
-        TaskSchedule s0 = new TaskSchedule("s0") //
+        TaskGraph s0 = new TaskGraph("s0") //
                 .streamIn(input, localSize) //
                 .task("t0", TestReductionsIntegersKernelContext::basicAccessThreadIds03, context, input, output) //
                 .streamOut(output);
@@ -205,7 +205,7 @@ public class TestReductionsIntegersKernelContext extends TornadoTestBase {
         GridScheduler gridScheduler = new GridScheduler("s0.t0", worker);
         KernelContext context = new KernelContext();
 
-        TaskSchedule s0 = new TaskSchedule("s0") //
+        TaskGraph s0 = new TaskGraph("s0") //
                 .streamIn(input, localSize) //
                 .task("t0", TestReductionsIntegersKernelContext::basicAccessThreadIds04, context, input, output) //
                 .streamOut(output);
@@ -247,7 +247,7 @@ public class TestReductionsIntegersKernelContext extends TornadoTestBase {
         GridScheduler gridScheduler = new GridScheduler("s0.t0", worker);
         KernelContext context = new KernelContext();
 
-        TaskSchedule s0 = new TaskSchedule("s0") //
+        TaskGraph s0 = new TaskGraph("s0") //
                 .streamIn(input, localSize) //
                 .task("t0", TestReductionsIntegersKernelContext::basicAccessThreadIds05, context, input, output) //
                 .streamOut(output);
@@ -274,7 +274,7 @@ public class TestReductionsIntegersKernelContext extends TornadoTestBase {
         GridScheduler gridScheduler = new GridScheduler("s0.t0", worker);
         KernelContext context = new KernelContext();
 
-        TaskSchedule s0 = new TaskSchedule("s0") //
+        TaskGraph s0 = new TaskGraph("s0") //
                 .streamIn(input) //
                 .task("t0", TestReductionsIntegersKernelContext::intReductionAddGlobalMemory, context, input, reduce) //
                 .streamOut(reduce, input);
@@ -326,7 +326,7 @@ public class TestReductionsIntegersKernelContext extends TornadoTestBase {
         GridScheduler gridScheduler = new GridScheduler("s0.t0", worker);
         KernelContext context = new KernelContext();
 
-        TaskSchedule s0 = new TaskSchedule("s0") //
+        TaskGraph s0 = new TaskGraph("s0") //
                 .task("t0", TestReductionsIntegersKernelContext::intReductionAddLocalMemory, context, input, reduce) //
                 .streamOut(reduce);
 
@@ -383,7 +383,7 @@ public class TestReductionsIntegersKernelContext extends TornadoTestBase {
         GridScheduler gridScheduler = new GridScheduler("s0.t0", worker);
         KernelContext context = new KernelContext();
 
-        TaskSchedule s0 = new TaskSchedule("s0") //
+        TaskGraph s0 = new TaskGraph("s0") //
                 .streamIn(input, localSize) //
                 .task("t0", TestReductionsIntegersKernelContext::intReductionMaxGlobalMemory, context, input, reduce) //
                 .streamOut(reduce);
@@ -434,7 +434,7 @@ public class TestReductionsIntegersKernelContext extends TornadoTestBase {
         GridScheduler gridScheduler = new GridScheduler("s0.t0", worker);
         KernelContext context = new KernelContext();
 
-        TaskSchedule s0 = new TaskSchedule("s0") //
+        TaskGraph s0 = new TaskGraph("s0") //
                 .streamIn(input, localSize) //
                 .task("t0", TestReductionsIntegersKernelContext::intReductionMaxLocalMemory, context, input, reduce) //
                 .streamOut(reduce);
@@ -491,7 +491,7 @@ public class TestReductionsIntegersKernelContext extends TornadoTestBase {
         GridScheduler gridScheduler = new GridScheduler("s0.t0", worker);
         KernelContext context = new KernelContext();
 
-        TaskSchedule s0 = new TaskSchedule("s0") //
+        TaskGraph s0 = new TaskGraph("s0") //
                 .streamIn(input, localSize) //
                 .task("t0", TestReductionsIntegersKernelContext::intReductionMinGlobalMemory, context, input, reduce) //
                 .streamOut(reduce);
@@ -542,7 +542,7 @@ public class TestReductionsIntegersKernelContext extends TornadoTestBase {
         GridScheduler gridScheduler = new GridScheduler("s0.t0", worker);
         KernelContext context = new KernelContext();
 
-        TaskSchedule s0 = new TaskSchedule("s0") //
+        TaskGraph s0 = new TaskGraph("s0") //
                 .streamIn(input, localSize) //
                 .task("t0", TestReductionsIntegersKernelContext::intReductionMinLocalMemory, context, input, reduce) //
                 .streamOut(reduce);

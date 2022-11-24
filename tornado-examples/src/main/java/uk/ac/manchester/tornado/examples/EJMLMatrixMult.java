@@ -26,7 +26,7 @@ import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.dense.row.RandomMatrices_DDRM;
 import org.ejml.dense.row.mult.MatrixMatrixMult_DDRM;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 
 public class EJMLMatrixMult {
 
@@ -72,7 +72,7 @@ public class EJMLMatrixMult {
         CommonOps_DDRM.fill(c, 0);
 
         // CommonOps_DDRM.mult(a, b, c);
-        TaskSchedule s0 = new TaskSchedule("s0").task("mult", MatrixMatrixMult_DDRM::mult_small, a, b, c).streamOut(c);
+        TaskGraph s0 = new TaskGraph("s0").task("mult", MatrixMatrixMult_DDRM::mult_small, a, b, c).streamOut(c);
 
         s0.execute();
 

@@ -20,7 +20,7 @@ package uk.ac.manchester.tornado.examples;
 import java.util.stream.IntStream;
 
 import uk.ac.manchester.tornado.api.Policy;
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.examples.common.Messages;
 
@@ -46,7 +46,7 @@ public class Saxpy {
 
         IntStream.range(0, numElements).parallel().forEach(i -> x[i] = 450);
 
-        TaskSchedule s0 = new TaskSchedule("s0").task("t0", Saxpy::saxpy, alpha, x, y).streamOut(y);
+        TaskGraph s0 = new TaskGraph("s0").task("t0", Saxpy::saxpy, alpha, x, y).streamOut(y);
 
         s0.executeWithProfilerSequentialGlobal(Policy.PERFORMANCE);
 
@@ -57,7 +57,7 @@ public class Saxpy {
 
         IntStream.range(0, numElements).parallel().forEach(i -> a[i] = 450);
 
-        TaskSchedule s1 = new TaskSchedule("s1").task("t0", Saxpy::saxpy, alpha, a, b).streamOut(a);
+        TaskGraph s1 = new TaskGraph("s1").task("t0", Saxpy::saxpy, alpha, a, b).streamOut(a);
 
         s1.executeWithProfilerSequentialGlobal(Policy.PERFORMANCE);
 

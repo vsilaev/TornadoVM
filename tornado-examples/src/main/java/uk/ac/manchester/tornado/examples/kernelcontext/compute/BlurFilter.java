@@ -19,7 +19,7 @@ package uk.ac.manchester.tornado.examples.kernelcontext.compute;
 
 import uk.ac.manchester.tornado.api.GridScheduler;
 import uk.ac.manchester.tornado.api.KernelContext;
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.WorkerGrid;
 import uk.ac.manchester.tornado.api.WorkerGrid2D;
 
@@ -159,7 +159,7 @@ public class BlurFilter {
             gridScheduler.setWorkerGrid("blur.green", workerGrid);
             gridScheduler.setWorkerGrid("blur.blue", workerGrid);
             KernelContext context = new KernelContext();
-            TaskSchedule parallelFilter = new TaskSchedule("blur") //
+            TaskGraph parallelFilter = new TaskGraph("blur") //
                     .task("red", BlurFilterImage::compute, context, redChannel, redFilter, w, h, filter, FILTER_WIDTH) //
                     .task("green", BlurFilterImage::compute, context, greenChannel, greenFilter, w, h, filter, FILTER_WIDTH) //
                     .task("blue", BlurFilterImage::compute, context, blueChannel, blueFilter, w, h, filter, FILTER_WIDTH) //

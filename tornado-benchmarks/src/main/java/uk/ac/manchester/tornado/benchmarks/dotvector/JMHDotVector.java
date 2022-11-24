@@ -41,7 +41,7 @@ import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.collections.types.Float3;
 import uk.ac.manchester.tornado.api.collections.types.VectorFloat3;
 import uk.ac.manchester.tornado.benchmarks.GraphicsKernels;
@@ -54,7 +54,7 @@ public class JMHDotVector {
         private VectorFloat3 a;
         private VectorFloat3 b;
         private float[] c;
-        TaskSchedule ts;
+        TaskGraph ts;
 
         @Setup(Level.Trial)
         public void doSetup() {
@@ -71,7 +71,7 @@ public class JMHDotVector {
                 a.set(i, new Float3(ra));
                 b.set(i, new Float3(rb));
             }
-            ts = new TaskSchedule("benchmark")//
+            ts = new TaskGraph("benchmark")//
                     .streamIn(a, b) //
                     .task("dotVector", GraphicsKernels::dotVector, a, b, c) //
                     .streamOut(c);
@@ -96,7 +96,7 @@ public class JMHDotVector {
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     @Fork(1)
     public void dotVectorTornado(BenchmarkSetup state, Blackhole blackhole) {
-        TaskSchedule t = state.ts;
+        TaskGraph t = state.ts;
         t.execute();
         blackhole.consume(t);
     }

@@ -20,7 +20,7 @@ package uk.ac.manchester.tornado.examples.dynamic;
 import java.util.Random;
 
 import uk.ac.manchester.tornado.api.Policy;
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.collections.types.Byte3;
 import uk.ac.manchester.tornado.api.collections.types.Float3;
@@ -170,7 +170,7 @@ public class RenderTrackMT {
         }
 
         long startInit = System.nanoTime();
-        TaskSchedule s0 = new TaskSchedule("s0").task("t0", RenderTrackMT::renderTrack, output, input).streamOut(output);
+        TaskGraph s0 = new TaskGraph("s0").task("t0", RenderTrackMT::renderTrack, output, input).streamOut(output);
         long stopInit = System.nanoTime();
         System.out.println("Initialization time:  " + (stopInit - startInit) + " ns" + "\n");
 

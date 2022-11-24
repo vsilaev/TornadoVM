@@ -21,7 +21,7 @@ import java.util.Arrays;
 
 import org.junit.Test;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.exceptions.TornadoTaskRuntimeException;
 import uk.ac.manchester.tornado.unittests.common.TornadoTestBase;
@@ -59,7 +59,7 @@ public class RuntimeFail extends TornadoTestBase {
         Arrays.fill(x, 2.0f);
         Arrays.fill(y, 8.0f);
 
-        TaskSchedule ts = new TaskSchedule("s0") //
+        TaskGraph ts = new TaskGraph("s0") //
                 .task("t0", RuntimeFail::vectorAdd, x, y, z) //
                 .task("t0", RuntimeFail::square, z) //
                 .streamOut(z);

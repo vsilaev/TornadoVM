@@ -25,7 +25,7 @@ import java.io.File;
 
 import javax.imageio.ImageIO;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 
 public class Mandelbrot {
@@ -98,7 +98,7 @@ public class Mandelbrot {
     public static short[] compute() {
         short[] result = new short[SIZE * SIZE];
         
-        new TaskSchedule("s0")
+        new TaskGraph("s0")
             .task("t0", Mandelbrot::mandelbrot, SIZE, result)
             .streamOut(result)
             .execute();

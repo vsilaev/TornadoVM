@@ -19,7 +19,7 @@
 package uk.ac.manchester.tornado.examples.dynamic;
 
 import uk.ac.manchester.tornado.api.Policy;
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 
 public class SaxpyMT {
@@ -64,7 +64,7 @@ public class SaxpyMT {
         int numElements = Integer.parseInt(args[0]);
         String executionType = args[1];
         int iterations = Integer.parseInt(args[2]);
-        TaskSchedule graph;
+        TaskGraph graph;
         long start,end;
         float alpha = 2f;
 
@@ -78,7 +78,7 @@ public class SaxpyMT {
             b[i] = 20;
         }
 
-        graph = new TaskSchedule("s0");
+        graph = new TaskGraph("s0");
         if (executionType.equals("multi") || executionType.equals("sequential")) {
             ;
         } else {

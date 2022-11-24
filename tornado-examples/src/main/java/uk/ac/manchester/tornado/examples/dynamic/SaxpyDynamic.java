@@ -19,7 +19,7 @@
 package uk.ac.manchester.tornado.examples.dynamic;
 
 import uk.ac.manchester.tornado.api.Policy;
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 
 public class SaxpyDynamic {
@@ -56,7 +56,7 @@ public class SaxpyDynamic {
         }
 
         long startInit = System.nanoTime();
-        TaskSchedule s0 = new TaskSchedule("s0").task("t0", SaxpyDynamic::saxpy, alpha, x, y, b).streamOut(y);
+        TaskGraph s0 = new TaskGraph("s0").task("t0", SaxpyDynamic::saxpy, alpha, x, y, b).streamOut(y);
         long stopInit = System.nanoTime();
         System.out.println("Initialization time:  " + (stopInit - startInit) + " ns" + "\n");
 

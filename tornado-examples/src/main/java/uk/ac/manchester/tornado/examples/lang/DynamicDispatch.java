@@ -21,7 +21,7 @@ package uk.ac.manchester.tornado.examples.lang;
 import java.util.Arrays;
 import java.util.function.BiFunction;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 
 public class DynamicDispatch {
 
@@ -58,7 +58,7 @@ public class DynamicDispatch {
         Arrays.fill(a, 1);
         Arrays.fill(b, 2);
 
-        TaskSchedule s0 = new TaskSchedule("s0").task("t0", DynamicDispatch::applyOp, new AddOp(), a, b, c).streamOut(c);
+        TaskGraph s0 = new TaskGraph("s0").task("t0", DynamicDispatch::applyOp, new AddOp(), a, b, c).streamOut(c);
 
         s0.warmup();
         s0.execute();

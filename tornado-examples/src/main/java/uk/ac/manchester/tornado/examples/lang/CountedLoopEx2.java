@@ -20,7 +20,7 @@ package uk.ac.manchester.tornado.examples.lang;
 
 import java.util.Arrays;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 
 public class CountedLoopEx2 {
 
@@ -38,7 +38,7 @@ public class CountedLoopEx2 {
         Arrays.fill(a, 1);
         Arrays.fill(b, 2);
 
-        TaskSchedule s0 = new TaskSchedule("s0").task("t0", CountedLoopEx2::add, a, b, c).streamOut(c);
+        TaskGraph s0 = new TaskGraph("s0").task("t0", CountedLoopEx2::add, a, b, c).streamOut(c);
 
         s0.warmup();
         s0.execute();

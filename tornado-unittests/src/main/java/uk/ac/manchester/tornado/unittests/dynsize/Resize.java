@@ -26,7 +26,7 @@ import java.util.stream.IntStream;
 import org.junit.Test;
 
 import uk.ac.manchester.tornado.api.GridScheduler;
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.WorkerGrid;
 import uk.ac.manchester.tornado.api.WorkerGrid1D;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
@@ -58,7 +58,7 @@ public class Resize extends TornadoTestBase {
     public void testDynamicSize01() {
         float[] a = createArray(256);
 
-        TaskSchedule ts = new TaskSchedule("s0") //
+        TaskGraph ts = new TaskGraph("s0") //
                 .streamIn(a) //
                 .task("t0", Resize::resize01, a) //
                 .streamOut(a); //
@@ -80,7 +80,7 @@ public class Resize extends TornadoTestBase {
     public void testDynamicSize02() {
         float[] a = createArray(256);
 
-        TaskSchedule ts = new TaskSchedule("s0") //
+        TaskGraph ts = new TaskGraph("s0") //
                 .streamIn(a) //
                 .task("t0", Resize::resize01, a) //
                 .streamOut(a); //
@@ -112,7 +112,7 @@ public class Resize extends TornadoTestBase {
         float[] a = createArray(1024);
         float[] b = createArray(1024);
 
-        TaskSchedule ts = new TaskSchedule("s0") //
+        TaskGraph ts = new TaskGraph("s0") //
                 .streamIn(a) //
                 .task("t0", Resize::resize02, a, b) //
                 .streamOut(b); //
@@ -138,7 +138,7 @@ public class Resize extends TornadoTestBase {
         float[] a = createArray(256);
         float[] b = createArray(256);
 
-        TaskSchedule ts = new TaskSchedule("s0") //
+        TaskGraph ts = new TaskGraph("s0") //
                 .streamIn(a) //
                 .task("t0", Resize::resize02, a, b) //
                 .streamOut(b); //
@@ -171,7 +171,7 @@ public class Resize extends TornadoTestBase {
         WorkerGrid workerGrid = new WorkerGrid1D(256);
         GridScheduler gridScheduler = new GridScheduler("s0.t0", workerGrid);
 
-        TaskSchedule ts = new TaskSchedule("s0") //
+        TaskGraph ts = new TaskGraph("s0") //
                 .streamIn(a) //
                 .task("t0", Resize::resize02, a, b) //
                 .streamOut(b); //
@@ -205,7 +205,7 @@ public class Resize extends TornadoTestBase {
         GridScheduler gridScheduler = new GridScheduler("s0.t0", workerGrid);
 
         // Do not stream in 'a'
-        TaskSchedule ts = new TaskSchedule("s0") //
+        TaskGraph ts = new TaskGraph("s0") //
                 .task("t0", Resize::resize02, a, b) //
                 .streamOut(b); //
         ts.execute(gridScheduler);

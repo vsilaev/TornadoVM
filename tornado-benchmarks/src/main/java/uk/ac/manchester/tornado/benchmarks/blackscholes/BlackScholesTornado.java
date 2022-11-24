@@ -20,7 +20,7 @@ package uk.ac.manchester.tornado.benchmarks.blackscholes;
 import static uk.ac.manchester.tornado.api.collections.math.TornadoMath.abs;
 import static uk.ac.manchester.tornado.benchmarks.ComputeKernels.blackscholes;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.common.TornadoDevice;
 import uk.ac.manchester.tornado.benchmarks.BenchmarkDriver;
 import uk.ac.manchester.tornado.benchmarks.ComputeKernels;
@@ -47,7 +47,7 @@ public class BlackScholesTornado extends BenchmarkDriver {
             randArray[i] = (i * 1.0f) / size;
         }
 
-        ts = new TaskSchedule("benchmark") //
+        ts = new TaskGraph("benchmark") //
                 .task("t0", ComputeKernels::blackscholes, randArray, put, call) //
                 .streamOut(put, call);
 
@@ -83,7 +83,7 @@ public class BlackScholesTornado extends BenchmarkDriver {
             randArrayTor[i] = (float) Math.random();
         }
 
-        ts = new TaskSchedule("benchmark");
+        ts = new TaskGraph("benchmark");
         ts.task("t0", ComputeKernels::blackscholes, randArrayTor, putTor, callTor);
 
         ts.warmup();

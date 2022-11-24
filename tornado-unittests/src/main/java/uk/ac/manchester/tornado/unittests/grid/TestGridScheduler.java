@@ -24,7 +24,7 @@ import java.util.stream.IntStream;
 import org.junit.Test;
 
 import uk.ac.manchester.tornado.api.GridScheduler;
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.WorkerGrid;
 import uk.ac.manchester.tornado.api.WorkerGrid1D;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
@@ -69,7 +69,7 @@ public class TestGridScheduler {
         WorkerGrid worker = new WorkerGrid1D(size);
         GridScheduler gridScheduler = new GridScheduler("s0.t0", worker);
 
-        TaskSchedule s0 = new TaskSchedule("s0")
+        TaskGraph s0 = new TaskGraph("s0")
                 .streamIn(a, b, size)
                 .task("t0", TestGridScheduler::vectorAddFloat, a, b, tornadoC)
                 .task("t1", TestGridScheduler::reduceAdd, tornadoC, size)
@@ -98,7 +98,7 @@ public class TestGridScheduler {
         WorkerGrid worker = new WorkerGrid1D(size);
         GridScheduler gridScheduler = new GridScheduler("s0.t0", worker);
 
-        TaskSchedule s0 = new TaskSchedule("s0") //
+        TaskGraph s0 = new TaskGraph("s0") //
                 .streamIn(a, b, size) //
                 .task("t0", TestGridScheduler::vectorAddFloat, a, b, tornadoC) //
                 .streamOut(tornadoC);
@@ -108,7 +108,7 @@ public class TestGridScheduler {
         worker.setLocalWork(1, 1, 1);
         s0.execute(gridScheduler);
 
-        TaskSchedule s1 = new TaskSchedule("s1").streamIn(tornadoC, size).task("t0", TestGridScheduler::reduceAdd, tornadoC, size).streamOut(tornadoC);
+        TaskGraph s1 = new TaskGraph("s1").streamIn(tornadoC, size).task("t0", TestGridScheduler::reduceAdd, tornadoC, size).streamOut(tornadoC);
         s1.execute();
         // Final SUM
         float finalSum = tornadoC[0];

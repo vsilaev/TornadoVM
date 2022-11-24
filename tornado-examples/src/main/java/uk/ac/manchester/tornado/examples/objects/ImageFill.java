@@ -17,7 +17,7 @@
  */
 package uk.ac.manchester.tornado.examples.objects;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.collections.types.ImageFloat;
 
 public class ImageFill {
@@ -30,7 +30,7 @@ public class ImageFill {
         final ImageFloat image = new ImageFloat(numElementsX, numElementsY);
         image.fill(-1f);
 
-        final TaskSchedule graph = new TaskSchedule("s0").task("t0", image::fill, 1f).streamOut(image);
+        final TaskGraph graph = new TaskGraph("s0").task("t0", image::fill, 1f).streamOut(image);
 
         System.out.println("Before:");
         System.out.println(image.toString());

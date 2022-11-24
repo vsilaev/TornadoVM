@@ -22,7 +22,7 @@ import static uk.ac.manchester.tornado.benchmarks.LinearAlgebraArrays.dgemm;
 
 import java.util.Random;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.common.Access;
 import uk.ac.manchester.tornado.api.common.TornadoDevice;
 import uk.ac.manchester.tornado.api.runtime.TornadoRuntime;
@@ -60,7 +60,7 @@ public class DgemmTornado extends BenchmarkDriver {
             b[i] = random.nextFloat();
         }
 
-        ts = new TaskSchedule("benchmark");
+        ts = new TaskGraph("benchmark");
         if (!USE_PREBUILT) {
 
             ts.streamIn(a, b) //

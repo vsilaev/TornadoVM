@@ -657,7 +657,7 @@ public interface TornadoAPI {
     void clearProfiles();
 
     /**
-     * Locks this object on the device memory. If a {@link TaskSchedule} is executed multiple times, then
+     * Locks this object on the device memory. If a {@link TaskGraph} is executed multiple times, then
      * this object will be copied in only for the first execution.
      */
     TornadoAPI lockObjectInMemory(Object object);
@@ -666,7 +666,7 @@ public interface TornadoAPI {
 
     /**
      * Unlocks this object from the device memory. The object must have been previously locked in order to unlock it.
-     * Once the object has been unlocked, it will be copied in on every subsequent execution of the {@link TaskSchedule}.
+     * Once the object has been unlocked, it will be copied in on every subsequent execution of the {@link TaskGraph}.
      */
     TornadoAPI unlockObjectFromMemory(Object object);
 
@@ -690,7 +690,7 @@ public interface TornadoAPI {
 
     void waitOn();
 
-    TaskSchedule useDefaultThreadScheduler(boolean use);
+    TaskGraph useDefaultThreadScheduler(boolean use);
 
     void updateReference(Object oldRef, Object newRef);
 

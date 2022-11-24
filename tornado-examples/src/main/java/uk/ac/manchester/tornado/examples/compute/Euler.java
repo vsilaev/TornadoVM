@@ -17,7 +17,7 @@
  */
 package uk.ac.manchester.tornado.examples.compute;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 
 /**
@@ -132,7 +132,7 @@ public class Euler {
         long[] outputD = new long[size];
         long[] outputE = new long[size];
 
-        TaskSchedule ts = new TaskSchedule("s0") //
+        TaskGraph ts = new TaskGraph("s0") //
                 .task("s0", Euler::solve, size, input, outputA, outputB, outputC, outputD, outputE) //
                 .streamOut(outputA, outputB, outputC, outputD, outputE);
 

@@ -28,7 +28,7 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.unittests.common.TornadoTestBase;
 
@@ -143,7 +143,7 @@ public class TestMatrices extends TornadoTestBase {
         int[][] a = new int[numElements][numElements];
 
         //@formatter:off
-        TaskSchedule t = new TaskSchedule("s0")
+        TaskGraph t = new TaskGraph("s0")
                 .task("t0", TestMatrices::fillMatrix, a)
                 .streamOut(new Object[]{a});
 	    //@formatter:on
@@ -164,7 +164,7 @@ public class TestMatrices extends TornadoTestBase {
         int[][] a = new int[numElements][numElements];
 
         //@formatter:off
-        TaskSchedule t = new TaskSchedule("s0")
+        TaskGraph t = new TaskGraph("s0")
 		        .task("t0", TestMatrices::fillMatrix2, a)
 		        .streamOut(new Object[] { a });
 	    //@formatter:on
@@ -185,7 +185,7 @@ public class TestMatrices extends TornadoTestBase {
         int[][] a = new int[numElements][numElements];
 
         //@formatter:off
-        TaskSchedule t = new TaskSchedule("s0")
+        TaskGraph t = new TaskGraph("s0")
 		        .task("t0", TestMatrices::fillMatrix3, a)
 		        .streamOut(new Object[] { a });
 		//@formatter:on
@@ -217,7 +217,7 @@ public class TestMatrices extends TornadoTestBase {
         });
 
         //@formatter:off
-        TaskSchedule t = new TaskSchedule("s0")
+        TaskGraph t = new TaskGraph("s0")
                 .task("t0", TestMatrices::matrixVector, matrix, vector, result, N)
                 .streamOut(result);
         //@formatter:on
@@ -247,7 +247,7 @@ public class TestMatrices extends TornadoTestBase {
         });
 
         //@formatter:off
-        TaskSchedule t = new TaskSchedule("s0")
+        TaskGraph t = new TaskGraph("s0")
                 .task("t0", TestMatrices::matrixVector, matrix, vector, result, N)
                 .streamOut(result);
         //@formatter:on
@@ -266,7 +266,7 @@ public class TestMatrices extends TornadoTestBase {
         float[] matrix = new float[N * N];
         float[] resultSeq = new float[N * N];
 
-        TaskSchedule t = new TaskSchedule("s0") //
+        TaskGraph t = new TaskGraph("s0") //
                 .task("t0", TestMatrices::matrixInit1D, matrix, N) //
                 .streamOut(matrix); //
 
@@ -285,7 +285,7 @@ public class TestMatrices extends TornadoTestBase {
         float[] matrix = new float[N * N];
         float[] resultSeq = new float[N * N];
 
-        TaskSchedule t = new TaskSchedule("s0") //
+        TaskGraph t = new TaskGraph("s0") //
                 .task("t0", TestMatrices::matrixInit1D, matrix, N) //
                 .streamOut(matrix); //
 
@@ -304,7 +304,7 @@ public class TestMatrices extends TornadoTestBase {
         float[] matrix = new float[N * N];
         float[] resultSeq = new float[N * N];
 
-        TaskSchedule t = new TaskSchedule("s0") //
+        TaskGraph t = new TaskGraph("s0") //
                 .task("t0", TestMatrices::matrixInit2D, matrix, N) //
                 .streamOut(matrix); //
 
@@ -323,7 +323,7 @@ public class TestMatrices extends TornadoTestBase {
         float[] matrix = new float[N * N];
         float[] resultSeq = new float[N * N];
 
-        TaskSchedule t = new TaskSchedule("s0") //
+        TaskGraph t = new TaskGraph("s0") //
                 .task("t0", TestMatrices::matrixInit2D, matrix, N) //
                 .streamOut(matrix); //
 
@@ -352,7 +352,7 @@ public class TestMatrices extends TornadoTestBase {
             matrixA[idx] = r.nextFloat();
         });
 
-        TaskSchedule t = new TaskSchedule("s0") //
+        TaskGraph t = new TaskGraph("s0") //
                 .task("t0", TestMatrices::matrixAddition1D, matrixA, matrixB, result, N) //
                 .streamOut(result); //
 
@@ -381,7 +381,7 @@ public class TestMatrices extends TornadoTestBase {
             matrixA[idx] = r.nextFloat();
         });
 
-        TaskSchedule t = new TaskSchedule("s0") //
+        TaskGraph t = new TaskGraph("s0") //
                 .task("t0", TestMatrices::matrixAddition1D, matrixA, matrixB, result, N) //
                 .streamOut(result); //
 
@@ -411,7 +411,7 @@ public class TestMatrices extends TornadoTestBase {
         });
 
         //@formatter:off
-        TaskSchedule t = new TaskSchedule("s0")
+        TaskGraph t = new TaskGraph("s0")
                 .task("t0", TestMatrices::matrixAddition2D, matrixA, matrixB, result, N)
                 .streamOut(result);
         //@formatter:on
@@ -441,7 +441,7 @@ public class TestMatrices extends TornadoTestBase {
         });
 
         //@formatter:off
-        TaskSchedule t = new TaskSchedule("s0")
+        TaskGraph t = new TaskGraph("s0")
                 .task("t0", TestMatrices::matrixAddition2D, matrixA, matrixB, result, N)
                 .streamOut(result);
         //@formatter:on
@@ -476,7 +476,7 @@ public class TestMatrices extends TornadoTestBase {
             }
         }
 
-        TaskSchedule ts = new TaskSchedule("s0").task("s0", TestMatrices::copyMatrix2D, matrixA, matrixB).streamOut(new float[][][] { matrixB });
+        TaskGraph ts = new TaskGraph("s0").task("s0", TestMatrices::copyMatrix2D, matrixA, matrixB).streamOut(new float[][][] { matrixB });
         ts.execute();
 
         for (int i = 0; i < N; i++) {
@@ -501,7 +501,7 @@ public class TestMatrices extends TornadoTestBase {
         });
 
         //@formatter:off
-        TaskSchedule t = new TaskSchedule("s0")
+        TaskGraph t = new TaskGraph("s0")
                 .task("t0", TestMatrices::matrixMultiplication, matrixA, matrixB, matrixC, N)
                 .streamOut(matrixC);
         //@formatter:on
@@ -539,7 +539,7 @@ public class TestMatrices extends TornadoTestBase {
         });
 
         //@formatter:off
-        TaskSchedule t = new TaskSchedule("s0")
+        TaskGraph t = new TaskGraph("s0")
                 .task("t0", TestMatrices::matrixMultiplication, matrixA, matrixB, matrixC, N)
                 .streamOut(matrixC);
         //@formatter:on
@@ -577,7 +577,7 @@ public class TestMatrices extends TornadoTestBase {
         });
 
         //@formatter:off
-        TaskSchedule t = new TaskSchedule("s0")
+        TaskGraph t = new TaskGraph("s0")
                 .task("t0", TestMatrices::matrixMultiplicationParallelInduction, matrixA, matrixB, matrixC, N)
                 .streamOut(matrixC);
         //@formatter:on
@@ -607,7 +607,7 @@ public class TestMatrices extends TornadoTestBase {
         });
 
         //@formatter:off
-        TaskSchedule t = new TaskSchedule("s0")
+        TaskGraph t = new TaskGraph("s0")
                 .task("t0", TestMatrices::matrixUsageOfParallelInduction, matrixA, matrixB, matrixC, N)
                 .streamOut(matrixC);
         //@formatter:on
@@ -653,7 +653,7 @@ public class TestMatrices extends TornadoTestBase {
 
         testAdd(matrixSeq);
 
-        TaskSchedule ts = new TaskSchedule("s0").task("t0", TestMatrices::testAdd, matrix)
+        TaskGraph ts = new TaskGraph("s0").task("t0", TestMatrices::testAdd, matrix)
                 // Wrap the matrix in a 1D array because the streamOut varargs will
                 // automatically unwrap it.
                 .streamOut(new long[][][] { matrix });
@@ -700,7 +700,7 @@ public class TestMatrices extends TornadoTestBase {
 
         testAddMultiple(firstMatrixSeq, secondMatrixSeq);
 
-        TaskSchedule ts = new TaskSchedule("s0").task("t0", TestMatrices::testAddMultiple, firstMatrix, secondMatrix)
+        TaskGraph ts = new TaskGraph("s0").task("t0", TestMatrices::testAddMultiple, firstMatrix, secondMatrix)
                 // Wrap the matrix in a 1D array because the streamOut varargs will
                 // automatically unwrap it.
                 .streamOut(new float[][][] { firstMatrix });

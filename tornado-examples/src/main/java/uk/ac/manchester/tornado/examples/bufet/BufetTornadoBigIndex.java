@@ -24,7 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.runtime.TornadoRuntime;
 
@@ -311,7 +311,7 @@ public class BufetTornadoBigIndex {
         for (int i = 0; i < chunks; i++) {
 
             System.out.println("Generate the miRNAs target groups for chunk " + i);
-            TaskSchedule s0 = new TaskSchedule("x" + i);
+            TaskGraph s0 = new TaskGraph("x" + i);
             s0.task("t0", BufetTornadoBigIndex::getRandomTargetGroup, onlyGeneVector, randID, map_all_split, chunkElements, bounds, randNum);
             s0.streamOut(map_all_split);
 

@@ -24,7 +24,7 @@ import static uk.ac.manchester.tornado.api.utils.TornadoUtilities.humanReadableB
 import java.util.ArrayList;
 import java.util.List;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.common.TornadoDevice;
 import uk.ac.manchester.tornado.api.runtime.TornadoRuntime;
 
@@ -47,7 +47,7 @@ public abstract class BenchmarkDriver {
 
     private int startingIndex = 30;
 
-    protected TaskSchedule ts;
+    protected TaskGraph ts;
 
     public BenchmarkDriver(long iterations) {
         this.iterations = iterations;
@@ -69,7 +69,7 @@ public abstract class BenchmarkDriver {
 
     public abstract void benchmarkMethod(TornadoDevice device);
 
-    public TaskSchedule getTaskSchedule() {
+    public TaskGraph getTaskSchedule() {
         return ts;
     }
 

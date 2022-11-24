@@ -21,7 +21,7 @@ package uk.ac.manchester.tornado.examples;
 import java.math.BigDecimal;
 import java.util.stream.IntStream;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.common.TornadoDevice;
 import uk.ac.manchester.tornado.api.runtime.TornadoRuntime;
@@ -69,7 +69,7 @@ public class InitBatchSmall {
         double mb = maxDeviceMemory * 1E-6;
         System.out.println("Maximum alloc device memory: " + mb + " (MB)");
 
-        TaskSchedule ts = new TaskSchedule("s0");
+        TaskGraph ts = new TaskGraph("s0");
         // @formatter:off
         ts.batch("200MB")
           .task("t0", InitBatchSmall::compute, arrayA, arrayB)

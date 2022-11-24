@@ -20,7 +20,7 @@ package uk.ac.manchester.tornado.examples.ooo;
 
 import java.util.Random;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 
 public class OOOTest {
@@ -50,7 +50,7 @@ public class OOOTest {
         System.out.printf("using %d maxtricies\n", numArrays);
 
         final Random random = new Random();
-        TaskSchedule graph = new TaskSchedule("example");
+        TaskGraph graph = new TaskGraph("example");
         for (int ii = 0; ii < numArrays; ii++) {
             int n = sizes[ii % sizes.length];
             float[] a = new float[n * n];

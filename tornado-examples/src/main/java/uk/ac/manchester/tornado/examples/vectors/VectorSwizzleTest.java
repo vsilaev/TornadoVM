@@ -18,7 +18,7 @@
 
 package uk.ac.manchester.tornado.examples.vectors;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.collections.types.Float3;
 import uk.ac.manchester.tornado.api.collections.types.VectorFloat3;
 
@@ -39,7 +39,7 @@ public class VectorSwizzleTest {
         final VectorFloat3 results = new VectorFloat3(1);
 
         //@formatter:off
-        new TaskSchedule("s0")
+        new TaskGraph("s0")
                 .task("t0", VectorSwizzleTest::test, value, results)
                 .streamOut(results)
                 .execute();

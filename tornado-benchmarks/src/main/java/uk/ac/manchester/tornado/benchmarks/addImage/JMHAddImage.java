@@ -39,7 +39,7 @@ import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.collections.types.Float4;
 import uk.ac.manchester.tornado.api.collections.types.ImageFloat4;
 import uk.ac.manchester.tornado.benchmarks.GraphicsKernels;
@@ -51,7 +51,7 @@ public class JMHAddImage {
 
         int numElementsX = Integer.parseInt(System.getProperty("x", "2048"));
         int numElementsY = Integer.parseInt(System.getProperty("y", "2048"));
-        TaskSchedule ts;
+        TaskGraph ts;
 
         ImageFloat4 a;
         ImageFloat4 b;
@@ -74,7 +74,7 @@ public class JMHAddImage {
                     b.set(i, j, new Float4(rb));
                 }
             }
-            ts = new TaskSchedule("benchmark") //
+            ts = new TaskGraph("benchmark") //
                     .streamIn(a, b) //
                     .task("addImage", GraphicsKernels::addImage, a, b, c) //
                     .streamOut(c);
@@ -99,7 +99,7 @@ public class JMHAddImage {
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     @Fork(1)
     public void addImageTornado(BenchmarkSetup state, Blackhole blackhole) {
-        TaskSchedule t = state.ts;
+        TaskGraph t = state.ts;
         t.execute();
         blackhole.consume(t);
     }

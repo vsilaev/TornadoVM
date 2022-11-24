@@ -20,7 +20,7 @@ package uk.ac.manchester.tornado.examples.objects;
 
 import java.util.Random;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.collections.graphics.ImagingOps;
 import uk.ac.manchester.tornado.api.collections.types.ImageFloat;
 
@@ -42,7 +42,7 @@ public class ResizeImage {
             }
         }
 
-        final TaskSchedule schedule = new TaskSchedule("s0").task("t0", ImagingOps::resizeImage, image2, image1, 2).streamOut(image2);
+        final TaskGraph schedule = new TaskGraph("s0").task("t0", ImagingOps::resizeImage, image2, image1, 2).streamOut(image2);
 
         schedule.warmup();
 

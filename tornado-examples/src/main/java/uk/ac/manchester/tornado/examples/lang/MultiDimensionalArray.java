@@ -20,7 +20,7 @@ package uk.ac.manchester.tornado.examples.lang;
 
 import java.util.Arrays;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 
 public class MultiDimensionalArray {
@@ -37,7 +37,7 @@ public class MultiDimensionalArray {
         int m = 8;
         int[][] values = new int[n][m];
 
-        TaskSchedule s0 = new TaskSchedule("s0").task("t0", MultiDimensionalArray::fill, values).streamOut(new Object[] { values });
+        TaskGraph s0 = new TaskGraph("s0").task("t0", MultiDimensionalArray::fill, values).streamOut(new Object[] { values });
 
         s0.warmup();
 

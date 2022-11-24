@@ -22,7 +22,7 @@ import java.util.LongSummaryStatistics;
 import java.util.Random;
 import java.util.stream.IntStream;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.collections.types.Matrix2DFloat;
 import uk.ac.manchester.tornado.api.collections.types.VectorFloat;
@@ -98,7 +98,7 @@ public class MatrixVector {
             matrix2DFloat.set(idx, jdx, r.nextFloat());
         }));
 
-        TaskSchedule ts = new TaskSchedule("la") //
+        TaskGraph ts = new TaskGraph("la") //
                 // .streamIn(matrix2DFloat, vectorFloat) //
                 .lockObjectsInMemory(matrix2DFloat, vectorFloat, result) //
                 .task("mv", MatrixVector::computeMatrixVector, matrix2DFloat, vectorFloat, result) //

@@ -26,7 +26,7 @@ import java.util.stream.IntStream;
 
 import org.junit.Test;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.unittests.common.TornadoTestBase;
 import uk.ac.manchester.tornado.unittests.tools.Exceptions.UnsupportedConfigurationException;
@@ -91,7 +91,7 @@ public class TestBatches extends TornadoTestBase {
 
         IntStream.range(0, arrayA.length).sequential().forEach(idx -> arrayA[idx] = idx);
 
-        TaskSchedule ts = new TaskSchedule("s0");
+        TaskGraph ts = new TaskGraph("s0");
 
         // @formatter:off
         ts.batch("100MB")   // Slots of 100 MB
@@ -122,7 +122,7 @@ public class TestBatches extends TornadoTestBase {
         Random r = new Random();
         IntStream.range(0, arrayA.length).sequential().forEach(idx -> arrayA[idx] = r.nextFloat());
 
-        TaskSchedule ts = new TaskSchedule("s0");
+        TaskGraph ts = new TaskGraph("s0");
 
         // @formatter:off
         ts.batch("300MB")   // Slots of 300 MB
@@ -151,7 +151,7 @@ public class TestBatches extends TornadoTestBase {
 
         IntStream.range(0, arrayA.length).sequential().forEach(idx -> arrayA[idx] = idx);
 
-        TaskSchedule ts = new TaskSchedule("s0");
+        TaskGraph ts = new TaskGraph("s0");
 
         // @formatter:off
         ts.batch("512MB")   // Slots of 512 MB
@@ -185,7 +185,7 @@ public class TestBatches extends TornadoTestBase {
             arrayB[idx] = idx;
         });
 
-        TaskSchedule ts = new TaskSchedule("s0");
+        TaskGraph ts = new TaskGraph("s0");
 
         // @formatter:off
         ts.batch("50MB")   // Process Slots of 50 MB
@@ -219,7 +219,7 @@ public class TestBatches extends TornadoTestBase {
             arrayB[idx] = idx;
         });
 
-        TaskSchedule ts = new TaskSchedule("s0");
+        TaskGraph ts = new TaskGraph("s0");
 
         // @formatter:off
         ts.batch("50MB")   // Process Slots of 50 MB
@@ -254,7 +254,7 @@ public class TestBatches extends TornadoTestBase {
             arrayB[idx] = (short) r.nextInt(Short.MAX_VALUE / 2);
         });
 
-        TaskSchedule ts = new TaskSchedule("s0");
+        TaskGraph ts = new TaskGraph("s0");
 
         // @formatter:off
         ts.batch("50MB")   // Process Slots of 50 MB
@@ -287,7 +287,7 @@ public class TestBatches extends TornadoTestBase {
             arrayB[idx] = idx;
         });
 
-        TaskSchedule ts = new TaskSchedule("s0");
+        TaskGraph ts = new TaskGraph("s0");
 
         // @formatter:off
         ts.batch("50MB")   // Process Slots of 50 MB
@@ -321,7 +321,7 @@ public class TestBatches extends TornadoTestBase {
             arrayB[idx] = idx;
         });
 
-        TaskSchedule ts = new TaskSchedule("s0");
+        TaskGraph ts = new TaskGraph("s0");
 
         // @formatter:off
         ts.batch("50MB")   // Process Slots of 50 MB

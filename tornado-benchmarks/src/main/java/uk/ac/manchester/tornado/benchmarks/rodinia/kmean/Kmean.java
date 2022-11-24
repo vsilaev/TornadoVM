@@ -19,7 +19,7 @@ package uk.ac.manchester.tornado.benchmarks.rodinia.kmean;
 
 import java.util.Random;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.benchmarks.rodinia.kmean.DataLoader.KmeansData;
 
@@ -50,7 +50,7 @@ public class Kmean {
     private float delta;
 
     @SuppressWarnings("unused")
-    private final TaskSchedule graph;
+    private final TaskGraph graph;
 
     public final class IntResult {
 
@@ -86,7 +86,7 @@ public class Kmean {
         membershipChanges = new IntResult();
 
         //@formatter:off
-        graph = new TaskSchedule("s0")
+        graph = new TaskGraph("s0")
                 .task("t0", Kmean::mapToNearestCluster, data,
                         numPoints, numFeatures, clusters, maxClusters, membership,
                         membershipChanges);

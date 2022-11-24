@@ -20,7 +20,7 @@ package uk.ac.manchester.tornado.benchmarks.addImage;
 import java.util.Random;
 import java.util.stream.IntStream;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.collections.types.Float4;
 import uk.ac.manchester.tornado.api.collections.types.FloatOps;
 import uk.ac.manchester.tornado.api.collections.types.ImageFloat4;
@@ -63,7 +63,7 @@ public class AddTornado extends BenchmarkDriver {
     @Override
     public void setUp() {
         initData();
-        ts = new TaskSchedule("benchmark") //
+        ts = new TaskGraph("benchmark") //
                 .streamIn(a, b) //
                 .task("addImage", GraphicsKernels::addImage, a, b, c) //
                 .streamOut(c);

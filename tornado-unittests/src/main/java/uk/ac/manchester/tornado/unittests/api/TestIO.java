@@ -18,7 +18,7 @@
 package uk.ac.manchester.tornado.unittests.api;
 
 import org.junit.Test;
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.unittests.arrays.TestArrays;
 import uk.ac.manchester.tornado.unittests.common.TornadoTestBase;
 
@@ -40,7 +40,7 @@ public class TestIO extends TornadoTestBase {
 
     /**
      * This test case uses the forceCopyIn method of the
-     * {@link uk.ac.manchester.tornado.api.TaskSchedule} API to pass input data to a
+     * {@link uk.ac.manchester.tornado.api.TaskGraph} API to pass input data to a
      * targeted device.
      * 
      * This method is used to copy data once and reuse it in the next invocations.
@@ -53,7 +53,7 @@ public class TestIO extends TornadoTestBase {
         float[] arrayB = createAndInitializeArray(N);
         float[] arrayC = new float[N];
 
-        TaskSchedule s0 = new TaskSchedule("s0");
+        TaskGraph s0 = new TaskGraph("s0");
         assertNotNull(s0);
 
         s0.forceCopyIn(arrayA, arrayB);
@@ -71,7 +71,7 @@ public class TestIO extends TornadoTestBase {
 
     /**
      * This test case uses the streamIn method of the
-     * {@link uk.ac.manchester.tornado.api.TaskSchedule} API to pass input data to a
+     * {@link uk.ac.manchester.tornado.api.TaskGraph} API to pass input data to a
      * targeted device.
      * 
      * This method is used to stream data every time a method is launched for
@@ -85,7 +85,7 @@ public class TestIO extends TornadoTestBase {
         float[] arrayB = createAndInitializeArray(N);
         float[] arrayC = new float[N];
 
-        TaskSchedule s0 = new TaskSchedule("s0");
+        TaskGraph s0 = new TaskGraph("s0");
         assertNotNull(s0);
 
         s0.streamIn(arrayA, arrayB);
@@ -103,7 +103,7 @@ public class TestIO extends TornadoTestBase {
 
     /**
      * This test case uses the streamIn method of the
-     * {@link uk.ac.manchester.tornado.api.TaskSchedule} API to pass input data to a
+     * {@link uk.ac.manchester.tornado.api.TaskGraph} API to pass input data to a
      * targeted device.
      * 
      * Additionally, the lockObjectsInMemory method is used to pin buffers used for
@@ -119,7 +119,7 @@ public class TestIO extends TornadoTestBase {
         float[] arrayB = createAndInitializeArray(N);
         float[] arrayC = new float[N];
 
-        TaskSchedule s0 = new TaskSchedule("s0");
+        TaskGraph s0 = new TaskGraph("s0");
         assertNotNull(s0);
 
         s0.lockObjectsInMemory(arrayA, arrayB, arrayC);
@@ -140,7 +140,7 @@ public class TestIO extends TornadoTestBase {
 
     /**
      * This test case uses the streamIn method of the
-     * {@link uk.ac.manchester.tornado.api.TaskSchedule} API to pass input data to a
+     * {@link uk.ac.manchester.tornado.api.TaskGraph} API to pass input data to a
      * targeted device.
      *
      * Additionally, the lockObjectsInMemory method is used to pin buffers used for
@@ -166,7 +166,7 @@ public class TestIO extends TornadoTestBase {
             arrayB[idx] = 2 * idx;
         });
 
-        TaskSchedule s0 = new TaskSchedule("s0");
+        TaskGraph s0 = new TaskGraph("s0");
         assertNotNull(s0);
 
         s0.lockObjectsInMemory(arrayA, arrayB, arrayB2, arrayC);
@@ -189,7 +189,7 @@ public class TestIO extends TornadoTestBase {
 
     /**
      * This test case uses the streamIn method of the
-     * {@link uk.ac.manchester.tornado.api.TaskSchedule} API to pass input data to a
+     * {@link uk.ac.manchester.tornado.api.TaskGraph} API to pass input data to a
      * targeted device.
      *
      * Additionally, the lockObjectsInMemory method is used to pin buffers used for
@@ -214,7 +214,7 @@ public class TestIO extends TornadoTestBase {
             arrayB[idx] = 2 * idx;
         });
 
-        TaskSchedule s0 = new TaskSchedule("s0");
+        TaskGraph s0 = new TaskGraph("s0");
         assertNotNull(s0);
 
         s0.lockObjectsInMemory(arrayA, arrayB, arrayC);

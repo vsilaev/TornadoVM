@@ -25,7 +25,7 @@ import java.util.stream.IntStream;
 import org.junit.Test;
 
 import uk.ac.manchester.tornado.api.GridScheduler;
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.WorkerGrid1D;
 import uk.ac.manchester.tornado.api.WorkerGrid2D;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
@@ -69,7 +69,7 @@ public class TestGrid extends TornadoTestBase {
             b[i] = (float) Math.random();
         });
 
-        TaskSchedule ts = new TaskSchedule("s0") //
+        TaskGraph ts = new TaskGraph("s0") //
                 .streamIn(a, b) //
                 .task("t0", TestArrays::vectorAddFloat, a, b, c) //
                 .streamOut(c); //
@@ -101,7 +101,7 @@ public class TestGrid extends TornadoTestBase {
             b[i] = (float) Math.random();
         });
 
-        TaskSchedule ts = new TaskSchedule("s0") //
+        TaskGraph ts = new TaskGraph("s0") //
                 .streamIn(a, b) //
                 .task("t1", TestGrid::matrixMultiplication, a, b, c, numElements) //
                 .streamOut(c); //
@@ -133,7 +133,7 @@ public class TestGrid extends TornadoTestBase {
         }
         Matrix2DInt matrixA = new Matrix2DInt(a);
         Matrix2DInt matrixB = new Matrix2DInt(X, Y);
-        TaskSchedule ts = new TaskSchedule("foo") //
+        TaskGraph ts = new TaskGraph("foo") //
                 .task("bar", TestMatrixTypes::computeMatrixSum, matrixA, matrixB, X, Y) //
                 .streamOut(matrixB);
 
@@ -168,7 +168,7 @@ public class TestGrid extends TornadoTestBase {
             b[i] = (float) Math.random();
         });
 
-        TaskSchedule ts = new TaskSchedule("s0") //
+        TaskGraph ts = new TaskGraph("s0") //
                 .streamIn(a, b) //
                 .task("t0", TestArrays::vectorAddFloat, a, b, c) //
                 .task("t1", TestArrays::vectorAddFloat, a, b, c) //
@@ -202,7 +202,7 @@ public class TestGrid extends TornadoTestBase {
             matrixB[idx] = 3.5f;
         });
 
-        TaskSchedule s0 = new TaskSchedule("s0") //
+        TaskGraph s0 = new TaskGraph("s0") //
                 .task("mxm", TestGrid::matrixMultiplication, matrixA, matrixB, matrixC, N) //
                 .streamOut(matrixC);
 

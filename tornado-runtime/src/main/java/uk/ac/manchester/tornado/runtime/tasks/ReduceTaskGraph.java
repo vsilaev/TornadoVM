@@ -47,7 +47,7 @@ import org.graalvm.compiler.nodes.StructuredGraph;
 
 import jdk.vm.ci.code.InstalledCode;
 import jdk.vm.ci.code.InvalidInstalledCodeException;
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.common.TaskPackage;
 import uk.ac.manchester.tornado.api.common.TornadoDevice;
 import uk.ac.manchester.tornado.api.enums.TornadoDeviceType;
@@ -64,7 +64,7 @@ import uk.ac.manchester.tornado.runtime.common.TornadoOptions;
 import uk.ac.manchester.tornado.runtime.tasks.meta.AbstractMetaData;
 import uk.ac.manchester.tornado.runtime.tasks.meta.MetaDataUtils;
 
-class ReduceTaskSchedule {
+class ReduceTaskGraph {
 
     private static final String EXCEPTION_MESSAGE_ERROR = "[ERROR] reduce type not supported yet: ";
     private static final String OPERATION_NOT_SUPPORTED_MESSAGE = "Operation not supported";
@@ -85,7 +85,7 @@ class ReduceTaskSchedule {
         }
     }
     
-    private TornadoTaskSchedule owner;
+    private TornadoTaskGraph owner;
     private List<TaskPackage> taskPackages;
     private List<Object> streamOutObjects;
     private List<Object> streamInObjects;
@@ -93,14 +93,14 @@ class ReduceTaskSchedule {
     private Map<Object, Object> hostHybridVariables = new ConcurrentHashMap<>();
     private Map<Object, Object> neutralElementsNew = new HashMap<>();
     private Map<Object, Object> neutralElementsOriginal = new HashMap<>();
-    private TaskSchedule rewrittenTaskSchedule;
+    private TaskGraph rewrittenTaskSchedule;
     private Map<Object, LinkedList<Integer>> reduceOperandTable;
     private CachedGraph<?> sketchGraph;
     private boolean hybridMode;
     private Map<Object, REDUCE_OPERATION> hybridMergeTable;
     private List<CompletableFuture<CompiledTaskPackage>> compilationHostJobs = new ArrayList<>();
     
-    ReduceTaskSchedule(TornadoTaskSchedule owner, List<TaskPackage> taskPackages, List<Object> streamInObjects, List<Object> streamOutObjects, CachedGraph<?> graph) {
+    ReduceTaskGraph(TornadoTaskGraph owner, List<TaskPackage> taskPackages, List<Object> streamInObjects, List<Object> streamOutObjects, CachedGraph<?> graph) {
         this.owner = owner;
         this.taskPackages = taskPackages;
         this.streamInObjects = streamInObjects;
@@ -344,7 +344,7 @@ class ReduceTaskSchedule {
                 streamInObjects.add(reduceArray.getValue());
             }
 
-            TornadoTaskSchedule.performStreamInThread(rewrittenTaskSchedule, streamInObjects);
+            TornadoTaskGraph.performStreamInThread(rewrittenTaskSchedule, streamInObjects);
 
             for (int i = 0; i < streamOutObjects.size(); i++) {
                 Object streamOutObject = streamOutObjects.get(i);
@@ -405,9 +405,9 @@ class ReduceTaskSchedule {
      *
      * @param metaReduceTable
      *            Metadata to create all new tasks for the reductions dynamically.
-     * @return {@link TaskSchedule} with the new reduction
+     * @return {@link TaskGraph} with the new reduction
      */
-    TaskSchedule scheduleWithReduction(MetaReduceCodeAnalysis metaReduceTable) {
+    TaskGraph scheduleWithReduction(MetaReduceCodeAnalysis metaReduceTable) {
 
         assert metaReduceTable != null;
 
@@ -508,7 +508,7 @@ class ReduceTaskSchedule {
             }
         }
 
-        rewrittenTaskSchedule = new TaskSchedule(taskScheduleReduceName);
+        rewrittenTaskSchedule = new TaskGraph(taskScheduleReduceName);
         // Inherit device of the owning schedule   
         rewrittenTaskSchedule.setDevice(owner.getDevice());
         
@@ -622,7 +622,7 @@ class ReduceTaskSchedule {
                 }
             }
         }
-        TornadoTaskSchedule.performStreamOutThreads(rewrittenTaskSchedule, streamOutObjects);
+        TornadoTaskGraph.performStreamOutThreads(rewrittenTaskSchedule, streamOutObjects);
         executeExpression();
         return rewrittenTaskSchedule;
     }

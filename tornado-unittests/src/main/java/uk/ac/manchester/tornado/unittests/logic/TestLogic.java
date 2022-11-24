@@ -24,7 +24,7 @@ import java.util.stream.IntStream;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.unittests.common.TornadoTestBase;
 
@@ -72,7 +72,7 @@ public class TestLogic extends TornadoTestBase {
 
         IntStream.range(0, data.length).sequential().forEach(i -> data[i] = i);
 
-        TaskSchedule s0 = new TaskSchedule("s0");
+        TaskGraph s0 = new TaskGraph("s0");
 
         // @formatter:off
         s0.task("t0", TestLogic::logic01, data, output)
@@ -97,7 +97,7 @@ public class TestLogic extends TornadoTestBase {
 
         IntStream.range(0, data.length).sequential().forEach(i -> data[i] = i);
 
-        TaskSchedule s0 = new TaskSchedule("s0");
+        TaskGraph s0 = new TaskGraph("s0");
 
         // @formatter:off
         s0.task("t0", TestLogic::logic02, data, output)
@@ -121,7 +121,7 @@ public class TestLogic extends TornadoTestBase {
 
         IntStream.range(0, data.length).sequential().forEach(i -> data[i] = i);
 
-        TaskSchedule s0 = new TaskSchedule("s0");
+        TaskGraph s0 = new TaskGraph("s0");
 
         // @formatter:off
         s0.task("t0", TestLogic::logic03, data, output)
@@ -145,7 +145,7 @@ public class TestLogic extends TornadoTestBase {
 
         IntStream.range(0, data.length).sequential().forEach(i -> data[i] = i);
 
-        TaskSchedule s0 = new TaskSchedule("s0");
+        TaskGraph s0 = new TaskGraph("s0");
 
         // @formatter:off
         s0.task("t0", TestLogic::logic04, data, output)

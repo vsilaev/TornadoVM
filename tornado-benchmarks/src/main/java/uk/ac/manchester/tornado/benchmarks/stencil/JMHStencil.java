@@ -42,7 +42,7 @@ import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 
 public class JMHStencil {
     @State(Scope.Thread)
@@ -56,7 +56,7 @@ public class JMHStencil {
         private float[] a1;
         private float[] ainit;
 
-        private TaskSchedule ts;
+        private TaskGraph ts;
 
         @Setup(Level.Trial)
         public void doSetup() {
@@ -77,7 +77,7 @@ public class JMHStencil {
                 }
             }
             copy(sz, ainit, a0);
-            ts = new TaskSchedule("benchmark") //
+            ts = new TaskGraph("benchmark") //
                     .streamIn(a0, a1) //
                     .task("stencil", Stencil::stencil3d, n, sz, a0, a1, FAC) //
                     .task("copy", Stencil::copy, sz, a1, a0) //
@@ -105,7 +105,7 @@ public class JMHStencil {
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     @Fork(1)
     public void stencilTornado(BenchmarkSetup state, Blackhole blackhole) {
-        TaskSchedule t = state.ts;
+        TaskGraph t = state.ts;
         t.execute();
         blackhole.consume(t);
     }

@@ -22,7 +22,7 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.collections.types.Float2;
 import uk.ac.manchester.tornado.api.collections.types.Float3;
@@ -59,7 +59,7 @@ public class TestVectorAllocation extends TornadoTestBase {
         }
 
         //@formatter:off
-        new TaskSchedule("s0")
+        new TaskGraph("s0")
             .task("t0", TestVectorAllocation::testVectorAlloc, a, output)
             .streamOut(output)
             .execute();
@@ -96,7 +96,7 @@ public class TestVectorAllocation extends TornadoTestBase {
         }
 
         //@formatter:off
-        new TaskSchedule("s0")
+        new TaskGraph("s0")
                 .task("t0", TestVectorAllocation::testVectorAlloc2, a, output)
                 .streamOut(output)
                 .execute();
@@ -137,7 +137,7 @@ public class TestVectorAllocation extends TornadoTestBase {
         }
 
         //@formatter:off
-        new TaskSchedule("s0")
+        new TaskGraph("s0")
                 .task("t0", TestVectorAllocation::testVectorAlloc3, a, output)
                 .streamOut(output)
                 .execute();

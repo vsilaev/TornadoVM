@@ -20,7 +20,7 @@ package uk.ac.manchester.tornado.benchmarks.montecarlo;
 
 import static uk.ac.manchester.tornado.api.collections.math.TornadoMath.abs;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.common.TornadoDevice;
 import uk.ac.manchester.tornado.api.runtime.TornadoRuntime;
 import uk.ac.manchester.tornado.benchmarks.BenchmarkDriver;
@@ -39,7 +39,7 @@ public class MonteCarloTornado extends BenchmarkDriver {
     @Override
     public void setUp() {
         output = new float[size];
-        ts = new TaskSchedule("benchmark") //
+        ts = new TaskGraph("benchmark") //
                 .task("montecarlo", ComputeKernels::monteCarlo, output, size) //
                 .streamOut(output);
         ts.warmup();

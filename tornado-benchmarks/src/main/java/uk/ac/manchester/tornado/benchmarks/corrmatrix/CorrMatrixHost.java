@@ -20,7 +20,7 @@ package uk.ac.manchester.tornado.benchmarks.corrmatrix;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.exceptions.TornadoRuntimeException;
 
 /**
@@ -198,7 +198,7 @@ public class CorrMatrixHost {
         final long[] subMatrixB = new long[NUM_SUB_ROWS * matrixB_numLongs];
         final int[] subResultMatrix = new int[NUM_SUB_ROWS * NUM_SUB_ROWS];
 
-        final TaskSchedule s0 = new TaskSchedule("benchmark").streamIn(subMatrixA, subMatrixB)
+        final TaskGraph s0 = new TaskGraph("benchmark").streamIn(subMatrixA, subMatrixB)
                 .task("corrmatrix", CorrMatrixKernel::run, subMatrixA, NUM_SUB_ROWS, subMatrixB, NUM_SUB_ROWS, matrixA_numLongs, subResultMatrix).streamOut(subResultMatrix);
 
         try {

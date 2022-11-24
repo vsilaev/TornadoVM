@@ -17,7 +17,7 @@
  */
 package uk.ac.manchester.tornado.benchmarks.mandelbrot;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.common.TornadoDevice;
 import uk.ac.manchester.tornado.benchmarks.BenchmarkDriver;
 import uk.ac.manchester.tornado.benchmarks.ComputeKernels;
@@ -34,7 +34,7 @@ public class MandelbrotTornado extends BenchmarkDriver {
     @Override
     public void setUp() {
         output = new short[size * size];
-        ts = new TaskSchedule("benchmark") //
+        ts = new TaskGraph("benchmark") //
                 .task("t0", ComputeKernels::mandelbrot, size, output) //
                 .streamOut(output);
         ts.warmup();

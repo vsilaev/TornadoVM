@@ -19,7 +19,7 @@ package uk.ac.manchester.tornado.examples.stencils;
 
 import java.util.Random;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 
 /**
@@ -109,7 +109,7 @@ public class Convolution2D {
         }
 
         // @formatter:off
-        final TaskSchedule graph = new TaskSchedule("s0")
+        final TaskGraph graph = new TaskGraph("s0")
                 .task("t0", Convolution2D::run2DConvolutionTornado, size, size,a,b)
                 .streamOut(b);
         // @formatter:on

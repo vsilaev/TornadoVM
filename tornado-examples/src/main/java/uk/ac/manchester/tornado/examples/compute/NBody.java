@@ -22,7 +22,7 @@ import static uk.ac.manchester.tornado.api.profiler.ChromeEventTracer.enqueueTas
 
 import java.util.Arrays;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 
 public class NBody {
@@ -138,7 +138,7 @@ public class NBody {
         System.out.println(resultsIterations.toString());
 
         // @formatter:off
-            final TaskSchedule t0 = new TaskSchedule("s0")
+            final TaskGraph t0 = new TaskGraph("s0")
                     .task("t0", NBody::nBody, numBodies, posTornadoVM, velTornadoVM, delT, espSqr);
             // @formatter:on
 

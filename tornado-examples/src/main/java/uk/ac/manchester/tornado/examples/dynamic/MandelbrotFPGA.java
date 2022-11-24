@@ -31,7 +31,7 @@ import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 
 import uk.ac.manchester.tornado.api.Policy;
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 
 public class MandelbrotFPGA {
@@ -191,7 +191,7 @@ public class MandelbrotFPGA {
                 this.image = writeFile(mandelbrotSequential, sizes);
             } else {
                 short[] result = new short[sizes * sizes];
-                TaskSchedule s0 = new TaskSchedule("s0");
+                TaskGraph s0 = new TaskGraph("s0");
 
                 s0.task("t0", MandelbrotImage::mandelbrotTornado, sizes, result);
                 s0.streamOut(result);
@@ -255,7 +255,7 @@ public class MandelbrotFPGA {
             frame.setVisible(true);
         } else {
             short[] result = new short[sizes * sizes];
-            TaskSchedule graph = new TaskSchedule("s0");
+            TaskGraph graph = new TaskGraph("s0");
             long end,start;
 
             graph.task("t0", MandelbrotFPGA::mandelbrotTornado, sizes, result).streamOut(result);

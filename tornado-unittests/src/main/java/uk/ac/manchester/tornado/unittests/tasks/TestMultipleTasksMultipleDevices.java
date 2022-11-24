@@ -25,12 +25,12 @@ import java.util.stream.IntStream;
 
 import org.junit.Test;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.runtime.TornadoRuntime;
 
 /**
  * Testing TornadoVM with multiple independent tasks on different devices. The
- * {@link TaskSchedule} contains more than one task. If multiple devices are not
+ * {@link TaskGraph} contains more than one task. If multiple devices are not
  * specified by the user, then the default device is used.
  *
  * The user needs to specify the target device for each task as follows:
@@ -60,7 +60,7 @@ public class TestMultipleTasksMultipleDevices {
             System.setProperty("s0.t1.device", "0:0");
         }
 
-        TaskSchedule ts = new TaskSchedule("s0")//
+        TaskGraph ts = new TaskGraph("s0")//
                 .task("t0", TestMultipleTasksSingleDevice::task0Initialization, b) //
                 .task("t1", TestMultipleTasksSingleDevice::task1Multiplication, a, 12) //
                 .streamOut(a, b); //
@@ -97,7 +97,7 @@ public class TestMultipleTasksMultipleDevices {
             System.setProperty("s0.t2.device", "0:2");
         }
 
-        TaskSchedule ts = new TaskSchedule("s0")//
+        TaskGraph ts = new TaskGraph("s0")//
                 .streamIn(a, b)//
                 .task("t0", TestMultipleTasksSingleDevice::task0Initialization, b) //
                 .task("t1", TestMultipleTasksSingleDevice::task1Multiplication, a, 12) //

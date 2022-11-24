@@ -24,7 +24,7 @@ import java.util.Arrays;
 
 import org.junit.Test;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.enums.TornadoVMBackendType;
 import uk.ac.manchester.tornado.api.runtime.TornadoRuntime;
 import uk.ac.manchester.tornado.unittests.TestHello;
@@ -64,7 +64,7 @@ public class TestProfiler extends TornadoTestBase {
         System.setProperty("tornado.profiler", "True");
 
         // @formatter:off
-        TaskSchedule ts = new TaskSchedule("s0")
+        TaskGraph ts = new TaskGraph("s0")
                 .task("t0", TestHello::add, a, b, c)
                 .streamOut(c);
         // @formatter:on
@@ -109,7 +109,7 @@ public class TestProfiler extends TornadoTestBase {
         System.setProperty("tornado.profiler", "False");
 
         // @formatter:off
-        TaskSchedule ts = new TaskSchedule("s0")
+        TaskGraph ts = new TaskGraph("s0")
                 .task("t0", TestHello::add, a, b, c)
                 .streamOut(c);
         // @formatter:on

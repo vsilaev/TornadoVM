@@ -20,7 +20,7 @@ package uk.ac.manchester.tornado.benchmarks.rotatevector;
 import static uk.ac.manchester.tornado.api.collections.types.FloatOps.findMaxULP;
 import static uk.ac.manchester.tornado.benchmarks.GraphicsKernels.rotateVector;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.collections.types.Float3;
 import uk.ac.manchester.tornado.api.collections.types.Matrix4x4Float;
 import uk.ac.manchester.tornado.api.collections.types.VectorFloat3;
@@ -54,7 +54,7 @@ public class RotateTornado extends BenchmarkDriver {
             input.set(i, value);
         }
 
-        ts = new TaskSchedule("benchmark");
+        ts = new TaskGraph("benchmark");
         ts.streamIn(input);
         ts.task("rotateVector", GraphicsKernels::rotateVector, output, m, input);
         ts.streamOut(output);

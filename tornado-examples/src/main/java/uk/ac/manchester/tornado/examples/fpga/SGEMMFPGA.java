@@ -18,7 +18,7 @@
 
 package uk.ac.manchester.tornado.examples.fpga;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 
 public class SGEMMFPGA {
@@ -61,7 +61,7 @@ public class SGEMMFPGA {
             b[i] = 1;
         }
 
-        TaskSchedule t0 = new TaskSchedule("s0").task("t0", SGEMMFPGA::sgemm, a, b, c, dims).streamOut(c);
+        TaskGraph t0 = new TaskGraph("s0").task("t0", SGEMMFPGA::sgemm, a, b, c, dims).streamOut(c);
 
         t0.warmup();
 

@@ -24,7 +24,7 @@ import java.util.Arrays;
 import org.junit.Test;
 
 import uk.ac.manchester.tornado.api.Policy;
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.unittests.common.TornadoTestBase;
 
@@ -57,7 +57,7 @@ public class TestDynamic extends TornadoTestBase {
         Arrays.fill(a, 10);
 
         //@formatter:off
-        TaskSchedule taskSchedule = new TaskSchedule("s0")
+        TaskGraph taskSchedule = new TaskGraph("s0")
             .task("t0", TestDynamic::compute, a, b)
             .streamOut(b);
         //@formatter:on
@@ -84,7 +84,7 @@ public class TestDynamic extends TornadoTestBase {
         Arrays.fill(a, 10);
 
         //@formatter:off
-        TaskSchedule taskSchedule = new TaskSchedule("ss0")
+        TaskGraph taskSchedule = new TaskGraph("ss0")
             .task("tt0", TestDynamic::compute, a, b)
             .streamOut(b);
         //@formatter:on
@@ -112,7 +112,7 @@ public class TestDynamic extends TornadoTestBase {
         Arrays.fill(b, 0);
 
         //@formatter:off
-        new TaskSchedule("s0")
+        new TaskGraph("s0")
             .streamIn(a)
             .task("t0", TestDynamic::saxpy, 2.0f, a, b)
             .streamOut(b)
@@ -136,7 +136,7 @@ public class TestDynamic extends TornadoTestBase {
         compute2(a, seq);
 
         //@formatter:off
-        TaskSchedule taskSchedule = new TaskSchedule("ts")
+        TaskGraph taskSchedule = new TaskGraph("ts")
             .streamIn(a)
             .task("task", TestDynamic::compute2, a, b)
             .streamOut(b);
@@ -168,7 +168,7 @@ public class TestDynamic extends TornadoTestBase {
         compute2(seq, seq);
 
         //@formatter:off
-        TaskSchedule taskSchedule = new TaskSchedule("pp")
+        TaskGraph taskSchedule = new TaskGraph("pp")
             .streamIn(a)
             .task("t0", TestDynamic::compute, a, b)
             .task("t1", TestDynamic::compute2, b, b)
@@ -197,7 +197,7 @@ public class TestDynamic extends TornadoTestBase {
         Arrays.fill(a, 10);
 
         //@formatter:off
-        TaskSchedule taskSchedule = new TaskSchedule("s0")
+        TaskGraph taskSchedule = new TaskGraph("s0")
             .streamIn(a)    
             .task("t0", TestDynamic::compute, a, b)
             .streamOut(b);

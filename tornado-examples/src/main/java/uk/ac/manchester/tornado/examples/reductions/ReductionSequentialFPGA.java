@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.Random;
 import java.util.stream.IntStream;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;;
+import uk.ac.manchester.tornado.api.TaskGraph;;
 
 public class ReductionSequentialFPGA {
 
@@ -45,7 +45,7 @@ public class ReductionSequentialFPGA {
         });
 
         //@formatter:off
-        TaskSchedule task = new TaskSchedule("s0")
+        TaskGraph task = new TaskGraph("s0")
             .task("t0", ReductionSequentialFPGA::reductionAddFloats, input, result)
             .streamOut(result);
         //@formatter:on

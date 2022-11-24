@@ -24,7 +24,7 @@ import java.util.stream.IntStream;
 
 import org.junit.Test;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.unittests.common.TornadoTestBase;
 
@@ -54,7 +54,7 @@ public class TestFlatMap extends TornadoTestBase {
             input[i] = 50 + r.nextInt(100);
         });
 
-        TaskSchedule ts = new TaskSchedule("s0") //
+        TaskGraph ts = new TaskGraph("s0") //
                 .streamIn(input) //
                 .task("t0", TestFlatMap::computeFlatMap, input, output, SIZE) //
                 .streamOut(output);

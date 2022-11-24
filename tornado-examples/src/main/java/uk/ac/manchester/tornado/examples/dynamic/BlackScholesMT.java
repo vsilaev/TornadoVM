@@ -21,7 +21,7 @@ package uk.ac.manchester.tornado.examples.dynamic;
 import java.util.Random;
 
 import uk.ac.manchester.tornado.api.Policy;
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.collections.math.TornadoMath;
 
@@ -142,7 +142,7 @@ public class BlackScholesMT {
         float[] putPrice = new float[size];
         float[] seqCall = new float[size];
         float[] seqPut = new float[size];
-        TaskSchedule graph = new TaskSchedule("s0");
+        TaskGraph graph = new TaskGraph("s0");
         long start,end;
 
         for (int i = 0; i < size; i++) {

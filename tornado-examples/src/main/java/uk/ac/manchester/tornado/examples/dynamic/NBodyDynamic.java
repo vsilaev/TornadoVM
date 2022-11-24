@@ -21,7 +21,7 @@ package uk.ac.manchester.tornado.examples.dynamic;
 import java.util.Arrays;
 
 import uk.ac.manchester.tornado.api.Policy;
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 
 public class NBodyDynamic {
@@ -129,7 +129,7 @@ public class NBodyDynamic {
 
         long startInit = System.nanoTime();
         // @formatter:off
-        final TaskSchedule s0 = new TaskSchedule("s0")
+        final TaskGraph s0 = new TaskGraph("s0")
                 .task("t0", NBodyDynamic::nBody, numBodies, positions, velocity, delT, espSqr, inputSize)
                 .streamOut(positions, velocity);
         // @formatter:on

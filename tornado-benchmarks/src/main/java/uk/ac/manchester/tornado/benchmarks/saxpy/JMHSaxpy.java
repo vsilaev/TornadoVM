@@ -39,7 +39,7 @@ import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.benchmarks.LinearAlgebraArrays;
 
 public class JMHSaxpy {
@@ -51,7 +51,7 @@ public class JMHSaxpy {
         private float[] y;
         private final float alpha = 2f;
 
-        private TaskSchedule ts;
+        private TaskGraph ts;
 
         @Setup(Level.Trial)
         public void doSetup() {
@@ -62,7 +62,7 @@ public class JMHSaxpy {
                 x[i] = i;
             }
 
-            ts = new TaskSchedule("benchmark") //
+            ts = new TaskGraph("benchmark") //
                     .streamIn(x) //
                     .task("saxpy", LinearAlgebraArrays::saxpy, alpha, x, y) //
                     .streamOut(y);
@@ -87,7 +87,7 @@ public class JMHSaxpy {
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     @Fork(1)
     public void saxpyTornado(BenchmarkSetup state, Blackhole blackhole) {
-        TaskSchedule t = state.ts;
+        TaskGraph t = state.ts;
         t.execute();
         blackhole.consume(t);
     }

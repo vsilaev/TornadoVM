@@ -38,7 +38,7 @@ import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.collections.types.Float3;
 import uk.ac.manchester.tornado.api.collections.types.ImageByte3;
 import uk.ac.manchester.tornado.api.collections.types.ImageFloat3;
@@ -52,7 +52,7 @@ public class JMHRenderTrack {
         private ImageFloat3 input;
         private ImageByte3 output;
 
-        private TaskSchedule ts;
+        private TaskGraph ts;
 
         @Setup(Level.Trial)
         public void doSetup() {
@@ -65,7 +65,7 @@ public class JMHRenderTrack {
                     input.set(i, j, new Float3(i, j, value));
                 }
             }
-            ts = new TaskSchedule("s0")//
+            ts = new TaskGraph("s0")//
                     .task("t0", ComputeKernels::renderTrack, output, input) //
                     .streamOut(output);
             ts.warmup();
@@ -89,7 +89,7 @@ public class JMHRenderTrack {
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     @Fork(1)
     public void renderTrackTornado(BenchmarkSetup state, Blackhole blackhole) {
-        TaskSchedule t = state.ts;
+        TaskGraph t = state.ts;
         t.execute();
         blackhole.consume(t);
     }

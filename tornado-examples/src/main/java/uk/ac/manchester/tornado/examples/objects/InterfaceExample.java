@@ -20,7 +20,7 @@ package uk.ac.manchester.tornado.examples.objects;
 
 import java.util.Arrays;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 
 public class InterfaceExample {
@@ -63,7 +63,7 @@ public class InterfaceExample {
         int[] b = new int[] { 1, 2, 3, 4, 5, 6, 7, 8 };
         int[] c = new int[8];
 
-        TaskSchedule s0 = new TaskSchedule("s0").task("t0", InterfaceExample::run, ops, a, b, c).streamOut(c);
+        TaskGraph s0 = new TaskGraph("s0").task("t0", InterfaceExample::run, ops, a, b, c).streamOut(c);
         s0.warmup();
         s0.execute();
 

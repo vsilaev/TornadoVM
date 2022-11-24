@@ -26,7 +26,7 @@ import java.util.stream.IntStream;
 
 import org.junit.Test;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.unittests.common.TornadoTestBase;
 
@@ -188,7 +188,7 @@ public class TestConditionals extends TornadoTestBase {
         int[] a = new int[size];
         Arrays.fill(a, 5);
 
-        new TaskSchedule("s0") //
+        new TaskGraph("s0") //
                 .task("t0", TestConditionals::ifStatement, a) //
                 .streamOut(a) //
                 .execute(); //
@@ -202,7 +202,7 @@ public class TestConditionals extends TornadoTestBase {
         int[] a = new int[size];
         Arrays.fill(a, 5);
 
-        new TaskSchedule("s0") //
+        new TaskGraph("s0") //
                 .task("t0", TestConditionals::ifElseStatement, a) //
                 .streamOut(a) //
                 .execute(); //
@@ -223,7 +223,7 @@ public class TestConditionals extends TornadoTestBase {
 
         nestedIfElseStatement(serial);
 
-        new TaskSchedule("s0") //
+        new TaskGraph("s0") //
                 .task("t0", TestConditionals::nestedIfElseStatement, a) //
                 .streamOut(a) //
                 .execute(); //
@@ -239,7 +239,7 @@ public class TestConditionals extends TornadoTestBase {
 
         Arrays.fill(a, 20);
 
-        new TaskSchedule("s0") //
+        new TaskGraph("s0") //
                 .task("t0", TestConditionals::switchStatement, a) //
                 .streamOut(a) //
                 .execute(); //
@@ -255,7 +255,7 @@ public class TestConditionals extends TornadoTestBase {
 
         Arrays.fill(a, 23);
 
-        new TaskSchedule("s0") //
+        new TaskGraph("s0") //
                 .task("t0", TestConditionals::switchStatement, a) //
                 .streamOut(a) //
                 .execute(); //
@@ -271,7 +271,7 @@ public class TestConditionals extends TornadoTestBase {
 
         Arrays.fill(a, 20);
 
-        new TaskSchedule("s0") //
+        new TaskGraph("s0") //
                 .task("t0", TestConditionals::switchStatement2, a) //
                 .streamOut(a) //
                 .execute(); //
@@ -287,7 +287,7 @@ public class TestConditionals extends TornadoTestBase {
 
         Arrays.fill(a, 20);
 
-        new TaskSchedule("s0") //
+        new TaskGraph("s0") //
                 .task("t0", TestConditionals::switchStatement3, a) //
                 .streamOut(a) //
                 .execute(); //
@@ -305,7 +305,7 @@ public class TestConditionals extends TornadoTestBase {
 
         Arrays.fill(a, 20);
 
-        new TaskSchedule("s0") //
+        new TaskGraph("s0") //
                 .task("t0", TestConditionals::switchStatement4, a) //
                 .streamOut(a) //
                 .execute();//
@@ -322,7 +322,7 @@ public class TestConditionals extends TornadoTestBase {
 
         Arrays.fill(a, 12);
 
-        new TaskSchedule("s0") //
+        new TaskGraph("s0") //
                 .task("t0", TestConditionals::switchStatement5, a) //
                 .streamOut(a) //
                 .execute();//
@@ -341,7 +341,7 @@ public class TestConditionals extends TornadoTestBase {
         Arrays.fill(a, 20);
 
         //@formatter:off
-        new TaskSchedule("s0")
+        new TaskGraph("s0")
                 .task("t0", TestConditionals::ternaryCondition, a)
                 .streamOut(a)
                 .execute();
@@ -362,7 +362,7 @@ public class TestConditionals extends TornadoTestBase {
         Arrays.fill(a, 20);
         Arrays.fill(b, 30);
 
-        new TaskSchedule("s0") //
+        new TaskGraph("s0") //
                 .task("t0", TestConditionals::ternaryComplexCondition, a, b) //
                 .streamOut(a) //
                 .execute(); //
@@ -381,7 +381,7 @@ public class TestConditionals extends TornadoTestBase {
         Arrays.fill(a, 20);
         Arrays.fill(b, 30);
 
-        new TaskSchedule("s0") //
+        new TaskGraph("s0") //
                 .task("t0", TestConditionals::ternaryComplexCondition2, a, b) //
                 .streamOut(a).execute(); //
 
@@ -397,7 +397,7 @@ public class TestConditionals extends TornadoTestBase {
 
         Arrays.fill(a, 42);
 
-        new TaskSchedule("s0") //
+        new TaskGraph("s0") //
                 .task("t0", TestConditionals::switchStatement6, a) //
                 .streamOut(a).execute(); //
 
@@ -413,7 +413,7 @@ public class TestConditionals extends TornadoTestBase {
 
         Arrays.fill(a, 12);
 
-        new TaskSchedule("s0") //
+        new TaskGraph("s0") //
                 .task("t0", TestConditionals::switchStatement6, a) //
                 .streamOut(a).execute(); //
 
@@ -429,7 +429,7 @@ public class TestConditionals extends TornadoTestBase {
 
         Arrays.fill(a, 22);
 
-        new TaskSchedule("s0") //
+        new TaskGraph("s0") //
                 .task("t0", TestConditionals::switchStatement6, a) //
                 .streamOut(a).execute(); //
 
@@ -447,7 +447,7 @@ public class TestConditionals extends TornadoTestBase {
         IntStream.range(0, sequential.length).sequential().forEach(i -> sequential[i] = i);
         IntStream.range(0, output.length).sequential().forEach(i -> output[i] = i);
 
-        TaskSchedule s0 = new TaskSchedule("s0");
+        TaskGraph s0 = new TaskGraph("s0");
 
         // @formatter:off
         s0.task("t0", TestConditionals::integerTestMove, output, N).streamOut(output);

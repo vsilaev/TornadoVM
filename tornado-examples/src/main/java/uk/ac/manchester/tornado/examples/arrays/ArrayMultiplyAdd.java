@@ -20,7 +20,7 @@ package uk.ac.manchester.tornado.examples.arrays;
 
 import java.util.Arrays;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.collections.math.SimpleMath;
 
 public class ArrayMultiplyAdd {
@@ -48,7 +48,7 @@ public class ArrayMultiplyAdd {
         /*
          * build an execution graph
          */
-        TaskSchedule schedule = new TaskSchedule("s0").task("t0", SimpleMath::vectorMultiply, a, b, c).task("t1", SimpleMath::vectorAdd, c, b, d).streamOut(d);
+        TaskGraph schedule = new TaskGraph("s0").task("t0", SimpleMath::vectorMultiply, a, b, c).task("t1", SimpleMath::vectorAdd, c, b, d).streamOut(d);
 
         // schedule.getTask("t0").mapTo(new OCLTornadoDevice(0, 0));
         // schedule.getTask("t1").mapTo(new OCLTornadoDevice(0, 2));

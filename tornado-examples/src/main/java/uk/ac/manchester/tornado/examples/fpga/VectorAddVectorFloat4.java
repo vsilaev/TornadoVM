@@ -18,7 +18,7 @@
 
 package uk.ac.manchester.tornado.examples.fpga;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.collections.types.Float4;
 import uk.ac.manchester.tornado.api.collections.types.VectorFloat4;
@@ -45,7 +45,7 @@ public class VectorAddVectorFloat4 {
         yy.fill(0);
         bb.fill(20);
 
-        TaskSchedule s0 = new TaskSchedule("s0").task("t0", VectorAddVectorFloat4::saxpy, xx, yy, bb).streamOut(yy);
+        TaskGraph s0 = new TaskGraph("s0").task("t0", VectorAddVectorFloat4::saxpy, xx, yy, bb).streamOut(yy);
 
         for (int idx = 0; idx < 10; idx++) {
             s0.execute();

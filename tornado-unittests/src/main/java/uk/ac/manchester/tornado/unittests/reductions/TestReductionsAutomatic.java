@@ -24,7 +24,7 @@ import java.util.stream.IntStream;
 
 import org.junit.Test;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.annotations.Reduce;
 import uk.ac.manchester.tornado.unittests.common.TornadoTestBase;
@@ -53,7 +53,7 @@ public class TestReductionsAutomatic extends TornadoTestBase {
         IntStream.range(0, size).parallel().forEach(i -> input[i] = i);
 
         //@formatter:off
-        TaskSchedule task = new TaskSchedule("s0")
+        TaskGraph task = new TaskGraph("s0")
             .streamIn(input)
             .task("t0", TestReductionsAutomatic::test, input, result)
             .streamOut(result);
@@ -79,7 +79,7 @@ public class TestReductionsAutomatic extends TornadoTestBase {
         });
 
         //@formatter:off
-        TaskSchedule task = new TaskSchedule("s0")
+        TaskGraph task = new TaskGraph("s0")
             .streamIn(input)
             .task("t0", TestReductionsAutomatic::testFloat, input, result)
             .streamOut(result);
@@ -129,7 +129,7 @@ public class TestReductionsAutomatic extends TornadoTestBase {
         });
 
         //@formatter:off
-            TaskSchedule task = new TaskSchedule("s0")
+            TaskGraph task = new TaskGraph("s0")
                 .streamIn(input)
                 .task("t0", TestReductionsAutomatic::testDouble, input, result)
                 .streamOut(result);

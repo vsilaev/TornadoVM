@@ -20,7 +20,7 @@ package uk.ac.manchester.tornado.examples.arrays;
 
 import java.util.Arrays;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.common.Access;
 import uk.ac.manchester.tornado.api.common.TornadoDevice;
@@ -52,7 +52,7 @@ public class ArrayAddIntPrebuilt {
         filePath += device.getPlatformName().contains("PTX") ? "add.ptx" : "add.cl";
 
         // @formatter:off
-        new TaskSchedule("s0")
+        new TaskGraph("s0")
                 .prebuiltTask("t0", "add", filePath,
                         new Object[] { a, b, c }, 
                         new Access[] { Access.READ, Access.READ, Access.WRITE },

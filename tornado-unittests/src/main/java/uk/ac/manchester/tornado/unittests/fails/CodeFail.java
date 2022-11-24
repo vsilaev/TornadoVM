@@ -22,7 +22,7 @@ import java.util.stream.IntStream;
 
 import org.junit.Test;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.annotations.Reduce;
 import uk.ac.manchester.tornado.api.collections.types.Matrix2DFloat;
@@ -57,7 +57,7 @@ public class CodeFail extends TornadoTestBase {
             b[i] = a[i];
         });
 
-        TaskSchedule ts = new TaskSchedule("s0");
+        TaskGraph ts = new TaskGraph("s0");
 
         ts.task("t0", CodeFail::foo, a) //
                 .streamOut(a)//
@@ -87,7 +87,7 @@ public class CodeFail extends TornadoTestBase {
             b[i] = a[i];
         });
 
-        TaskSchedule ts = new TaskSchedule("s0");
+        TaskGraph ts = new TaskGraph("s0");
 
         ts.task("t0", CodeFail::bar, a) //
                 .streamOut(a) //
@@ -116,7 +116,7 @@ public class CodeFail extends TornadoTestBase {
             input[i] = i;
         });
 
-        TaskSchedule task = new TaskSchedule("s0") //
+        TaskGraph task = new TaskGraph("s0") //
                 .streamIn(input) //
                 .task("t0", CodeFail::zoo, input, result1, result2) //
                 .streamOut(result1, result2); //

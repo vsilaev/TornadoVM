@@ -58,8 +58,8 @@ package uk.ac.manchester.tornado.api;
  * to local/shared memory and barriers.</li>
  * <li>{@link KernelContext} provides a Java API that is transparently
  * translated to both OpenCL and PTX by the TornadoVM JIT compiler. The main
- * difference with the {@link TaskSchedule} API is that the tasks within a
- * {@link TaskSchedule} that use {@link KernelContext} must be
+ * difference with the {@link TaskGraph} API is that the tasks within a
+ * {@link TaskGraph} that use {@link KernelContext} must be
  * {@link GridScheduler}.</li>
  * </ul>
  * </p>

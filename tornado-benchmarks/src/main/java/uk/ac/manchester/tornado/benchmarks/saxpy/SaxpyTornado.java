@@ -20,7 +20,7 @@ package uk.ac.manchester.tornado.benchmarks.saxpy;
 import static uk.ac.manchester.tornado.api.collections.math.TornadoMath.findULPDistance;
 import static uk.ac.manchester.tornado.benchmarks.LinearAlgebraArrays.saxpy;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.common.TornadoDevice;
 import uk.ac.manchester.tornado.api.runtime.TornadoRuntime;
 import uk.ac.manchester.tornado.benchmarks.BenchmarkDriver;
@@ -48,7 +48,7 @@ public class SaxpyTornado extends BenchmarkDriver {
             x[i] = i;
         }
 
-        ts = new TaskSchedule("benchmark");
+        ts = new TaskGraph("benchmark");
         ts.streamIn(x);
         ts.task("saxpy", LinearAlgebraArrays::saxpy, alpha, x, y);
         ts.streamOut(y);

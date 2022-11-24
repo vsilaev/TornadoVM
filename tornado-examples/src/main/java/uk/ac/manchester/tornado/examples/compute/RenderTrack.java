@@ -20,7 +20,7 @@ package uk.ac.manchester.tornado.examples.compute;
 import java.util.ArrayList;
 import java.util.Random;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.collections.types.Byte3;
 import uk.ac.manchester.tornado.api.collections.types.Float3;
@@ -86,7 +86,7 @@ public class RenderTrack {
             }
         }
 
-        TaskSchedule task = new TaskSchedule("s0").task("t0", RenderTrack::renderTrack, outputTornadoVM, input).streamOut(outputTornadoVM);
+        TaskGraph task = new TaskGraph("s0").task("t0", RenderTrack::renderTrack, outputTornadoVM, input).streamOut(outputTornadoVM);
         ArrayList<Long> timers = new ArrayList<>();
         task.warmup();
         for (int i = 0; i < 10; i++) {

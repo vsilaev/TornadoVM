@@ -29,7 +29,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.TornadoDriver;
 import uk.ac.manchester.tornado.api.TornadoRuntimeInterface;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
@@ -117,7 +117,7 @@ public class TestsVirtualLayer extends TornadoTestBase {
 
         int initValue = 0;
 
-        TaskSchedule s0 = new TaskSchedule("s0");
+        TaskGraph s0 = new TaskGraph("s0");
         for (int i = 0; i < numKernels; i++) {
             s0.task("t" + i, TestsVirtualLayer::accumulator, data, 1);
         }
@@ -155,7 +155,7 @@ public class TestsVirtualLayer extends TornadoTestBase {
 
         IntStream.range(0, numElements).parallel().forEach(i -> x[i] = 450);
 
-        TaskSchedule s0 = new TaskSchedule("s0");
+        TaskGraph s0 = new TaskGraph("s0");
 
         s0.task("t0", TestsVirtualLayer::saxpy, alpha, x, y).streamOut(y);
         s0.streamOut(y);
@@ -187,7 +187,7 @@ public class TestsVirtualLayer extends TornadoTestBase {
         int[] data = new int[N];
         Arrays.fill(data, 100);
 
-        TaskSchedule s0 = new TaskSchedule("s0");
+        TaskGraph s0 = new TaskGraph("s0");
 
         // This test only is executed once (the first task)
 
@@ -218,7 +218,7 @@ public class TestsVirtualLayer extends TornadoTestBase {
         int[] data = new int[N];
         Arrays.fill(data, 100);
 
-        TaskSchedule s0 = new TaskSchedule("s0");
+        TaskGraph s0 = new TaskGraph("s0");
         s0.setDevice(driver.getDevice(0));
         s0.task("t0", TestsVirtualLayer::testA, data, 1);
         s0.setDevice(driver.getDevice(1));
@@ -249,7 +249,7 @@ public class TestsVirtualLayer extends TornadoTestBase {
         Arrays.fill(dataA, 100);
         Arrays.fill(dataB, 200);
 
-        TaskSchedule s0 = new TaskSchedule("s0");
+        TaskGraph s0 = new TaskGraph("s0");
         s0.task("t0", TestsVirtualLayer::testA, dataA, 1);
         s0.task("t1", TestsVirtualLayer::testA, dataB, 10);
         s0.streamOut(dataA);
@@ -285,7 +285,7 @@ public class TestsVirtualLayer extends TornadoTestBase {
 
             String taskScheduleName = "s" + driverIndex;
 
-            TaskSchedule s0 = new TaskSchedule(taskScheduleName);
+            TaskGraph s0 = new TaskGraph(taskScheduleName);
             driver = getTornadoRuntime().getDriver(driverIndex);
 
             final int numDevices = driver.getDeviceCount();
@@ -338,14 +338,14 @@ public class TestsVirtualLayer extends TornadoTestBase {
             assertFalse("The current driver has less than 2 devices", true);
         }
 
-        TaskSchedule s0 = new TaskSchedule("s0");
+        TaskGraph s0 = new TaskGraph("s0");
         TornadoRuntime.setProperty("s0.t0.device", "0:0");
         // s0.setDevice(tornadoDriver.getDevice(1)); /// XXX: fix this call
         s0.task("t0", TestsVirtualLayer::testA, dataA, 1);
         s0.streamOut(dataA);
         s0.execute();
 
-        TaskSchedule s1 = new TaskSchedule("s1");
+        TaskGraph s1 = new TaskGraph("s1");
         TornadoRuntime.setProperty("s1.t1.device", "0:1");
         // s1.setDevice(tornadoDriver.getDevice(0));
         s1.task("t1", TestsVirtualLayer::testA, dataB, 1);

@@ -40,7 +40,7 @@ import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.benchmarks.ComputeKernels;
 
 public class JMHNBody {
@@ -53,7 +53,7 @@ public class JMHNBody {
         float[] velSeq;
         private float[] posSeq;
 
-        private TaskSchedule ts;
+        private TaskGraph ts;
 
         @Setup(Level.Trial)
         public void doSetup() {
@@ -80,7 +80,7 @@ public class JMHNBody {
                 System.arraycopy(auxVelocityZero, 0, velSeq, 0, auxVelocityZero.length);
             }
 
-            ts = new TaskSchedule("benchmark") //
+            ts = new TaskGraph("benchmark") //
                     .streamIn(velSeq, posSeq) //
                     .task("t0", ComputeKernels::nBody, numBodies, posSeq, velSeq, delT, espSqr);
             ts.warmup();
@@ -104,7 +104,7 @@ public class JMHNBody {
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     @Fork(1)
     public void nbodyTornado(BenchmarkSetup state, Blackhole blackhole) {
-        TaskSchedule t = state.ts;
+        TaskGraph t = state.ts;
         t.execute();
         blackhole.consume(t);
     }

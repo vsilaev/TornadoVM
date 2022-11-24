@@ -19,7 +19,7 @@ package uk.ac.manchester.tornado.benchmarks.dft;
 
 import static uk.ac.manchester.tornado.api.collections.math.TornadoMath.abs;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.common.TornadoDevice;
 import uk.ac.manchester.tornado.benchmarks.BenchmarkDriver;
 import uk.ac.manchester.tornado.benchmarks.ComputeKernels;
@@ -51,7 +51,7 @@ public class DFTTornado extends BenchmarkDriver {
     @Override
     public void setUp() {
         initData();
-        ts = new TaskSchedule("benchmark") //
+        ts = new TaskGraph("benchmark") //
                 .streamIn(inReal, inImag) //
                 .task("t0", ComputeKernels::computeDFT, inReal, inImag, outReal, outImag) //
                 .streamOut(outReal, outImag);

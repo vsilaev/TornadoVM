@@ -20,7 +20,7 @@ package uk.ac.manchester.tornado.examples.paralleliser;
 
 import java.util.Random;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.collections.math.TornadoMath;
 import uk.ac.manchester.tornado.api.collections.types.ImageFloat;
@@ -58,7 +58,7 @@ public class ResizeImage {
             }
         }
 
-        final TaskSchedule schedule = new TaskSchedule("s0").task("t0", ResizeImage::resize, image2, image1, 2).streamOut(image2);
+        final TaskGraph schedule = new TaskGraph("s0").task("t0", ResizeImage::resize, image2, image1, 2).streamOut(image2);
 
         schedule.warmup();
 

@@ -37,7 +37,7 @@ import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.benchmarks.ComputeKernels;
 
 public class JMHDFT {
@@ -51,7 +51,7 @@ public class JMHDFT {
         private double[] outReal;
         private double[] outImag;
 
-        private TaskSchedule ts;
+        private TaskGraph ts;
 
         @Setup(Level.Trial)
         public void doSetup() {
@@ -65,7 +65,7 @@ public class JMHDFT {
                 inImag[i] = 1 / (double) (i + 2);
             }
 
-            ts = new TaskSchedule("benchmark") //
+            ts = new TaskGraph("benchmark") //
                     .streamIn(inReal, inImag) //
                     .task("t0", ComputeKernels::computeDFT, inReal, inImag, outReal, outImag) //
                     .streamOut(outReal, outImag);
@@ -90,7 +90,7 @@ public class JMHDFT {
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     @Fork(1)
     public void dftTornado(BenchmarkSetup state, Blackhole blackhole) {
-        TaskSchedule t = state.ts;
+        TaskGraph t = state.ts;
         t.execute();
         blackhole.consume(t);
     }

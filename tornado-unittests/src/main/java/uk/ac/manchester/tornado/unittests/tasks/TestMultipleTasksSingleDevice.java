@@ -22,13 +22,13 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.unittests.common.TornadoTestBase;
 
 /**
  * Testing Tornado with multiple tasks in the same device. The
- * {@link TaskSchedule} contains more than one task.
+ * {@link TaskGraph} contains more than one task.
  *
  */
 public class TestMultipleTasksSingleDevice extends TornadoTestBase {
@@ -64,7 +64,7 @@ public class TestMultipleTasksSingleDevice extends TornadoTestBase {
         int[] b = new int[numElements];
 
         //@formatter:off
-        new TaskSchedule("s0")
+        new TaskGraph("s0")
 		    .streamIn(a, b)
 		    .task("t0", TestMultipleTasksSingleDevice::task0Initialization, a)
 		    .task("t1", TestMultipleTasksSingleDevice::task1Multiplication, a, 12)
@@ -84,7 +84,7 @@ public class TestMultipleTasksSingleDevice extends TornadoTestBase {
         int[] b = new int[numElements];
 
         //@formatter:off
-        new TaskSchedule("s0")
+        new TaskGraph("s0")
             .streamIn(a, b)
             .task("t0", TestMultipleTasksSingleDevice::task0Initialization, a)
             .task("t1", TestMultipleTasksSingleDevice::task1Multiplication, a, 12)
@@ -107,7 +107,7 @@ public class TestMultipleTasksSingleDevice extends TornadoTestBase {
         int[] c = new int[numElements];
 
         //@formatter:off
-        new TaskSchedule("s0")
+        new TaskGraph("s0")
             .streamIn(a, b)
             .task("t0", TestMultipleTasksSingleDevice::task0Initialization, a)
             .task("t1", TestMultipleTasksSingleDevice::task1Multiplication, a, 12)
@@ -131,7 +131,7 @@ public class TestMultipleTasksSingleDevice extends TornadoTestBase {
         int[] c = new int[numElements];
 
         //@formatter:off
-        new TaskSchedule("s0")
+        new TaskGraph("s0")
             .streamIn(a, b)
             .task("t0", TestMultipleTasksSingleDevice::task0Initialization, a)
             .task("t1", TestMultipleTasksSingleDevice::task1Multiplication, a, 12)

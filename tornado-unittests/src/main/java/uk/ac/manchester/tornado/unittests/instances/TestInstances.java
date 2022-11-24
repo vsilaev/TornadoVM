@@ -22,7 +22,7 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.unittests.common.TornadoTestBase;
 
 public class TestInstances extends TornadoTestBase {
@@ -42,7 +42,7 @@ public class TestInstances extends TornadoTestBase {
         double[] array = new double[1000];
 
         // @formatter:off
-        new TaskSchedule("s0")
+        new TaskGraph("s0")
             .task("t0", f::compute, array, 2.1)
             .streamOut(array)
             .execute();
@@ -64,7 +64,7 @@ public class TestInstances extends TornadoTestBase {
         double[] array = new double[1000];
 
         // @formatter:off
-        new TaskSchedule("s0")
+        new TaskGraph("s0")
             .task("t0", this::compute, array, 2.1)
             .streamOut(array)
             .execute();

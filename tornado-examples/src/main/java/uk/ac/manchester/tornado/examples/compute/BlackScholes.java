@@ -20,7 +20,7 @@ package uk.ac.manchester.tornado.examples.compute;
 
 import java.util.Random;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.collections.math.TornadoMath;
 
@@ -106,7 +106,7 @@ public class BlackScholes {
             input[i] = random.nextFloat();
         }
 
-        TaskSchedule graph = new TaskSchedule("s0") //
+        TaskGraph graph = new TaskGraph("s0") //
                 .streamIn(input) //
                 .task("t0", BlackScholes::blackScholesKernel, input, callPrice, putPrice) //
                 .streamOut(callPrice, putPrice);

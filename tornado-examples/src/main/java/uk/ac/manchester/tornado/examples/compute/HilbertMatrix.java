@@ -18,7 +18,7 @@
 
 package uk.ac.manchester.tornado.examples.compute;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 
 public class HilbertMatrix {
@@ -39,7 +39,7 @@ public class HilbertMatrix {
         float[] output = new float[NROWS * NCOLS];
 
         // @formatter:off
-        TaskSchedule s0 = new TaskSchedule("s0")
+        TaskGraph s0 = new TaskGraph("s0")
                 .task("t0", HilbertMatrix::hilberComputation, output, NROWS, NCOLS)
                 .streamOut(output);
         // @formatter:on

@@ -20,7 +20,7 @@ package uk.ac.manchester.tornado.examples.arrays;
 
 import java.util.Arrays;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.TornadoDriver;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.runtime.TornadoRuntime;
@@ -42,7 +42,7 @@ public class MigratingArrayAccInt {
         Arrays.fill(a, 0);
 
         //@formatter:off
-        TaskSchedule s0 = new TaskSchedule("s0");
+        TaskGraph s0 = new TaskGraph("s0");
         for (int i = 0; i < numKernels; i++) {
             s0.task("t" + i, MigratingArrayAccInt::acc, a, 1);
         }

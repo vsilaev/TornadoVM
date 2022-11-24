@@ -25,7 +25,7 @@ import java.util.stream.IntStream;
 
 import org.junit.Test;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.unittests.arrays.TestArrays;
 import uk.ac.manchester.tornado.unittests.common.TornadoTestBase;
 
@@ -41,7 +41,7 @@ public class TestAPI extends TornadoTestBase {
             data[idx] = size;
         });
 
-        TaskSchedule s0 = new TaskSchedule("s0");
+        TaskGraph s0 = new TaskGraph("s0");
         assertNotNull(s0);
 
         s0.lockObjectInMemory(data);
@@ -67,7 +67,7 @@ public class TestAPI extends TornadoTestBase {
             data[idx] = size;
         });
 
-        TaskSchedule s0 = new TaskSchedule("s0");
+        TaskGraph s0 = new TaskGraph("s0");
         assertNotNull(s0);
 
         s0.lockObjectInMemory(data);
@@ -94,7 +94,7 @@ public class TestAPI extends TornadoTestBase {
             data[idx] = size;
         });
 
-        TaskSchedule s0 = new TaskSchedule("s0");
+        TaskGraph s0 = new TaskGraph("s0");
         assertNotNull(s0);
 
         s0.lockObjectInMemory(data);

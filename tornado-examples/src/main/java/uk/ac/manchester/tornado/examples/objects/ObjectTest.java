@@ -18,7 +18,7 @@
 
 package uk.ac.manchester.tornado.examples.objects;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 
 public class ObjectTest {
 
@@ -53,7 +53,7 @@ public class ObjectTest {
          * Next we insert the task into a task graph and specify that we want
          * the value of c updated on completion.
          */
-        final TaskSchedule schedule = new TaskSchedule("s0").task("t0", ObjectTest::add, a, b, c).streamOut(c);
+        final TaskGraph schedule = new TaskGraph("s0").task("t0", ObjectTest::add, a, b, c).streamOut(c);
 
         /*
          * Calculate a (3) + b (2) = c (5)

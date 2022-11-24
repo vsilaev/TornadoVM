@@ -22,7 +22,7 @@ import static uk.ac.manchester.tornado.api.collections.types.FloatOps.findMaxULP
 import java.util.Random;
 import java.util.stream.IntStream;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.collections.types.Float3;
 import uk.ac.manchester.tornado.api.collections.types.ImageFloat;
 import uk.ac.manchester.tornado.api.collections.types.ImageFloat3;
@@ -63,7 +63,7 @@ public class DotTornado extends BenchmarkDriver {
                 b.set(i, j, new Float3(rb));
             }
         }
-        ts = new TaskSchedule("benchmark") //
+        ts = new TaskGraph("benchmark") //
                 .streamIn(a, b) //
                 .task("dotVector", GraphicsKernels::dotImage, a, b, c) //
                 .streamOut(c);

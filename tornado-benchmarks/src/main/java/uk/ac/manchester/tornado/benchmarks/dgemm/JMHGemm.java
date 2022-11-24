@@ -40,7 +40,7 @@ import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.benchmarks.LinearAlgebraArrays;
 
 public class JMHGemm {
@@ -51,7 +51,7 @@ public class JMHGemm {
         double[] a;
         double[] b;
         double[] c;
-        TaskSchedule ts;
+        TaskGraph ts;
 
         @Setup(Level.Trial)
         public void doSetup() {
@@ -70,7 +70,7 @@ public class JMHGemm {
                 b[i] = random.nextFloat();
             }
 
-            ts = new TaskSchedule("benchmark")//
+            ts = new TaskGraph("benchmark")//
                     .streamIn(a, b) //
                     .task("dgemm", LinearAlgebraArrays::dgemm, m, n, n, a, b, c) //
                     .streamOut(c);
@@ -96,7 +96,7 @@ public class JMHGemm {
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     @Fork(1)
     public void gemmTornado(BenchmarkSetup state, Blackhole blackhole) {
-        TaskSchedule t = state.ts;
+        TaskGraph t = state.ts;
         t.execute();
         blackhole.consume(t);
     }

@@ -26,7 +26,7 @@ import java.util.Arrays;
 
 import org.junit.Test;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.enums.TornadoVMBackendType;
 import uk.ac.manchester.tornado.api.exceptions.Debug;
@@ -62,7 +62,7 @@ public class TestHello extends TornadoTestBase {
     public void testHello() {
         assertNotBackend(TornadoVMBackendType.SPIRV);
 
-        TaskSchedule task = new TaskSchedule("s0").task("t0", TestHello::printHello, 8);
+        TaskGraph task = new TaskGraph("s0").task("t0", TestHello::printHello, 8);
         assertNotNull(task);
 
         try {
@@ -84,7 +84,7 @@ public class TestHello extends TornadoTestBase {
         Arrays.fill(b, 2);
 
         // @formatter:off
-		new TaskSchedule("s0")
+		new TaskGraph("s0")
 		    .task("t0", TestHello::add, a, b, c)
 		    .streamOut(c)
 		    .execute();
@@ -106,7 +106,7 @@ public class TestHello extends TornadoTestBase {
         TestHello t = new TestHello();
 
         //@formatter:off
-        new TaskSchedule("s0")
+        new TaskGraph("s0")
             .task("t0", t::compute, a, b)
             .streamOut(b)
             .execute();
@@ -128,7 +128,7 @@ public class TestHello extends TornadoTestBase {
         TestHello t = new TestHello();
 
         //@formatter:off
-        new TaskSchedule("s0")
+        new TaskGraph("s0")
             .streamIn(a)
             .task("t0", t::compute, a, b)
             .streamOut(b)
@@ -148,7 +148,7 @@ public class TestHello extends TornadoTestBase {
         Arrays.fill(a, 10);
 
         //@formatter:off
-        new TaskSchedule("s0")
+        new TaskGraph("s0")
             .task("t0", TestHello::compute, a)
             .streamOut(a)
             .execute();

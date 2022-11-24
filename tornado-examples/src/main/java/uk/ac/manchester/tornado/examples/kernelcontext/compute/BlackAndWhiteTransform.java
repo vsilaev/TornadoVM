@@ -32,7 +32,7 @@ import javax.swing.JFrame;
 
 import uk.ac.manchester.tornado.api.GridScheduler;
 import uk.ac.manchester.tornado.api.KernelContext;
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.WorkerGrid;
 import uk.ac.manchester.tornado.api.WorkerGrid2D;
 
@@ -64,7 +64,7 @@ public class BlackAndWhiteTransform {
 
         private static final String IMAGE_FILE = "/tmp/image.jpg";
 
-        private static TaskSchedule tornadoTask;
+        private static TaskGraph tornadoTask;
 
         private static WorkerGrid workerGrid;
         private static GridScheduler gridScheduler;
@@ -140,7 +140,7 @@ public class BlackAndWhiteTransform {
                     gridScheduler = new GridScheduler("s0.t0", workerGrid);
                     KernelContext context = new KernelContext();
 
-                    tornadoTask = new TaskSchedule("s0");
+                    tornadoTask = new TaskGraph("s0");
                     tornadoTask.streamIn(imageRGB).task("t0", LoadImage::compute2D, context, imageRGB, w, s).streamOut(imageRGB);
 
                 }

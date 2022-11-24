@@ -21,7 +21,7 @@ package uk.ac.manchester.tornado.examples.flatmap;
 import java.util.Random;
 import java.util.stream.IntStream;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 
 /**
@@ -53,7 +53,7 @@ public class FlatMapExample {
             input[i] = 50 + r.nextInt(100);
         });
 
-        TaskSchedule ts = new TaskSchedule("s0") //
+        TaskGraph ts = new TaskGraph("s0") //
                 .streamIn(input) //
                 .task("t0", FlatMapExample::computeFlatMap, input, output, SIZE) //
                 .streamOut(output);

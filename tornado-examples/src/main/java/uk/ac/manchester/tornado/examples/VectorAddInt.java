@@ -19,7 +19,7 @@ package uk.ac.manchester.tornado.examples;
 
 import java.util.Arrays;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 
 public class VectorAddInt {
@@ -42,7 +42,7 @@ public class VectorAddInt {
         Arrays.fill(b, 20);
 
         //@formatter:off
-        TaskSchedule schedule = new TaskSchedule("s0")
+        TaskGraph schedule = new TaskGraph("s0")
                 .streamIn(a, b)
                 .task("t0", VectorAddInt::vectorAdd, a, b, c)
                 .streamOut(c);

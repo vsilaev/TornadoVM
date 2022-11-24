@@ -23,7 +23,7 @@ import static uk.ac.manchester.tornado.benchmarks.LinearAlgebraArrays.sgemm;
 import java.util.Random;
 
 import uk.ac.manchester.tornado.api.GridScheduler;
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.WorkerGrid;
 import uk.ac.manchester.tornado.api.WorkerGrid2D;
 import uk.ac.manchester.tornado.api.common.Access;
@@ -73,7 +73,7 @@ public class SgemmTornado extends BenchmarkDriver {
             grid.setWorkerGrid("benchmark.sgemm", worker);
         }
 
-        ts = new TaskSchedule("benchmark");
+        ts = new TaskGraph("benchmark");
         if (!USE_PREBUILT) {
             ts.streamIn(a, b);
             ts.task("sgemm", LinearAlgebraArrays::sgemm, m, n, n, a, b, c);

@@ -21,7 +21,7 @@ import static uk.ac.manchester.tornado.api.collections.math.TornadoMath.findULPD
 import static uk.ac.manchester.tornado.benchmarks.LinearAlgebraArrays.spmv;
 import static uk.ac.manchester.tornado.benchmarks.spmv.Benchmark.initData;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.common.TornadoDevice;
 import uk.ac.manchester.tornado.benchmarks.BenchmarkDriver;
 import uk.ac.manchester.tornado.benchmarks.LinearAlgebraArrays;
@@ -44,7 +44,7 @@ public class SpmvTornado extends BenchmarkDriver {
         v = new float[matrix.size];
         y = new float[matrix.size];
         initData(v);
-        ts = new TaskSchedule("benchmark") //
+        ts = new TaskGraph("benchmark") //
                 .streamIn(matrix.vals, matrix.cols, matrix.rows, v, y) //
                 .task("spmv", LinearAlgebraArrays::spmv, matrix.vals, matrix.cols, matrix.rows, v, matrix.size, y) //
                 .streamOut(y);

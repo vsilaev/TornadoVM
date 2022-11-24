@@ -26,7 +26,7 @@ import java.util.stream.IntStream;
 
 import org.junit.Test;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.enums.TornadoVMBackendType;
 import uk.ac.manchester.tornado.unittests.common.TornadoTestBase;
@@ -86,7 +86,7 @@ public class TestFields extends TornadoTestBase {
         final int N = 1024;
         Foo foo = new Foo(N);
 
-        TaskSchedule s0 = new TaskSchedule("s0");
+        TaskGraph s0 = new TaskGraph("s0");
         assertNotNull(s0);
 
         s0.lockObjectInMemory(foo);
@@ -107,7 +107,7 @@ public class TestFields extends TornadoTestBase {
         Foo foo = new Foo(N);
         foo.initRandom();
 
-        TaskSchedule s0 = new TaskSchedule("s0");
+        TaskGraph s0 = new TaskGraph("s0");
         assertNotNull(s0);
 
         s0.lockObjectInMemory(foo);
@@ -127,7 +127,7 @@ public class TestFields extends TornadoTestBase {
         final int N = 1024;
         Bar bar = new Bar(N, 15);
 
-        TaskSchedule s0 = new TaskSchedule("Bar");
+        TaskGraph s0 = new TaskGraph("Bar");
         assertNotNull(s0);
 
         s0.lockObjectInMemory(bar);
@@ -186,7 +186,7 @@ public class TestFields extends TornadoTestBase {
         B b = new B();
         final A a = new A(b);
 
-        TaskSchedule ts = new TaskSchedule("s0");
+        TaskGraph ts = new TaskGraph("s0");
         ts.streamIn(a);
         ts.task("t0", TestFields::setField, a, 77f);
         ts.streamOut(a);
@@ -208,7 +208,7 @@ public class TestFields extends TornadoTestBase {
         B b = new B();
         final A a = new A(b);
 
-        TaskSchedule ts = new TaskSchedule("s0");
+        TaskGraph ts = new TaskGraph("s0");
         ts.streamIn(a);
         ts.task("t0", TestFields::setNestedField, a, 77f);
         ts.streamOut(a);
@@ -229,7 +229,7 @@ public class TestFields extends TornadoTestBase {
         Arrays.fill(indexes, 1);
         Arrays.fill(b.someArray, 2);
 
-        TaskSchedule ts = new TaskSchedule("s0");
+        TaskGraph ts = new TaskGraph("s0");
         ts.streamIn(a);
         ts.task("t0", TestFields::setNestedArray, a, indexes);
         ts.streamOut(a);

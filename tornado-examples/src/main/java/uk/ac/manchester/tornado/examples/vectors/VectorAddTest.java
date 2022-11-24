@@ -18,7 +18,7 @@
 
 package uk.ac.manchester.tornado.examples.vectors;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.collections.types.Float3;
 import uk.ac.manchester.tornado.api.collections.types.VectorFloat3;
@@ -56,7 +56,7 @@ public class VectorAddTest {
         System.out.printf("vector<float3>: %s\n", b);
 
         //@formatter:off
-        TaskSchedule s0 = new TaskSchedule("s0")
+        TaskGraph s0 = new TaskGraph("s0")
                 .task("t0", VectorAddTest::test, a, b, results)
                 .streamOut(results);
         //@formatter:on

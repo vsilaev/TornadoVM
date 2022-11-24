@@ -19,7 +19,7 @@ package uk.ac.manchester.tornado.examples.matrices;
 
 import java.util.Random;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.TornadoDriver;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.collections.types.Float4;
@@ -84,7 +84,7 @@ public class MatrixAddition2D {
         }
 
         //@formatter:off
-        TaskSchedule t = new TaskSchedule("s0")
+        TaskGraph t = new TaskGraph("s0")
                 .task("t0", MatrixAddition2D::matrixAddition, matrixA, matrixB, matrixC, size)
                 .streamOut(matrixC);
         //@formatter:on
@@ -115,7 +115,7 @@ public class MatrixAddition2D {
         }
 
         //@formatter:off
-        TaskSchedule t1 = new TaskSchedule("s1")
+        TaskGraph t1 = new TaskGraph("s1")
                 .task("t1", MatrixAddition2D::matrixAddition, matrixAV, matrixBV, matrixCV, (size* 2))
                 .streamOut(matrixCV);
         //@formatter:on

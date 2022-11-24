@@ -20,7 +20,7 @@ package uk.ac.manchester.tornado.examples.fpga;
 
 import java.util.Arrays;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 
 /**
@@ -87,7 +87,7 @@ public class InitFPGA {
         Arrays.fill(x, 10);
 
         // @formatter:off
-        TaskSchedule s0 = new TaskSchedule("s0")
+        TaskGraph s0 = new TaskGraph("s0")
                 .streamIn(x)
                 .task("t0", InitFPGA::init, x)
                 .streamOut(x);

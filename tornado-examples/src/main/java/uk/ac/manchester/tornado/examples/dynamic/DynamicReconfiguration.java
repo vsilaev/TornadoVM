@@ -21,7 +21,7 @@ package uk.ac.manchester.tornado.examples.dynamic;
 import java.util.Arrays;
 
 import uk.ac.manchester.tornado.api.Policy;
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 
 /**
@@ -42,7 +42,7 @@ public class DynamicReconfiguration {
         float[] b = new float[numElements];
         Arrays.fill(a, 10);
         //@formatter:off
-        new TaskSchedule("s0")
+        new TaskGraph("s0")
             .task("t0", DynamicReconfiguration::saxpy, 2.0f, a, b)
             .streamOut(b)
             .executeWithProfiler(Policy.PERFORMANCE);

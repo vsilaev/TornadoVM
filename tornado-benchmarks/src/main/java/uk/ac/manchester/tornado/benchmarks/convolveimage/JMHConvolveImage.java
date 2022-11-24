@@ -41,7 +41,7 @@ import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.collections.types.ImageFloat;
 import uk.ac.manchester.tornado.benchmarks.GraphicsKernels;
 
@@ -58,7 +58,7 @@ public class JMHConvolveImage {
         ImageFloat output;
         ImageFloat filter;
 
-        private TaskSchedule ts;
+        private TaskGraph ts;
 
         @Setup(Level.Trial)
         public void doSetup() {
@@ -69,7 +69,7 @@ public class JMHConvolveImage {
             createImage(input);
             createFilter(filter);
 
-            ts = new TaskSchedule("benchmark") //
+            ts = new TaskGraph("benchmark") //
                     .streamIn(input).task("convolveImage", GraphicsKernels::convolveImage, input, filter, output) //
                     .streamOut(output);
             ts.warmup();
@@ -93,7 +93,7 @@ public class JMHConvolveImage {
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     @Fork(1)
     public void convolveImageArrayTornado(BenchmarkSetup state, Blackhole blackhole) {
-        TaskSchedule t = state.ts;
+        TaskGraph t = state.ts;
         t.execute();
         blackhole.consume(t);
     }

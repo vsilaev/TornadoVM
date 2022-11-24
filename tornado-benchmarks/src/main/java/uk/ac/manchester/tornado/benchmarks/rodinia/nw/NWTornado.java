@@ -25,7 +25,7 @@ import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 
 public class NWTornado {
@@ -194,7 +194,7 @@ public class NWTornado {
         random.setSeed(7);
         Arrays.fill(input_itemsets, 0);
 
-        TaskSchedule s0 = new TaskSchedule("s0").task("init-ref", NWTornado::initialiseReference, max_rows, max_cols, input_itemsets, referrence, blosum62)
+        TaskGraph s0 = new TaskGraph("s0").task("init-ref", NWTornado::initialiseReference, max_rows, max_cols, input_itemsets, referrence, blosum62)
                 .task("init-input1", NWTornado::initialiseInput, max_rows, max_cols, penalty, input_itemsets).task("init-input2", NWTornado::initialiseInput, max_cols, 1, penalty, input_itemsets)
                 .task("topleft", NWTornado::processTopLeft, max_rows, max_cols, penalty, input_itemsets, referrence)
                 .task("bottomright", NWTornado::processBottomRight, max_rows, max_cols, penalty, input_itemsets, referrence).streamOut(input_itemsets, referrence);

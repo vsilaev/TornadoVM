@@ -23,7 +23,7 @@ import java.util.Arrays;
 
 import org.junit.Test;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.unittests.common.TornadoTestBase;
 
 public class MultipleRuns extends TornadoTestBase {
@@ -39,7 +39,7 @@ public class MultipleRuns extends TornadoTestBase {
         int[] expectedResult = new int[numElements];
         Arrays.fill(expectedResult, iterations * 50);
 
-        TaskSchedule ts = new TaskSchedule("s0") //
+        TaskGraph ts = new TaskGraph("s0") //
                 .streamIn(a) //
                 .task("t0", TestKernels::addValue, a) //
                 .streamOut(a); //

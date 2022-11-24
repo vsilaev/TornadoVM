@@ -27,7 +27,7 @@ import java.util.stream.IntStream;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import uk.ac.manchester.tornado.api.TaskSchedule;
+import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.annotations.Reduce;
 import uk.ac.manchester.tornado.unittests.common.TornadoNotSupported;
@@ -135,7 +135,7 @@ public class TestNewArrays extends TornadoTestBase {
         Arrays.fill(b, 20);
 
         //@formatter:off
-        TaskSchedule schedule = new TaskSchedule("s0")
+        TaskGraph schedule = new TaskGraph("s0")
                 .streamIn(a, b)
                 .task("t0", TestNewArrays::vectorAdd, a, b, c)
                 .streamOut(c);
@@ -161,7 +161,7 @@ public class TestNewArrays extends TornadoTestBase {
         Arrays.fill(b, 20);
 
         //@formatter:off
-        TaskSchedule schedule = new TaskSchedule("s0")
+        TaskGraph schedule = new TaskGraph("s0")
                 .streamIn(a, b)
                 .task("t0", TestNewArrays::vectorAddComplexConditions, a, b, c)
                 .streamOut(c);
@@ -185,7 +185,7 @@ public class TestNewArrays extends TornadoTestBase {
             dataSeq[i] = data[i];
         });
 
-        TaskSchedule s0 = new TaskSchedule("s0");
+        TaskGraph s0 = new TaskGraph("s0");
         assertNotNull(s0);
 
         s0.task("t0", TestNewArrays::initializeToOne, data);
@@ -210,7 +210,7 @@ public class TestNewArrays extends TornadoTestBase {
             dataSeq[i] = data[i];
         });
 
-        TaskSchedule s0 = new TaskSchedule("s0");
+        TaskGraph s0 = new TaskGraph("s0");
         assertNotNull(s0);
 
         s0.task("t0", TestNewArrays::initializeToOneParallelScope, data);
@@ -235,7 +235,7 @@ public class TestNewArrays extends TornadoTestBase {
             dataSeq[i] = data[i];
         });
 
-        TaskSchedule s0 = new TaskSchedule("s0");
+        TaskGraph s0 = new TaskGraph("s0");
         assertNotNull(s0);
 
         s0.task("t0", TestNewArrays::initializeToOneParallelScopeComplex, data);
@@ -260,7 +260,7 @@ public class TestNewArrays extends TornadoTestBase {
             dataSeq[i] = data[i];
         });
 
-        TaskSchedule s0 = new TaskSchedule("s0");
+        TaskGraph s0 = new TaskGraph("s0");
         assertNotNull(s0);
 
         s0.task("t0", TestNewArrays::initializeToOneParallel, data);
@@ -286,7 +286,7 @@ public class TestNewArrays extends TornadoTestBase {
             input[i] = r.nextFloat();
         });
 
-        TaskSchedule task = new TaskSchedule("s0") //
+        TaskGraph task = new TaskGraph("s0") //
                 .streamIn(input) //
                 .task("t0", TestNewArrays::reductionAddFloats, input, result) //
                 .streamOut(result); //
