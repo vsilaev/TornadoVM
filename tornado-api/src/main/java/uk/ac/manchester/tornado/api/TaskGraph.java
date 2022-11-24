@@ -2,7 +2,7 @@
  * This file is part of Tornado: A heterogeneous programming framework:
  * https://github.com/beehive-lab/tornadovm
  *
- * Copyright (c) 2013-2020, APT Group, Department of Computer Science,
+ * Copyright (c) 2013-2022, APT Group, Department of Computer Science,
  * The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -72,10 +72,10 @@ import uk.ac.manchester.tornado.api.profiler.ProfileInterface;
 import uk.ac.manchester.tornado.api.runtime.TornadoAPIProvider;
 
 /**
- * Tornado Task Schedule API.
+ * Tornado Task Graph API.
  * <p>
- * Task-based parallel API to express methods to be accelerated
- * on any OpenCL, PTX or SPIRV compatible device.
+ * Task-based parallel API to express methods to be accelerated on any OpenCL,
+ * PTX or SPIRV compatible device.
  * </p>
  */
 public class TaskGraph implements TornadoAPI, ProfileInterface {
@@ -221,20 +221,14 @@ public class TaskGraph implements TornadoAPI, ProfileInterface {
     }
 
     @Override
-    public TaskGraph streamIn(Object... objects) {
-        taskScheduleImpl.streamInInner(objects);
+    public TaskGraph transferToDevice(final int mode, Object... objects) {
+        taskScheduleImpl.transferToDevice(mode, objects);
         return this;
     }
 
     @Override
-    public TornadoAPI forceCopyIn(Object... objects) {
-        taskScheduleImpl.forceStreamInInner(objects);
-        return this;
-    }
-
-    @Override
-    public TaskGraph streamOut(Object... objects) {
-        taskScheduleImpl.streamOutInner(objects);
+    public TaskGraph transferToHost(Object... objects) {
+        taskScheduleImpl.transferToHost(objects);
         return this;
     }
 
@@ -378,7 +372,6 @@ public class TaskGraph implements TornadoAPI, ProfileInterface {
     public TornadoDevice getDeviceForTask(String id) {
         return taskScheduleImpl.getDeviceForTask(id);
     }
-    
     @Override
     public TaskGraph setDeviceForTask(String id, TornadoDevice device) {
         taskScheduleImpl.setDeviceForTask(id, device);
@@ -460,28 +453,33 @@ public class TaskGraph implements TornadoAPI, ProfileInterface {
         taskScheduleImpl.useDefaultThreadScheduler(use);
         return this;
     }
-
+    
     /**
      * Update a data reference from one array to another within TornadoVM.
-     * 
+     *
      * Arrays can be of different sizes.
-     * 
+     *
      * If a {@link GridScheduler} is not passed in the {@link #execute()} method,
-     * then it will also trigger recompilation. Otherwise TornadoVM will not
+     * then it will also trigger recompilation. Otherwise, TornadoVM will not
      * recompile the code, since the first compilation was generic.
-     * 
-     * 
-     * @param oldRef
-     * @param newRef
+     *
+     *
+     * @param oldParameter
+     * @param newParameter
      */
     @Override
-    public void updateReference(Object oldRef, Object newRef) {
-        taskScheduleImpl.updateReference(oldRef, newRef);
+    public TaskGraph replaceParameter(Object oldParameter, Object newParameter) {
+        taskScheduleImpl.replaceParameter(oldParameter, newParameter);
+        return this;
     }
 
     @Override
     public boolean isFinished() {
         return taskScheduleImpl.isFinished();
+    }
+    
+    public HashSet<Object> getArgumentsLookup() {
+        return taskScheduleImpl.getArgumentsLookup();
     }
 
     private CompletableFuture<TornadoAPI> selfFuture(CompletableFuture<?> any) {
