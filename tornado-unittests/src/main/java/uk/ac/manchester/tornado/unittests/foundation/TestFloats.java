@@ -1,16 +1,5 @@
-package uk.ac.manchester.tornado.unittests.foundation;
-
-import static org.junit.Assert.assertEquals;
-
-import java.util.Arrays;
-
-import org.junit.Test;
-
-import uk.ac.manchester.tornado.api.TaskGraph;
-import uk.ac.manchester.tornado.unittests.common.TornadoTestBase;
-
 /*
- * Copyright (c) 2021, APT Group, Department of Computer Science,
+ * Copyright (c) 2021, 2022, APT Group, Department of Computer Science,
  * The University of Manchester.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,6 +15,26 @@ import uk.ac.manchester.tornado.unittests.common.TornadoTestBase;
  * limitations under the License.
  *
  */
+package uk.ac.manchester.tornado.unittests.foundation;
+
+import static org.junit.Assert.assertEquals;
+
+import java.util.Arrays;
+
+import org.junit.Test;
+
+import uk.ac.manchester.tornado.api.TaskGraph;
+import uk.ac.manchester.tornado.api.enums.DataTransferMode;
+import uk.ac.manchester.tornado.unittests.common.TornadoTestBase;
+
+/**
+ * <p>
+ * How to test?
+ * </p>
+ * <code>
+ *     tornado-test -V uk.ac.manchester.tornado.unittests.foundation.TestFloats
+ * </code>
+ */
 public class TestFloats extends TornadoTestBase {
 
     @Test
@@ -35,7 +44,7 @@ public class TestFloats extends TornadoTestBase {
 
         new TaskGraph("s0") //
                 .task("t0", TestKernels::testFloatCopy, a) //
-                .streamOut(a) //
+                .transferToHost(a) //
                 .execute(); //
 
         assertEquals(a[0], 50.0f, 0.01f);
@@ -57,8 +66,9 @@ public class TestFloats extends TornadoTestBase {
         }
 
         new TaskGraph("s0") //
+                .transferToDevice(DataTransferMode.FIRST_EXECUTION, b, c) //
                 .task("t0", TestKernels::vectorAddFloatCompute, a, b, c) //
-                .streamOut(a) //
+                .transferToHost(a) //
                 .execute(); //
 
         for (int i = 0; i < numElements; i++) {
@@ -82,8 +92,9 @@ public class TestFloats extends TornadoTestBase {
         }
 
         new TaskGraph("s0") //
+                .transferToDevice(DataTransferMode.FIRST_EXECUTION, b, c) //
                 .task("t0", TestKernels::vectorSubFloatCompute, a, b, c) //
-                .streamOut(a) //
+                .transferToHost(a) //
                 .execute(); //
 
         for (int i = 0; i < numElements; i++) {
@@ -109,8 +120,9 @@ public class TestFloats extends TornadoTestBase {
         }
 
         new TaskGraph("s0") //
+                .transferToDevice(DataTransferMode.FIRST_EXECUTION, b, c) //
                 .task("t0", TestKernels::vectorMulFloatCompute, a, b, c) //
-                .streamOut(a) //
+                .transferToHost(a) //
                 .execute(); //
 
         for (int i = 0; i < numElements; i++) {
@@ -135,8 +147,9 @@ public class TestFloats extends TornadoTestBase {
         }
 
         new TaskGraph("s0") //
+                .transferToDevice(DataTransferMode.FIRST_EXECUTION, b, c) //
                 .task("t0", TestKernels::vectorDivFloatCompute, a, b, c) //
-                .streamOut(a) //
+                .transferToHost(a) //
                 .execute(); //
 
         for (int i = 0; i < numElements; i++) {

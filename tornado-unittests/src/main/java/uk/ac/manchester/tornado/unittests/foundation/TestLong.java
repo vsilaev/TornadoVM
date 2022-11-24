@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, APT Group, Department of Computer Science,
+ * Copyright (c) 2021, 2022, APT Group, Department of Computer Science,
  * The University of Manchester.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,8 +24,17 @@ import java.util.Arrays;
 import org.junit.Test;
 
 import uk.ac.manchester.tornado.api.TaskGraph;
+import uk.ac.manchester.tornado.api.enums.DataTransferMode;
 import uk.ac.manchester.tornado.unittests.common.TornadoTestBase;
 
+/**
+ * <p>
+ * How to run?
+ * </p>
+ * <code>
+ *      tornado-test.py -V uk.ac.manchester.tornado.unittests.foundation.TestLong
+ * </code>
+ */
 public class TestLong extends TornadoTestBase {
 
     @Test
@@ -40,7 +49,7 @@ public class TestLong extends TornadoTestBase {
 
         new TaskGraph("s0") //
                 .task("t0", TestKernels::testLongsCopy, a) //
-                .streamOut(a) //
+                .transferToHost(a) //
                 .execute(); //
 
         for (int i = 0; i < numElements; i++) {
@@ -64,8 +73,9 @@ public class TestLong extends TornadoTestBase {
         }
 
         new TaskGraph("s0") //
+                .transferToDevice(DataTransferMode.FIRST_EXECUTION, b, c) //
                 .task("t0", TestKernels::vectorSumLongCompute, a, b, c) //
-                .streamOut(a) //
+                .transferToHost(a) //
                 .execute(); //
 
         for (int i = 0; i < numElements; i++) {

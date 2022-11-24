@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020, APT Group, Department of Computer Science,
+ * Copyright (c) 2013-2020, 2022, APT Group, Department of Computer Science,
  * The University of Manchester.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,8 +42,17 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
 
 import uk.ac.manchester.tornado.api.TaskGraph;
+import uk.ac.manchester.tornado.api.enums.DataTransferMode;
 import uk.ac.manchester.tornado.benchmarks.GraphicsKernels;
 
+/**
+ * <p>
+ * How to run in isolation?
+ * </p>
+ * <code>
+ *    tornado -jar benchmarks/target/jmhbenchmarks.jar uk.ac.manchester.tornado.benchmarks.convolvearray.JMHConvolveArray
+ * </code>
+ */
 public class JMHConvolveArray {
 
     @State(Scope.Thread)
@@ -55,7 +64,7 @@ public class JMHConvolveArray {
         float[] input;
         float[] output;
         float[] filter;
-        TaskGraph ts;
+        TaskGraph taskGraph;
 
         @Setup(Level.Trial)
         public void doSetup() {
@@ -66,11 +75,11 @@ public class JMHConvolveArray {
             createImage(input, imageSizeX, imageSizeY);
             createFilter(filter, filterSize, filterSize);
 
-            ts = new TaskGraph("benchmark") //
-                    .streamIn(input) //
+            taskGraph = new TaskGraph("benchmark") //
+                    .transferToDevice(DataTransferMode.EVERY_EXECUTION, input, filter) //
                     .task("convolveImageArray", GraphicsKernels::convolveImageArray, input, filter, output, imageSizeX, imageSizeY, filterSize, filterSize) //
-                    .streamOut(output);
-            ts.warmup();
+                    .transferToHost(output);
+            taskGraph.warmup();
         }
     }
 
@@ -91,9 +100,9 @@ public class JMHConvolveArray {
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     @Fork(1)
     public void convolveImageArrayTornado(BenchmarkSetup state, Blackhole blackhole) {
-        TaskGraph t = state.ts;
-        t.execute();
-        blackhole.consume(t);
+        TaskGraph taskGraph = state.taskGraph;
+        taskGraph.execute();
+        blackhole.consume(taskGraph);
     }
 
     public static void main(String[] args) throws RunnerException {

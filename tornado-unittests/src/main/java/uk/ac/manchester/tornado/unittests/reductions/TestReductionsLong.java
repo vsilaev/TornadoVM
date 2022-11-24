@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020, APT Group, School of Computer Science,
+ * Copyright (c) 2020, 2022, APT Group, Department of Computer Science,
  * The University of Manchester.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,7 +15,6 @@
  * limitations under the License.
  *
  */
-
 package uk.ac.manchester.tornado.unittests.reductions;
 
 import static org.junit.Assert.assertEquals;
@@ -30,8 +29,17 @@ import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.annotations.Reduce;
 import uk.ac.manchester.tornado.api.collections.math.TornadoMath;
+import uk.ac.manchester.tornado.api.enums.DataTransferMode;
 import uk.ac.manchester.tornado.unittests.common.TornadoTestBase;
 
+/**
+ * <p>
+ * How to run?
+ * </p>
+ * <code>
+ *     tornado-test -V uk.ac.manchester.tornado.unittests.reductions.TestReductionsLong
+ * </code>
+ */
 public class TestReductionsLong extends TornadoTestBase {
 
     private static final int SIZE = 4096;
@@ -54,9 +62,9 @@ public class TestReductionsLong extends TornadoTestBase {
 
         //@formatter:off
         new TaskGraph("s0")
-                .streamIn(input)
+                .transferToDevice(DataTransferMode.EVERY_EXECUTION, input)
                 .task("t0", TestReductionsLong::reductionAnnotation, input, result)
-                .streamOut(result)
+                .transferToHost(result)
                 .execute();
         //@formatter:on
 
@@ -86,9 +94,9 @@ public class TestReductionsLong extends TornadoTestBase {
 
         //@formatter:off
         new TaskGraph("s0")
-                .streamIn(input)
+                .transferToDevice(DataTransferMode.EVERY_EXECUTION, input)
                 .task("t0", TestReductionsLong::multReductionAnnotation, input, result)
-                .streamOut(result)
+                .transferToHost(result)
                 .execute();
         //@formatter:on
 
@@ -120,9 +128,9 @@ public class TestReductionsLong extends TornadoTestBase {
 
         //@formatter:off
         new TaskGraph("s0")
-                .streamIn(input)
+                .transferToDevice(DataTransferMode.EVERY_EXECUTION, input)
                 .task("t0", TestReductionsLong::maxReductionAnnotation, input, result)
-                .streamOut(result)
+                .transferToHost(result)
                 .execute();
         //@formatter:on
 
@@ -148,12 +156,11 @@ public class TestReductionsLong extends TornadoTestBase {
         long[] result = new long[1];
         Arrays.fill(result, Integer.MAX_VALUE);
 
-        //@formatter:off
-        new TaskGraph("s0")
-                .task("t0", TestReductionsLong::minReductionAnnotation, input, result)
-                .streamOut(result)
+        new TaskGraph("s0") //
+                .transferToDevice(DataTransferMode.FIRST_EXECUTION, input) //
+                .task("t0", TestReductionsLong::minReductionAnnotation, input, result) //
+                .transferToHost(result) //
                 .execute();
-        //@formatter:on
 
         long[] sequential = new long[] { Long.MAX_VALUE };
         minReductionAnnotation(input, sequential);
@@ -180,9 +187,9 @@ public class TestReductionsLong extends TornadoTestBase {
 
         //@formatter:off
         new TaskGraph("s0")
-                .streamIn(input)
+                .transferToDevice(DataTransferMode.EVERY_EXECUTION, input)
                 .task("t0", TestReductionsLong::maxReductionAnnotation2, input, result)
-                .streamOut(result)
+                .transferToHost(result)
                 .execute();
         //@formatter:on
 
@@ -208,9 +215,9 @@ public class TestReductionsLong extends TornadoTestBase {
 
         //@formatter:off
         new TaskGraph("s0")
-                .streamIn(input)
+                .transferToDevice(DataTransferMode.EVERY_EXECUTION, input)
                 .task("t0", TestReductionsLong::minReductionAnnotation2, input, result)
-                .streamOut(result)
+                .transferToHost(result)
                 .execute();
         //@formatter:on
 

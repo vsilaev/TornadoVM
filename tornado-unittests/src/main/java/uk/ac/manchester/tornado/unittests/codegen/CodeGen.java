@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, APT Group, Department of Computer Science,
+ * Copyright (c) 2020, 2022 APT Group, Department of Computer Science,
  * The University of Manchester.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,17 +28,24 @@ import org.junit.Test;
 import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.common.TornadoDevice;
+import uk.ac.manchester.tornado.api.enums.DataTransferMode;
 import uk.ac.manchester.tornado.api.enums.TornadoDeviceType;
 import uk.ac.manchester.tornado.api.enums.TornadoVMBackendType;
 import uk.ac.manchester.tornado.api.runtime.TornadoRuntime;
 import uk.ac.manchester.tornado.unittests.common.TornadoTestBase;
 
+/**
+ * How to test?
+ *
+ * <code>
+ *     tornado-test -V uk.ac.manchester.tornado.unittests.codegen.CodeGen
+ * </code>
+ */
 public class CodeGen extends TornadoTestBase {
 
     public static void cascadeKernel(int grayIntegralImage[], int imageWidth, int imageHeight, int resultsXY[]) {
         for (@Parallel int y = 0; y < imageHeight; y++) {
             for (@Parallel int x = 0; x < imageWidth; x++) {
-                @SuppressWarnings("unused")
                 int gradient = grayIntegralImage[(y * imageWidth) + x];
             }
         }
@@ -96,7 +103,7 @@ public class CodeGen extends TornadoTestBase {
     @Test
     public void test01() {
 
-        TaskGraph ts = new TaskGraph("foo");
+        TaskGraph taskGraph = new TaskGraph("foo");
 
         int imageWidth = 512;
         int imageHeight = 512;
@@ -105,10 +112,11 @@ public class CodeGen extends TornadoTestBase {
 
         IntStream.range(0, imageHeight * imageHeight).forEach(x -> grayIntegralImage[x] = x);
 
-        ts.task("bar", CodeGen::cascadeKernel, grayIntegralImage, imageWidth, imageHeight, resultsXY) //
-                .streamOut(resultsXY);
+        taskGraph.transferToDevice(DataTransferMode.FIRST_EXECUTION, grayIntegralImage) //
+                .task("bar", CodeGen::cascadeKernel, grayIntegralImage, imageWidth, imageHeight, resultsXY) //
+                .transferToHost(resultsXY);
 
-        ts.execute();
+        taskGraph.execute();
     }
 
     private boolean isRunningOnCPU() {
@@ -121,9 +129,9 @@ public class CodeGen extends TornadoTestBase {
         if (isRunningOnCPU()) {
             return;
         }
-        TaskGraph ts = new TaskGraph("s0") //
+        TaskGraph taskGraph = new TaskGraph("s0") //
                 .task("t0", CodeGen::badCascadeKernel2);
-        ts.warmup();
+        taskGraph.warmup();
     }
 
     @Test
@@ -132,9 +140,9 @@ public class CodeGen extends TornadoTestBase {
         if (isRunningOnCPU()) {
             return;
         }
-        TaskGraph ts = new TaskGraph("s0") //
+        TaskGraph taskGraph = new TaskGraph("s0") //
                 .task("t0", CodeGen::badCascadeKernel3);
-        ts.warmup();
+        taskGraph.warmup();
     }
 
     @Test
@@ -143,9 +151,9 @@ public class CodeGen extends TornadoTestBase {
         if (isRunningOnCPU()) {
             return;
         }
-        TaskGraph ts = new TaskGraph("s0") //
+        TaskGraph taskGraph = new TaskGraph("s0") //
                 .task("t0", CodeGen::badCascadeKernel4);
-        ts.warmup();
+        taskGraph.warmup();
     }
 
     @Test
@@ -158,8 +166,9 @@ public class CodeGen extends TornadoTestBase {
         breakStatement(serial);
 
         new TaskGraph("break") //
+                .transferToDevice(DataTransferMode.EVERY_EXECUTION, a) //
                 .task("task", CodeGen::breakStatement, a) //
-                .streamOut(a) //
+                .transferToHost(a) //
                 .execute(); //
 
         assertArrayEquals(serial, a);

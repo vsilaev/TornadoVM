@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, APT Group, Department of Computer Science,
+ * Copyright (c) 2020, 2022, APT Group, Department of Computer Science,
  * The University of Manchester.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,9 +26,18 @@ import org.junit.Test;
 
 import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
+import uk.ac.manchester.tornado.api.enums.DataTransferMode;
 import uk.ac.manchester.tornado.unittests.common.TornadoNotSupported;
 import uk.ac.manchester.tornado.unittests.common.TornadoTestBase;
 
+/**
+ * <p>
+ * How to run?
+ * </p>
+ * <code>
+ *     tornado-test -V uk.ac.manchester.tornado.unittests.numpromotion.Types
+ * </code>
+ */
 public class Types extends TornadoTestBase {
 
     private static void b2b(byte[] input, byte[] output) {
@@ -90,9 +99,9 @@ public class Types extends TornadoTestBase {
         IntStream.range(0, input.length).forEach(x -> input[x] = (byte) r.nextInt(127));
 
         new TaskGraph("s0") //
-                .streamIn(input) //
+                .transferToDevice(DataTransferMode.EVERY_EXECUTION, input) //
                 .task("t0", Types::b2b, input, output) //
-                .streamOut(output) //
+                .transferToHost(output) //
                 .execute();
 
         b2b(input, seq);
@@ -112,9 +121,9 @@ public class Types extends TornadoTestBase {
         IntStream.range(0, input.length).forEach(x -> input[x] = (byte) r.nextInt(127));
 
         new TaskGraph("s0") //
-                .streamIn(input) //
+                .transferToDevice(DataTransferMode.EVERY_EXECUTION, input) //
                 .task("t0", Types::b2b, input, output) //
-                .streamOut(output) //
+                .transferToHost(output) //
                 .execute();
 
         b2b(input, seq);
@@ -134,9 +143,9 @@ public class Types extends TornadoTestBase {
         IntStream.range(0, input.length).forEach(x -> input[x] = (byte) r.nextInt(127));
 
         new TaskGraph("s0") //
-                .streamIn(input) //
+                .transferToDevice(DataTransferMode.EVERY_EXECUTION, input) //
                 .task("t0", Types::b2i, input, output) //
-                .streamOut(output) //
+                .transferToHost(output) //
                 .execute();
 
         b2i(input, seq);
@@ -156,9 +165,9 @@ public class Types extends TornadoTestBase {
         IntStream.range(0, input.length).forEach(x -> input[x] = (byte) r.nextInt(127));
 
         new TaskGraph("s0") //
-                .streamIn(input) //
+                .transferToDevice(DataTransferMode.EVERY_EXECUTION, input) //
                 .task("t0", Types::b2s, input, output) //
-                .streamOut(output) //
+                .transferToHost(output) //
                 .execute();
 
         b2s(input, seq);
@@ -178,9 +187,9 @@ public class Types extends TornadoTestBase {
         IntStream.range(0, input.length).forEach(x -> input[x] = (byte) r.nextInt(127));
 
         new TaskGraph("s0") //
-                .streamIn(input) //
+                .transferToDevice(DataTransferMode.EVERY_EXECUTION, input) //
                 .task("t0", Types::b2l, input, output) //
-                .streamOut(output) //
+                .transferToHost(output) //
                 .execute();
         b2l(input, seq);
         for (int i = 0; i < seq.length; i++) {
@@ -199,9 +208,9 @@ public class Types extends TornadoTestBase {
         IntStream.range(0, input.length).forEach(x -> input[x] = r.nextInt());
 
         new TaskGraph("s0") //
-                .streamIn(input) //
+                .transferToDevice(DataTransferMode.EVERY_EXECUTION, input) //
                 .task("t0", Types::i2l, input, output) //
-                .streamOut(output) //
+                .transferToHost(output) //
                 .execute();
 
         i2l(input, seq);
@@ -221,9 +230,9 @@ public class Types extends TornadoTestBase {
         IntStream.range(0, input.length).forEach(x -> input[x] = (short) r.nextInt(256));
 
         new TaskGraph("s0") //
-                .streamIn(input) //
+                .transferToDevice(DataTransferMode.EVERY_EXECUTION, input) //
                 .task("t0", Types::s2i, input, output) //
-                .streamOut(output) //
+                .transferToHost(output) //
                 .execute();
 
         s2i(input, seq);
@@ -243,9 +252,9 @@ public class Types extends TornadoTestBase {
         IntStream.range(0, input.length).forEach(x -> input[x] = r.nextFloat());
 
         new TaskGraph("s0") //
-                .streamIn(input) //
+                .transferToDevice(DataTransferMode.EVERY_EXECUTION, input) //
                 .task("t0", Types::f2d, input, output) //
-                .streamOut(output) //
+                .transferToHost(output) //
                 .execute();
 
         f2d(input, seq);
@@ -265,9 +274,9 @@ public class Types extends TornadoTestBase {
         IntStream.range(0, input.length).forEach(x -> input[x] = r.nextInt());
 
         new TaskGraph("s0") //
-                .streamIn(input) //
+                .transferToDevice(DataTransferMode.EVERY_EXECUTION, input) //
                 .task("t0", Types::i2d, input, output) //
-                .streamOut(output) //
+                .transferToHost(output) //
                 .execute();
 
         i2d(input, seq);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, APT Group, Department of Computer Science,
+ * Copyright (c) 2020, 2022, APT Group, Department of Computer Science,
  * The University of Manchester.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,8 +26,17 @@ import org.junit.Test;
 
 import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
+import uk.ac.manchester.tornado.api.enums.DataTransferMode;
 import uk.ac.manchester.tornado.unittests.common.TornadoTestBase;
 
+/**
+ * <p>
+ * How to test?
+ * </p>
+ * <code>
+ *     tornado-test -V uk.ac.manchester.tornado.unittests.flatmap.TestFlatMap
+ * </code>
+ */
 public class TestFlatMap extends TornadoTestBase {
 
     private static final int SIZE = 256;
@@ -54,11 +63,11 @@ public class TestFlatMap extends TornadoTestBase {
             input[i] = 50 + r.nextInt(100);
         });
 
-        TaskGraph ts = new TaskGraph("s0") //
-                .streamIn(input) //
+        TaskGraph taskGraph = new TaskGraph("s0") //
+                .transferToDevice(DataTransferMode.EVERY_EXECUTION, input) //
                 .task("t0", TestFlatMap::computeFlatMap, input, output, SIZE) //
-                .streamOut(output);
-        ts.execute();
+                .transferToHost(output);
+        taskGraph.execute();
 
         computeFlatMap(input, seq, SIZE);
 

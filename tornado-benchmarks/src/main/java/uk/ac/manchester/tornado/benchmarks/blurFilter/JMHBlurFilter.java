@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, APT Group, Department of Computer Science,
+ * Copyright (c) 2020, 2022, APT Group, Department of Computer Science,
  * The University of Manchester.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,8 +39,17 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
 
 import uk.ac.manchester.tornado.api.TaskGraph;
+import uk.ac.manchester.tornado.api.enums.DataTransferMode;
 import uk.ac.manchester.tornado.benchmarks.ComputeKernels;
 
+/**
+ * <p>
+ * How to run in isolation?
+ * </p>
+ * <code>
+ *    tornado -jar benchmarks/target/jmhbenchmarks.jar uk.ac.manchester.tornado.benchmarks.blurFilter.JMHBlurFilter
+ * </code>
+ */
 public class JMHBlurFilter {
 
     @State(Scope.Thread)
@@ -55,7 +64,7 @@ public class JMHBlurFilter {
         int[] greenFilter;
         int[] blueFilter;
         float[] filter;
-        TaskGraph ts;
+        TaskGraph taskGraph;
 
         @Setup(Level.Trial)
         public void doSetup() {
@@ -89,14 +98,14 @@ public class JMHBlurFilter {
                 }
             }
 
-            ts = new TaskGraph("blur") //
-                    .streamIn(redChannel, greenChannel, blueChannel) //
+            taskGraph = new TaskGraph("blur") //
+                    .transferToDevice(DataTransferMode.EVERY_EXECUTION, redChannel, greenChannel, blueChannel, filter) //
                     .task("red", ComputeKernels::channelConvolution, redChannel, redFilter, w, h, filter, FILTER_WIDTH) //
                     .task("green", ComputeKernels::channelConvolution, greenChannel, greenFilter, w, h, filter, FILTER_WIDTH) //
                     .task("blue", ComputeKernels::channelConvolution, blueChannel, blueFilter, w, h, filter, FILTER_WIDTH) //
-                    .streamOut(redFilter, greenFilter, blueFilter) //
+                    .transferToHost(redFilter, greenFilter, blueFilter) //
                     .useDefaultThreadScheduler(true);
-            ts.warmup();
+            taskGraph.warmup();
         }
     }
 
@@ -107,9 +116,9 @@ public class JMHBlurFilter {
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     @Fork(1)
     public void blurFilterJava(BenchmarkSetup state) {
-        ComputeKernels.channelConvolution(state.redChannel, state.redFilter, state.size, state.size, state.filter, BenchmarkSetup.FILTER_WIDTH);
-        ComputeKernels.channelConvolution(state.greenChannel, state.greenFilter, state.size, state.size, state.filter, BenchmarkSetup.FILTER_WIDTH);
-        ComputeKernels.channelConvolution(state.blueChannel, state.blueFilter, state.size, state.size, state.filter, BenchmarkSetup.FILTER_WIDTH);
+        ComputeKernels.channelConvolution(state.redChannel, state.redFilter, state.size, state.size, state.filter, state.FILTER_WIDTH);
+        ComputeKernels.channelConvolution(state.greenChannel, state.greenFilter, state.size, state.size, state.filter, state.FILTER_WIDTH);
+        ComputeKernels.channelConvolution(state.blueChannel, state.blueFilter, state.size, state.size, state.filter, state.FILTER_WIDTH);
     }
 
     @Benchmark
@@ -119,9 +128,9 @@ public class JMHBlurFilter {
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     @Fork(1)
     public void blurFilterTornado(BenchmarkSetup state, Blackhole blackhole) {
-        TaskGraph t = state.ts;
-        t.execute();
-        blackhole.consume(t);
+        TaskGraph taskGraph = state.taskGraph;
+        taskGraph.execute();
+        blackhole.consume(taskGraph);
     }
 
     public static void main(String[] args) throws RunnerException {

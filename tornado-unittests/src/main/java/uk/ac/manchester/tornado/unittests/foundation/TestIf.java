@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, APT Group, Department of Computer Science,
+ * Copyright (c) 2021, 2022, APT Group, Department of Computer Science,
  * The University of Manchester.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,8 +28,9 @@ import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.unittests.common.TornadoTestBase;
 
 /**
- * Run:
- * 
+ * <p>
+ * How to run?
+ * </p>
  * <code>
  *     tornado-test.py -V -f uk.ac.manchester.tornado.unittests.foundation.TestIf
  * </code>
@@ -47,7 +48,7 @@ public class TestIf extends TornadoTestBase {
 
         new TaskGraph("s0") //
                 .task("t0", TestKernels::testIfInt, a) //
-                .streamOut(a) //
+                .transferToHost(a) //
                 .execute(); //
 
         assertEquals(50, a[0]);
@@ -64,7 +65,7 @@ public class TestIf extends TornadoTestBase {
 
         new TaskGraph("s0") //
                 .task("t0", TestKernels::testIfInt2, a) //
-                .streamOut(a) //
+                .transferToHost(a) //
                 .execute(); //
 
         assertArrayEquals(expectedResult, a);
@@ -81,7 +82,7 @@ public class TestIf extends TornadoTestBase {
 
         new TaskGraph("s0") //
                 .task("t0", TestKernels::testIfInt3, a) //
-                .streamOut(a) //
+                .transferToHost(a) //
                 .execute(); //
 
         assertArrayEquals(expectedResult, a);
@@ -98,7 +99,7 @@ public class TestIf extends TornadoTestBase {
 
         new TaskGraph("s0") //
                 .task("t0", TestKernels::testIfInt4, a) //
-                .streamOut(a) //
+                .transferToHost(a) //
                 .execute(); //
 
         assertArrayEquals(expectedResult, a);
@@ -115,7 +116,7 @@ public class TestIf extends TornadoTestBase {
 
         new TaskGraph("s0") //
                 .task("t0", TestKernels::testIfInt5, a) //
-                .streamOut(a) //
+                .transferToHost(a) //
                 .execute(); //
 
         assertArrayEquals(expectedResult, a);
@@ -132,7 +133,7 @@ public class TestIf extends TornadoTestBase {
 
         new TaskGraph("s0") //
                 .task("t0", TestKernels::testIfInt6, a) //
-                .streamOut(a) //
+                .transferToHost(a) //
                 .execute(); //
 
         assertArrayEquals(expectedResult, a);

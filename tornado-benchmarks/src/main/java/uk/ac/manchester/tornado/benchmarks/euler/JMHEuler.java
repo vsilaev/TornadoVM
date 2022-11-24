@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, APT Group, Department of Computer Science,
+ * Copyright (c) 2020, 2022, APT Group, Department of Computer Science,
  * The University of Manchester.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,8 +38,17 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
 
 import uk.ac.manchester.tornado.api.TaskGraph;
+import uk.ac.manchester.tornado.api.enums.DataTransferMode;
 import uk.ac.manchester.tornado.benchmarks.ComputeKernels;
 
+/**
+ * <p>
+ * How to run in isolation?
+ * </p>
+ * <code>
+ *    tornado -jar benchmarks/target/jmhbenchmarks.jar uk.ac.manchester.tornado.benchmarks.euler.JMHEuler
+ * </code>
+ */
 public class JMHEuler {
 
     @State(Scope.Thread)
@@ -52,7 +61,7 @@ public class JMHEuler {
         long[] outputC;
         long[] outputD;
         long[] outputE;
-        private TaskGraph ts;
+        private TaskGraph taskGraph;
 
         private long[] init(int size) {
             long[] input = new long[size];
@@ -70,11 +79,11 @@ public class JMHEuler {
             outputC = new long[size];
             outputD = new long[size];
             outputE = new long[size];
-            ts = new TaskGraph("s0") //
-                    .streamIn(input) //
+            taskGraph = new TaskGraph("s0") //
+                    .transferToDevice(DataTransferMode.EVERY_EXECUTION, input) //
                     .task("s0", ComputeKernels::euler, size, input, outputA, outputB, outputC, outputD, outputE) //
-                    .streamOut(outputA, outputB, outputC, outputD, outputE);
-            ts.warmup();
+                    .transferToHost(outputA, outputB, outputC, outputD, outputE);
+            taskGraph.warmup();
         }
     }
 
@@ -95,9 +104,9 @@ public class JMHEuler {
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     @Fork(1)
     public void eulerTornado(BenchmarkSetup state, Blackhole blackhole) {
-        TaskGraph t = state.ts;
-        t.execute();
-        blackhole.consume(t);
+        TaskGraph taskGraph = state.taskGraph;
+        taskGraph.execute();
+        blackhole.consume(taskGraph);
     }
 
     public static void main(String[] args) throws RunnerException {

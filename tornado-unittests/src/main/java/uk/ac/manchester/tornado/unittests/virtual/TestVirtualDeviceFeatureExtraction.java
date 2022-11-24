@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, APT Group, Department of Computer Science,
+ * Copyright (c) 2020, 2022, APT Group, Department of Computer Science,
  * The University of Manchester.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,9 +30,18 @@ import org.junit.Test;
 import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.annotations.Reduce;
+import uk.ac.manchester.tornado.api.enums.DataTransferMode;
 import uk.ac.manchester.tornado.api.enums.TornadoVMBackendType;
 import uk.ac.manchester.tornado.unittests.common.TornadoTestBase;
 
+/**
+ * <p>
+ * How to run?
+ * </p>
+ * <code>
+ *     tornado-test -V --jvm="-Dtornado.device.desc=virtual-device-CPU.json -Dtornado.print.kernel=True -Dtornado.virtual.device=True -Dtornado.print.kernel.dir=virtualKernelOut.out" uk.ac.manchester.tornado.unittests.virtual.TestVirtualDeviceFeatureExtraction
+ * </code>
+ */
 public class TestVirtualDeviceFeatureExtraction extends TornadoTestBase {
 
     private static final byte TAB = 0x9;
@@ -69,9 +78,9 @@ public class TestVirtualDeviceFeatureExtraction extends TornadoTestBase {
 
         //@formatter:off
         new TaskGraph("s0")
-                .streamIn(input)
+                .transferToDevice(DataTransferMode.EVERY_EXECUTION, input)
                 .task("t0", TestVirtualDeviceFeatureExtraction::maxReduction, input, result)
-                .streamOut(result)
+                .transferToHost(result)
                 .execute();
         //@formatter:on
 

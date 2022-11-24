@@ -33,11 +33,19 @@ import uk.ac.manchester.tornado.api.TornadoVM_Intrinsics;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.common.Access;
 import uk.ac.manchester.tornado.api.common.TornadoDevice;
+import uk.ac.manchester.tornado.api.enums.DataTransferMode;
 import uk.ac.manchester.tornado.api.enums.TornadoVMBackendType;
 import uk.ac.manchester.tornado.api.runtime.TornadoRuntime;
 import uk.ac.manchester.tornado.unittests.common.TornadoNotSupported;
 import uk.ac.manchester.tornado.unittests.common.TornadoTestBase;
 
+/**
+ * How to test?
+ *
+ * <code>
+ *     tornado-test -V --fast uk.ac.manchester.tornado.unittests.atomics.TestAtomics
+ * </code>
+ */
 public class TestAtomics extends TornadoTestBase {
 
     /**
@@ -165,8 +173,9 @@ public class TestAtomics extends TornadoTestBase {
         Arrays.fill(b, 1);
 
         new TaskGraph("s0") //
+                .transferToDevice(DataTransferMode.FIRST_EXECUTION, a) //
                 .task("t0", TestAtomics::atomic03, a) //
-                .streamOut(a) //
+                .transferToHost(a) //
                 .execute();
 
         atomic03(b);
@@ -184,19 +193,19 @@ public class TestAtomics extends TornadoTestBase {
         int[] a = new int[size];
         Arrays.fill(a, 1);
 
-        TaskGraph ts = new TaskGraph("s0") //
+        TaskGraph taskGraph = new TaskGraph("s0") //
                 .task("t0", TestAtomics::atomic04, a) //
-                .streamOut(a); //
+                .transferToHost(a); //
 
-        ts.execute();
+        taskGraph.execute();
 
-        if (!ts.isFinished()) {
+        if (!taskGraph.isFinished()) {
             assertTrue(false);
         }
 
         // On GPUs and FPGAs, threads within the same work-group run in parallel.
         // Increments will be performed atomically when using TornadoAtomicInteger.
-        // However the order is not guaranteed. For this test, we need to check that
+        // However, the order is not guaranteed. For this test, we need to check that
         // there are not repeated values in the output array.
         boolean repeated = isValueRepeated(a);
         assertTrue(!repeated);
@@ -211,19 +220,19 @@ public class TestAtomics extends TornadoTestBase {
         int[] a = new int[size];
         Arrays.fill(a, 1);
 
-        TaskGraph ts = new TaskGraph("s0") //
+        TaskGraph taskGraph = new TaskGraph("s0") //
                 .task("t0", TestAtomics::atomic04Get, a) //
-                .streamOut(a); //
+                .transferToHost(a); //
 
-        ts.execute();
+        taskGraph.execute();
 
-        if (!ts.isFinished()) {
+        if (!taskGraph.isFinished()) {
             assertTrue(false);
         }
 
         // On GPUs and FPGAs, threads within the same work-group run in parallel.
         // Increments will be performed atomically when using TornadoAtomicInteger.
-        // However the order is not guaranteed. For this test, we need to check that
+        // However, the order is not guaranteed. For this test, we need to check that
         // there are not repeated values in the output array.
         boolean repeated = isValueRepeated(a);
         assertTrue(!repeated);
@@ -263,7 +272,7 @@ public class TestAtomics extends TornadoTestBase {
                         new int[] { 32 },
                         new int[]{155}     // Atomics - Initial Value
                         )
-                .streamOut(a)
+                .transferToHost(a)
                 .execute();
         // @formatter:on
 
@@ -282,14 +291,14 @@ public class TestAtomics extends TornadoTestBase {
         Arrays.fill(a, 1);
         Arrays.fill(b, 1);
 
-        TaskGraph ts = new TaskGraph("s0") //
-                .streamIn(a, b) //
+        TaskGraph taskGraph = new TaskGraph("s0") //
+                .transferToDevice(DataTransferMode.EVERY_EXECUTION, a, b) //
                 .task("t0", TestAtomics::atomic06, a, b) //
-                .streamOut(a, b); //
+                .transferToHost(a, b); //
 
-        ts.execute();
+        taskGraph.execute();
 
-        if (!ts.isFinished()) {
+        if (!taskGraph.isFinished()) {
             assertTrue(false);
         }
 
@@ -308,13 +317,14 @@ public class TestAtomics extends TornadoTestBase {
         int[] a = new int[size];
         Arrays.fill(a, 1);
 
-        TaskGraph ts = new TaskGraph("s0") //
+        TaskGraph taskGraph = new TaskGraph("s0") //
+                .transferToDevice(DataTransferMode.EVERY_EXECUTION, a) //
                 .task("t0", TestAtomics::atomic07, a) //
-                .streamOut(a); //
+                .transferToHost(a); //
 
-        ts.execute();
+        taskGraph.execute();
 
-        if (!ts.isFinished()) {
+        if (!taskGraph.isFinished()) {
             assertTrue(false);
         }
         boolean repeated = isValueRepeated(a);
@@ -330,13 +340,14 @@ public class TestAtomics extends TornadoTestBase {
         int[] a = new int[size];
         Arrays.fill(a, 1);
 
-        TaskGraph ts = new TaskGraph("s0") //
+        TaskGraph taskGraph = new TaskGraph("s0") //
+                .transferToDevice(DataTransferMode.EVERY_EXECUTION, a) //
                 .task("t0", TestAtomics::atomic08, a) //
-                .streamOut(a); //
+                .transferToHost(a); //
 
-        ts.execute();
+        taskGraph.execute();
 
-        if (!ts.isFinished()) {
+        if (!taskGraph.isFinished()) {
             assertTrue(false);
         }
         boolean repeated = isValueRepeated(a);
@@ -371,9 +382,9 @@ public class TestAtomics extends TornadoTestBase {
         AtomicInteger ai = new AtomicInteger(initialValue);
 
         new TaskGraph("s0") //
-                .streamIn(a, ai) //
+                .transferToDevice(DataTransferMode.EVERY_EXECUTION, a, ai) //
                 .task("t0", TestAtomics::atomic09, a, ai) //
-                .streamOut(a, ai) //
+                .transferToHost(a, ai) //
                 .execute();
 
         boolean repeated = isValueRepeated(a);
@@ -396,10 +407,10 @@ public class TestAtomics extends TornadoTestBase {
 
         AtomicInteger ai = new AtomicInteger(initialValue);
 
-        // We force a COPY_IN instead of STREAM_IN
         new TaskGraph("s0") //
+                .transferToDevice(DataTransferMode.EVERY_EXECUTION, a) //
                 .task("t0", TestAtomics::atomic09, a, ai) //
-                .streamOut(a, ai) //
+                .transferToHost(a, ai) //
                 .execute();
 
         boolean repeated = isValueRepeated(a);
@@ -422,11 +433,10 @@ public class TestAtomics extends TornadoTestBase {
 
         AtomicInteger ai = new AtomicInteger(initialValue);
 
-        // We force a COPY_IN instead of STREAM_IN
-        // Also, the atomic uses COPY_OUT non blocking call
         new TaskGraph("s0") //
+                .transferToDevice(DataTransferMode.EVERY_EXECUTION, a) //
                 .task("t0", TestAtomics::atomic09, a, ai) //
-                .streamOut(ai, a) //
+                .transferToHost(ai, a) //
                 .execute();
 
         boolean repeated = isValueRepeated(a);
@@ -453,8 +463,9 @@ public class TestAtomics extends TornadoTestBase {
         AtomicInteger bi = new AtomicInteger(initialValueB);
 
         new TaskGraph("s0") //
+                .transferToDevice(DataTransferMode.EVERY_EXECUTION, a) //
                 .task("t0", TestAtomics::atomic10, a, ai, bi) //
-                .streamOut(ai, a, bi) //
+                .transferToHost(ai, a, bi) //
                 .execute();
 
         boolean repeated = isValueRepeated(a);
@@ -482,8 +493,9 @@ public class TestAtomics extends TornadoTestBase {
         AtomicInteger ai = new AtomicInteger(initialValueA);
 
         new TaskGraph("s0") //
+                .transferToDevice(DataTransferMode.EVERY_EXECUTION, a) //
                 .task("t0", TestAtomics::atomic13, a, ai) //
-                .streamOut(ai, a) //
+                .transferToHost(ai, a) //
                 .execute();
 
         boolean repeated = isValueRepeated(a);
@@ -509,8 +521,9 @@ public class TestAtomics extends TornadoTestBase {
         AtomicInteger bi = new AtomicInteger(initialValueB);
 
         new TaskGraph("s0") //
+                .transferToDevice(DataTransferMode.EVERY_EXECUTION, a) //
                 .task("t0", TestAtomics::atomic14, a, ai, bi) //
-                .streamOut(ai, a, bi) //
+                .transferToHost(ai, a, bi) //
                 .execute();
 
         int lastValue = ai.get();
@@ -534,8 +547,9 @@ public class TestAtomics extends TornadoTestBase {
         AtomicInteger ai = new AtomicInteger(initialValueA);
 
         new TaskGraph("s0") //
+                .transferToDevice(DataTransferMode.EVERY_EXECUTION, a) //
                 .task("t0", TestAtomics::atomic15, a, ai) //
-                .streamOut(ai, a) //
+                .transferToHost(ai, a) //
                 .execute();
 
         int lastValue = ai.get();
@@ -558,14 +572,14 @@ public class TestAtomics extends TornadoTestBase {
         final int initialValueA = 311;
         AtomicInteger ai = new AtomicInteger(initialValueA);
 
-        TaskGraph ts = new TaskGraph("s0") //
-                .streamIn(ai) //
+        TaskGraph taskGraph = new TaskGraph("s0") //
+                .transferToDevice(DataTransferMode.EVERY_EXECUTION, a, ai) //
                 .task("t0", TestAtomics::atomic16, a, ai) //
-                .streamOut(ai, a);
+                .transferToHost(ai, a);
 
         final int iterations = 50;
         IntStream.range(0, iterations).forEach(i -> {
-            ts.execute();
+            taskGraph.execute();
         });
 
         int lastValue = ai.get();

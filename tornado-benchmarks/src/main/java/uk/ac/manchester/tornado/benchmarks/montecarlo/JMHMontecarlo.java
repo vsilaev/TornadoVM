@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, APT Group, Department of Computer Science,
+ * Copyright (c) 2020, 2022, APT Group, Department of Computer Science,
  * The University of Manchester.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,21 +42,29 @@ import org.openjdk.jmh.runner.options.TimeValue;
 import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.benchmarks.ComputeKernels;
 
+/**
+ * <p>
+ * How to run in isolation?
+ * </p>
+ * <code>
+ *    tornado -jar benchmarks/target/jmhbenchmarks.jar uk.ac.manchester.tornado.benchmarks.montecarlo.JMHMontecarlo
+ * </code>
+ */
 public class JMHMontecarlo {
     @State(Scope.Thread)
     public static class BenchmarkSetup {
 
         private int size = Integer.parseInt(System.getProperty("x", "8192"));
         private float[] output;
-        private TaskGraph ts;
+        private TaskGraph taskGraph;
 
         @Setup(Level.Trial)
         public void doSetup() {
             output = new float[size];
-            ts = new TaskGraph("benchmark") //
+            taskGraph = new TaskGraph("benchmark") //
                     .task("montecarlo", ComputeKernels::monteCarlo, output, size) //
-                    .streamOut(output);
-            ts.warmup();
+                    .transferToHost(output);
+            taskGraph.warmup();
         }
     }
 
@@ -77,9 +85,9 @@ public class JMHMontecarlo {
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     @Fork(1)
     public void montecarloTornado(BenchmarkSetup state, Blackhole blackhole) {
-        TaskGraph t = state.ts;
-        t.execute();
-        blackhole.consume(t);
+        TaskGraph taskGraph = state.taskGraph;
+        taskGraph.execute();
+        blackhole.consume(taskGraph);
     }
 
     public static void main(String[] args) throws RunnerException {

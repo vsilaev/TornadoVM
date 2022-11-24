@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, APT Group, Department of Computer Science,
+ * Copyright (c) 2021, 2022, APT Group, Department of Computer Science,
  * The University of Manchester.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,18 +35,23 @@ import uk.ac.manchester.tornado.api.KernelContext;
 import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.WorkerGrid;
 import uk.ac.manchester.tornado.api.WorkerGrid2D;
+import uk.ac.manchester.tornado.api.enums.DataTransferMode;
 
 /**
  * Program taken from the Marawacc parallel programming framework with the
  * permission from the author.
  *
+ * <p>
  * It takes an input coloured input image and transforms it into a grey-scale
  * image.
+ * </p>
  *
+ * <p>
  * How to run?
+ * </p>
  *
  * <code>
- * $ tornado uk.ac.manchester.tornado.examples.kernelcontext.compute.BlackAndWhiteTransform 
+ * $ tornado -m tornado.examples/uk.ac.manchester.tornado.examples.kernelcontext.compute.BlackAndWhiteTransform
  * </code>
  *
  *
@@ -121,6 +126,7 @@ public class BlackAndWhiteTransform {
         private void parallelComputation(Graphics g) {
             int w = image.getWidth();
             int s = image.getHeight();
+            int size = w * s;
 
             int[] imageRGB = new int[w * s];
 
@@ -141,7 +147,9 @@ public class BlackAndWhiteTransform {
                     KernelContext context = new KernelContext();
 
                     tornadoTask = new TaskGraph("s0");
-                    tornadoTask.streamIn(imageRGB).task("t0", LoadImage::compute2D, context, imageRGB, w, s).streamOut(imageRGB);
+                    tornadoTask.transferToDevice(DataTransferMode.EVERY_EXECUTION, imageRGB) //
+                            .task("t0", LoadImage::compute2D, context, imageRGB, w, s) //
+                            .transferToHost(imageRGB);
 
                 }
                 // [Optional] Set the global work group

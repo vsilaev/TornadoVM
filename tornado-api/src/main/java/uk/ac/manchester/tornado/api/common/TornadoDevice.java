@@ -2,7 +2,7 @@
  * This file is part of Tornado: A heterogeneous programming framework:
  * https://github.com/beehive-lab/tornadovm
  *
- * Copyright (c) 2013-2020, APT Group, Department of Computer Science,
+ * Copyright (c) 2013-2020, 2022, APT Group, Department of Computer Science,
  * The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -56,7 +56,7 @@ public interface TornadoDevice {
 
     /**
      * It allocates an object in the pre-defined heap of the target device. It also
-     * ensure that there is enough space for the input object.
+     * ensures that there is enough space for the input object.
      *
      * @param object
      *            to be allocated
@@ -70,7 +70,7 @@ public interface TornadoDevice {
      */
     int allocate(Object object, long batchSize, TornadoDeviceObjectState state);
 
-    int allocateBulk(Object[] objects, long batchSize, TornadoDeviceObjectState[] states);
+    int allocateObjects(Object[] objects, long batchSize, TornadoDeviceObjectState[] states);
 
     int deallocate(TornadoDeviceObjectState state);
 

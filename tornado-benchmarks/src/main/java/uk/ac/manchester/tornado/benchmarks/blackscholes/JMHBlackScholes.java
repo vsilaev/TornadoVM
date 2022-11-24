@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, APT Group, Department of Computer Science,
+ * Copyright (c) 2020, 2022, APT Group, Department of Computer Science,
  * The University of Manchester.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,8 +38,17 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
 
 import uk.ac.manchester.tornado.api.TaskGraph;
+import uk.ac.manchester.tornado.api.enums.DataTransferMode;
 import uk.ac.manchester.tornado.benchmarks.ComputeKernels;
 
+/**
+ * <p>
+ * How to run in isolation?
+ * </p>
+ * <code>
+ *    tornado -jar benchmarks/target/jmhbenchmarks.jar uk.ac.manchester.tornado.benchmarks.blackscholes.JMHBlackScholes
+ * </code>
+ */
 public class JMHBlackScholes {
 
     @State(Scope.Thread)
@@ -49,7 +58,7 @@ public class JMHBlackScholes {
         float[] randArray;
         float[] call;
         float[] put;
-        TaskGraph ts;
+        TaskGraph taskGraph;
 
         @Setup(Level.Trial)
         public void doSetup() {
@@ -61,11 +70,12 @@ public class JMHBlackScholes {
                 randArray[i] = (i * 1.0f) / size;
             }
 
-            ts = new TaskGraph("benchmark") //
+            taskGraph = new TaskGraph("benchmark") //
+                    .transferToDevice(DataTransferMode.EVERY_EXECUTION, randArray) //
                     .task("t0", ComputeKernels::blackscholes, randArray, put, call) //
-                    .streamOut(put, call);
+                    .transferToHost(put, call);
 
-            ts.warmup();
+            taskGraph.warmup();
         }
     }
 
@@ -86,7 +96,7 @@ public class JMHBlackScholes {
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     @Fork(1)
     public void blachcholesTornado(BenchmarkSetup state, Blackhole blackhole) {
-        TaskGraph t = state.ts;
+        TaskGraph t = state.taskGraph;
         t.execute();
         blackhole.consume(t);
     }

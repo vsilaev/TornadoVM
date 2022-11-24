@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, APT Group, Department of Computer Science,
+ * Copyright (c) 2020, 2022, APT Group, Department of Computer Science,
  * The University of Manchester.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,8 +41,17 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
 
 import uk.ac.manchester.tornado.api.TaskGraph;
+import uk.ac.manchester.tornado.api.enums.DataTransferMode;
 import uk.ac.manchester.tornado.benchmarks.ComputeKernels;
 
+/**
+ * <p>
+ * How to run in isolation?
+ * </p>
+ * <code>
+ *    tornado -jar benchmarks/target/jmhbenchmarks.jar uk.ac.manchester.tornado.benchmarks.nbody.JMHNBody
+ * </code>
+ */
 public class JMHNBody {
     @State(Scope.Thread)
     public static class BenchmarkSetup {
@@ -53,7 +62,7 @@ public class JMHNBody {
         float[] velSeq;
         private float[] posSeq;
 
-        private TaskGraph ts;
+        private TaskGraph taskGraph;
 
         @Setup(Level.Trial)
         public void doSetup() {
@@ -80,10 +89,10 @@ public class JMHNBody {
                 System.arraycopy(auxVelocityZero, 0, velSeq, 0, auxVelocityZero.length);
             }
 
-            ts = new TaskGraph("benchmark") //
-                    .streamIn(velSeq, posSeq) //
+            taskGraph = new TaskGraph("benchmark") //
+                    .transferToDevice(DataTransferMode.EVERY_EXECUTION, velSeq, posSeq) //
                     .task("t0", ComputeKernels::nBody, numBodies, posSeq, velSeq, delT, espSqr);
-            ts.warmup();
+            taskGraph.warmup();
         }
     }
 
@@ -104,9 +113,9 @@ public class JMHNBody {
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     @Fork(1)
     public void nbodyTornado(BenchmarkSetup state, Blackhole blackhole) {
-        TaskGraph t = state.ts;
-        t.execute();
-        blackhole.consume(t);
+        TaskGraph taskGraph = state.taskGraph;
+        taskGraph.execute();
+        blackhole.consume(taskGraph);
     }
 
     public static void main(String[] args) throws RunnerException {

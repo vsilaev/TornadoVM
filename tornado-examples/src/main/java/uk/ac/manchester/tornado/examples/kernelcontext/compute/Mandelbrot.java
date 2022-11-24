@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, APT Group, Department of Computer Science,
+ * Copyright (c) 2021-2022 APT Group, Department of Computer Science,
  * The University of Manchester.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,9 +36,17 @@ import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.WorkerGrid;
 import uk.ac.manchester.tornado.api.WorkerGrid2D;
 
+/**
+ * <p>
+ * How to run?
+ * </p>
+ * <code>
+ *      $ tornado --threadInfo -m tornado.examples/uk.ac.manchester.tornado.examples.kernelcontext.compute.Mandelbrot
+ * </code>
+ */
 public class Mandelbrot {
 
-    public final static int SIZE = 256;
+    public static final int SIZE = 256;
     public static final boolean USE_TORNADO = true;
 
     @SuppressWarnings("serial")
@@ -151,7 +159,7 @@ public class Mandelbrot {
                 TaskGraph s0 = new TaskGraph("s0");
 
                 s0.task("t0", MandelbrotImage::mandelbrotTornado, context, SIZE, result);
-                s0.streamOut(result).execute(gridScheduler);
+                s0.transferToHost(result).execute(gridScheduler);
                 this.image = writeFile(result, SIZE);
             }
             // draw the image

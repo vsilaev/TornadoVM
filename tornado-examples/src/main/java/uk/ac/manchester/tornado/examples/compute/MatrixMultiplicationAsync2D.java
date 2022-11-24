@@ -23,6 +23,7 @@ import java.util.concurrent.CountDownLatch;
 import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.collections.types.Matrix2DFloat;
+import uk.ac.manchester.tornado.api.enums.DataTransferMode;
 
 public class MatrixMultiplicationAsync2D {
 
@@ -70,10 +71,10 @@ public class MatrixMultiplicationAsync2D {
         //@formatter:off
         TaskGraph t = new TaskGraph("s0")
                 .task("t0", MatrixMultiplicationAsync2D::matrixMultiplication, matrixA, matrixB, matrixC, size)
-                .streamIn(matrixA)  
-                .streamIn(matrixB)
-                .streamIn(matrixC)    
-                .streamOut(matrixC);
+                .transferToDevice(DataTransferMode.FIRST_EXECUTION, matrixA)  
+                .transferToDevice(DataTransferMode.FIRST_EXECUTION, matrixB)
+                .transferToDevice(DataTransferMode.FIRST_EXECUTION, matrixC)    
+                .transferToHost(matrixC);
         //@formatter:on
 
         double flops = 2 * Math.pow(size, 3);

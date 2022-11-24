@@ -47,11 +47,14 @@ import org.graalvm.compiler.nodes.StructuredGraph;
 
 import jdk.vm.ci.code.InstalledCode;
 import jdk.vm.ci.code.InvalidInstalledCodeException;
+import uk.ac.manchester.tornado.api.KernelContext;
 import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.common.TaskPackage;
 import uk.ac.manchester.tornado.api.common.TornadoDevice;
+import uk.ac.manchester.tornado.api.enums.DataTransferMode;
 import uk.ac.manchester.tornado.api.enums.TornadoDeviceType;
 import uk.ac.manchester.tornado.api.exceptions.TornadoRuntimeException;
+import uk.ac.manchester.tornado.api.exceptions.TornadoTaskRuntimeException;
 import uk.ac.manchester.tornado.api.mm.TaskMetaDataInterface;
 import uk.ac.manchester.tornado.api.runtime.TornadoRuntime;
 import uk.ac.manchester.tornado.runtime.TornadoCoreRuntime;
@@ -85,25 +88,28 @@ class ReduceTaskGraph {
         }
     }
     
-    private TornadoTaskGraph owner;
-    private List<TaskPackage> taskPackages;
-    private List<Object> streamOutObjects;
-    private List<Object> streamInObjects;
+    private final TornadoTaskGraph owner;
+    private final List<TaskPackage> taskPackages;
+    private final List<Object> streamOutObjects;
+    private final ArrayList<Object> streamInObjects;
+    private final List<StreamingObject> streamingObjects;
+    
     private Map<Object, Object> originalReduceVariables;
     private Map<Object, Object> hostHybridVariables = new ConcurrentHashMap<>();
     private Map<Object, Object> neutralElementsNew = new HashMap<>();
     private Map<Object, Object> neutralElementsOriginal = new HashMap<>();
-    private TaskGraph rewrittenTaskSchedule;
+    private TaskGraph rewrittenTaskGraph;
     private Map<Object, LinkedList<Integer>> reduceOperandTable;
     private CachedGraph<?> sketchGraph;
     private boolean hybridMode;
     private Map<Object, REDUCE_OPERATION> hybridMergeTable;
     private List<CompletableFuture<CompiledTaskPackage>> compilationHostJobs = new ArrayList<>();
     
-    ReduceTaskGraph(TornadoTaskGraph owner, List<TaskPackage> taskPackages, List<Object> streamInObjects, List<Object> streamOutObjects, CachedGraph<?> graph) {
+    ReduceTaskGraph(TornadoTaskGraph owner, List<TaskPackage> taskPackages, List<Object> streamInObjects, List<StreamingObject> streamingObjects, List<Object> streamOutObjects, CachedGraph<?> graph) {
         this.owner = owner;
         this.taskPackages = taskPackages;
-        this.streamInObjects = streamInObjects;
+        this.streamInObjects = (ArrayList<Object>)streamInObjects;
+        this.streamingObjects = streamingObjects;
         this.streamOutObjects = streamOutObjects;
         this.sketchGraph = graph;
     }
@@ -321,19 +327,12 @@ class ReduceTaskGraph {
                 // Update table that consistency between input variables and reduce tasks.
                 // This part is used to STREAM_IN data when performing multiple reductions in
                 // the same task-schedule
-                if (tableReduce.containsKey(taskNumber)) {
-                    if (!reduceOperandTable.containsKey(streamInObject)) {
-                        LinkedList<Integer> taskList = new LinkedList<>();
-                        taskList.add(taskNumber);
-                        reduceOperandTable.put(streamInObject, taskList);
-                    } 
-                    // Was removed by the following
-                    // [fix] Multiple reduction tasks within the same TaskSchedule
-                    /*else {
-                        reduceOperandTable.get(streamInObject).add(taskNumber);
-                    }
-                    */
+                if (tableReduce.containsKey(taskNumber) && (!reduceOperandTable.containsKey(streamInObject))) {
+                    LinkedList<Integer> taskList = new LinkedList<>();
+                    taskList.add(taskNumber);
+                    reduceOperandTable.put(streamInObject, taskList);
                 }
+
                 if (originalReduceVariables.containsKey(streamInObject)) {
                     streamInObjects.set(i, originalReduceVariables.get(streamInObject));
                 }
@@ -344,7 +343,13 @@ class ReduceTaskGraph {
                 streamInObjects.add(reduceArray.getValue());
             }
 
-            TornadoTaskGraph.performStreamInThread(rewrittenTaskSchedule, streamInObjects);
+            TornadoTaskGraph.performStreamInObject(rewrittenTaskGraph, streamInObjects, DataTransferMode.EVERY_EXECUTION);
+
+            for (StreamingObject so : streamingObjects) {
+                if (so.getMode() == DataTransferMode.FIRST_EXECUTION) {
+                    TornadoTaskGraph.performStreamInObject(rewrittenTaskGraph, so.getObject(), DataTransferMode.FIRST_EXECUTION);
+                }
+            }
 
             for (int i = 0; i < streamOutObjects.size(); i++) {
                 Object streamOutObject = streamOutObjects.get(i);
@@ -508,9 +513,9 @@ class ReduceTaskGraph {
             }
         }
 
-        rewrittenTaskSchedule = new TaskGraph(taskScheduleReduceName);
+        rewrittenTaskGraph = new TaskGraph(taskScheduleReduceName);
         // Inherit device of the owning schedule   
-        rewrittenTaskSchedule.setDevice(owner.getDevice());
+        rewrittenTaskGraph.setDevice(owner.getDevice());
         
         updateStreamInOutVariables(metaReduceTable.getTable());
 
@@ -543,7 +548,7 @@ class ReduceTaskGraph {
                     Object parameterToMethod = taskPackage.getTaskParameters()[i + 1];
                     if (reduceOperandTable.containsKey(parameterToMethod)) {
                         if (reduceOperandTable.get(parameterToMethod).size() > 1) {
-                            rewrittenTaskSchedule.forceCopyIn(parameterToMethod);
+                            rewrittenTaskGraph.transferToDevice(DataTransferMode.FIRST_EXECUTION, parameterToMethod);
                         }
                     }
                 }
@@ -560,13 +565,13 @@ class ReduceTaskGraph {
             ));
 
             if (propertiesOverride.isEmpty()) {
-                rewrittenTaskSchedule.addTask(taskPackage);
+                rewrittenTaskGraph.addTask(taskPackage);
             } else {
                 // Execute with overriden gloabl/local FPGA dimensions (inherited from parent task)
-                AbstractMetaData.withPropertiesOverride(propertiesOverride, () -> rewrittenTaskSchedule.addTask(taskPackage));
+                AbstractMetaData.withPropertiesOverride(propertiesOverride, () -> rewrittenTaskGraph.addTask(taskPackage));
             }
             // Inherit device of the original task
-            rewrittenTaskSchedule.setDeviceForTask(taskScheduleReduceName + "." + taskPackage.getId(), originalDevice);
+            rewrittenTaskGraph.setDeviceForTask(taskScheduleReduceName + "." + taskPackage.getId(), originalDevice);
 
             // Add extra task with the final reduction
             if (tableReduce.containsKey(taskNumber)) {
@@ -594,23 +599,23 @@ class ReduceTaskGraph {
 
                         switch (operation) {
                             case ADD:
-                                ReduceFactory.handleAdd(newArray, rewrittenTaskSchedule, sizeReduceArray, newTaskSequentialName);
+                                ReduceFactory.handleAdd(newArray, rewrittenTaskGraph, sizeReduceArray, newTaskSequentialName);
                                 break;
                             case MUL:
-                                ReduceFactory.handleMul(newArray, rewrittenTaskSchedule, sizeReduceArray, newTaskSequentialName);
+                                ReduceFactory.handleMul(newArray, rewrittenTaskGraph, sizeReduceArray, newTaskSequentialName);
                                 break;
                             case MAX:
-                                ReduceFactory.handleMax(newArray, rewrittenTaskSchedule, sizeReduceArray, newTaskSequentialName);
+                                ReduceFactory.handleMax(newArray, rewrittenTaskGraph, sizeReduceArray, newTaskSequentialName);
                                 break;
                             case MIN:
-                                ReduceFactory.handleMin(newArray, rewrittenTaskSchedule, sizeReduceArray, newTaskSequentialName);
+                                ReduceFactory.handleMin(newArray, rewrittenTaskGraph, sizeReduceArray, newTaskSequentialName);
                                 break;
                             default:
                                 throw new TornadoRuntimeException("[ERROR] Reduce operation not supported yet.");
                         }
                         
                         // Inherit device of the original task
-                        rewrittenTaskSchedule.setDeviceForTask(taskScheduleReduceName + "." + newTaskSequentialName, originalDevice);
+                        rewrittenTaskGraph.setDeviceForTask(taskScheduleReduceName + "." + newTaskSequentialName, originalDevice);
 
                         if (hybridMode) {
                             if (hybridMergeTable == null) {
@@ -622,15 +627,42 @@ class ReduceTaskGraph {
                 }
             }
         }
-        TornadoTaskGraph.performStreamOutThreads(rewrittenTaskSchedule, streamOutObjects);
+        TornadoTaskGraph.performStreamOutThreads(rewrittenTaskGraph, streamOutObjects);
         executeExpression();
-        return rewrittenTaskSchedule;
+        return rewrittenTaskGraph;
+    }
+
+    private boolean checkAllArgumentsPerTask() {
+        for (TaskPackage task : taskPackages) {
+            Object[] taskParameters = task.getTaskParameters();
+            // Note: the first element in the object list is a lambda expression
+            // (computation)
+            for (int i = 1; i < (taskParameters.length - 1); i++) {
+                Object parameter = taskParameters[i];
+                if (parameter instanceof Number || parameter instanceof KernelContext) {
+                    continue;
+                }
+                if (!rewrittenTaskGraph.getArgumentsLookup().contains(parameter)) {
+                    throw new TornadoTaskRuntimeException(
+                            "Parameter #" + i + " <" + parameter + "> from task <" + task.getId() + "> not specified either in transferToDevice or transferToHost functions");
+                }
+            }
+        }
+        return true;
     }
 
     void executeExpression() {
+        // check parameter list
+        if (TornadoOptions.FORCE_CHECK_PARAMETERS) {
+            try {
+                checkAllArgumentsPerTask();
+            } catch (TornadoTaskRuntimeException tre) {
+                throw tre;
+            }
+        }
         setNeutralElement();
         List<CompletableFuture<?>> runningHostJobs = forkSequentialHostJobs();
-        rewrittenTaskSchedule.execute();
+        rewrittenTaskGraph.execute();
         awaitSequentialHostJobs(runningHostJobs);
         updateOutputArray();
     }
@@ -647,7 +679,7 @@ class ReduceTaskGraph {
         if (runningHostJobs != null && !runningHostJobs.isEmpty()) {
             CompletableFuture.allOf(runningHostJobs.toArray(new CompletableFuture[0])).whenComplete((__, ex) -> {
                 if (null != ex) {
-                    ex.printStackTrace();
+                    ex.printStackTrace(System.err);
                 }
             }).join();
         }

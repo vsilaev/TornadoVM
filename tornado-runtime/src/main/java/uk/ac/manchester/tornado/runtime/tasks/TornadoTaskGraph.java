@@ -69,6 +69,7 @@ import org.graalvm.compiler.phases.util.Providers;
 import jdk.vm.ci.meta.ResolvedJavaMethod;
 import uk.ac.manchester.tornado.api.AbstractTaskGraph;
 import uk.ac.manchester.tornado.api.GridScheduler;
+import uk.ac.manchester.tornado.api.KernelContext;
 import uk.ac.manchester.tornado.api.Policy;
 import uk.ac.manchester.tornado.api.TaskGraph;
 import uk.ac.manchester.tornado.api.TornadoDriver;
@@ -94,14 +95,16 @@ import uk.ac.manchester.tornado.api.common.TornadoFunctions.Task6;
 import uk.ac.manchester.tornado.api.common.TornadoFunctions.Task7;
 import uk.ac.manchester.tornado.api.common.TornadoFunctions.Task8;
 import uk.ac.manchester.tornado.api.common.TornadoFunctions.Task9;
+import uk.ac.manchester.tornado.api.enums.DataTransferMode;
 import uk.ac.manchester.tornado.api.enums.TornadoDeviceType;
 import uk.ac.manchester.tornado.api.enums.TornadoExecutionStatus;
 import uk.ac.manchester.tornado.api.exceptions.TornadoBailoutRuntimeException;
 import uk.ac.manchester.tornado.api.exceptions.TornadoDeviceFP64NotSupported;
+import uk.ac.manchester.tornado.api.exceptions.TornadoDynamicReconfigurationException;
 import uk.ac.manchester.tornado.api.exceptions.TornadoRuntimeException;
+import uk.ac.manchester.tornado.api.exceptions.TornadoTaskRuntimeException;
 import uk.ac.manchester.tornado.api.profiler.ProfilerType;
 import uk.ac.manchester.tornado.api.profiler.TornadoProfiler;
-import uk.ac.manchester.tornado.api.runtime.TornadoRuntime;
 import uk.ac.manchester.tornado.runtime.TornadoCoreRuntime;
 import uk.ac.manchester.tornado.runtime.TornadoVM;
 import uk.ac.manchester.tornado.runtime.analyzer.MetaReduceCodeAnalysis;
@@ -135,7 +138,7 @@ public class TornadoTaskGraph implements AbstractTaskGraph {
     /**
      * Options for Dynamic Reconfiguration
      */
-    private static final boolean EXEPERIMENTAL_MULTI_HOST_HEAP = false;
+    private static final boolean EXPERIMENTAL_MULTI_HOST_HEAP = false;
     @SuppressWarnings("unused")
     private static final int DEFAULT_DRIVER_INDEX = 0;
     private static final int PERFORMANCE_WARMUP = 3;
@@ -168,12 +171,16 @@ public class TornadoTaskGraph implements AbstractTaskGraph {
     private Map<TornadoAcceleratorDevice, TornadoVM> vmTable;
     private Event event;
     private String taskScheduleName;
-    private ArrayList<TaskPackage> taskPackages = new ArrayList<>();
+    private List<TaskPackage> taskPackages = new ArrayList<>();
     private List<Object> streamOutObjects = new ArrayList<>();
     private List<Object> streamInObjects = new ArrayList<>();
+
+    private HashSet<Object> argumentsLookUp = new HashSet<>();
+
+    private List<StreamingObject> streamingInputObjects = new ArrayList<>();
     private ConcurrentHashMap<Policy, Integer> policyTimeTable = new ConcurrentHashMap<>();
-    private ConcurrentHashMap<Integer, ArrayList<Object>> multiHeapManagerOutputs = new ConcurrentHashMap<>();
-    private ConcurrentHashMap<Integer, ArrayList<Object>> multiHeapManagerInputs = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<Integer, List<Object>> multiHeapManagerOutputs = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<Integer, List<Object>> multiHeapManagerInputs = new ConcurrentHashMap<>();
     private ConcurrentHashMap<Integer, TaskGraph> taskScheduleIndex = new ConcurrentHashMap<>();
     private StringBuilder bufferLogProfiler = new StringBuilder();
     private CachedGraph<?> graph;
@@ -210,64 +217,70 @@ public class TornadoTaskGraph implements AbstractTaskGraph {
         this.taskScheduleName = taskScheduleName;
         vmTable = new HashMap<>();
     }
-    
 
-    static void performStreamInThread(TaskGraph task, List<Object> inputObjects) {
+    static void performStreamInObject(TaskGraph task, Object inputObject, final int dataTransferMode) {
+        task.transferToDevice(dataTransferMode, inputObject);
+    }
+
+    static void performStreamInObject(TaskGraph task, List<Object> inputObjects, final int dataTransferMode) {
         int numObjectsCopyIn = inputObjects.size();
         switch (numObjectsCopyIn) {
             case 0:
                 break;
             case 1:
-                task.streamIn(inputObjects.get(0));
+                task.transferToDevice(dataTransferMode, inputObjects.get(0));
                 break;
             case 2:
-                task.streamIn(inputObjects.get(0), inputObjects.get(1));
+                task.transferToDevice(dataTransferMode, inputObjects.get(0), inputObjects.get(1));
                 break;
             case 3:
-                task.streamIn(inputObjects.get(0), inputObjects.get(1), inputObjects.get(2));
+                task.transferToDevice(dataTransferMode, inputObjects.get(0), inputObjects.get(1), inputObjects.get(2));
                 break;
             case 4:
-                task.streamIn(inputObjects.get(0), inputObjects.get(1), inputObjects.get(2), inputObjects.get(3));
+                task.transferToDevice(dataTransferMode, inputObjects.get(0), inputObjects.get(1), inputObjects.get(2), inputObjects.get(3));
                 break;
             case 5:
-                task.streamIn(inputObjects.get(0), inputObjects.get(1), inputObjects.get(2), inputObjects.get(3), inputObjects.get(4));
+                task.transferToDevice(dataTransferMode, inputObjects.get(0), inputObjects.get(1), inputObjects.get(2), inputObjects.get(3), inputObjects.get(4));
                 break;
             case 6:
-                task.streamIn(inputObjects.get(0), inputObjects.get(1), inputObjects.get(2), inputObjects.get(3), inputObjects.get(4), inputObjects.get(5));
+                task.transferToDevice(dataTransferMode, inputObjects.get(0), inputObjects.get(1), inputObjects.get(2), inputObjects.get(3), inputObjects.get(4), inputObjects.get(5));
                 break;
             case 7:
-                task.streamIn(inputObjects.get(0), inputObjects.get(1), inputObjects.get(2), inputObjects.get(3), inputObjects.get(4), inputObjects.get(5), inputObjects.get(6));
+                task.transferToDevice(dataTransferMode, inputObjects.get(0), inputObjects.get(1), inputObjects.get(2), inputObjects.get(3), inputObjects.get(4), inputObjects.get(5),
+                        inputObjects.get(6));
                 break;
             case 8:
-                task.streamIn(inputObjects.get(0), inputObjects.get(1), inputObjects.get(2), inputObjects.get(3), inputObjects.get(4), inputObjects.get(5), inputObjects.get(6), inputObjects.get(7));
+                task.transferToDevice(dataTransferMode, inputObjects.get(0), inputObjects.get(1), inputObjects.get(2), inputObjects.get(3), inputObjects.get(4), inputObjects.get(5),
+                        inputObjects.get(6), inputObjects.get(7));
                 break;
             case 9:
-                task.streamIn(inputObjects.get(0), inputObjects.get(1), inputObjects.get(2), inputObjects.get(3), inputObjects.get(4), inputObjects.get(5), inputObjects.get(6), inputObjects.get(7),
-                        inputObjects.get(8));
+                task.transferToDevice(dataTransferMode, inputObjects.get(0), inputObjects.get(1), inputObjects.get(2), inputObjects.get(3), inputObjects.get(4), inputObjects.get(5),
+                        inputObjects.get(6), inputObjects.get(7), inputObjects.get(8));
                 break;
             case 10:
-                task.streamIn(inputObjects.get(0), inputObjects.get(1), inputObjects.get(2), inputObjects.get(3), inputObjects.get(4), inputObjects.get(5), inputObjects.get(6), inputObjects.get(7),
-                        inputObjects.get(8), inputObjects.get(9));
+                task.transferToDevice(dataTransferMode, inputObjects.get(0), inputObjects.get(1), inputObjects.get(2), inputObjects.get(3), inputObjects.get(4), inputObjects.get(5),
+                        inputObjects.get(6), inputObjects.get(7), inputObjects.get(8), inputObjects.get(9));
                 break;
             case 11:
-                task.streamIn(inputObjects.get(0), inputObjects.get(1), inputObjects.get(2), inputObjects.get(3), inputObjects.get(4), inputObjects.get(5), inputObjects.get(6), inputObjects.get(7),
-                        inputObjects.get(8), inputObjects.get(9), inputObjects.get(10));
+                task.transferToDevice(dataTransferMode, inputObjects.get(0), inputObjects.get(1), inputObjects.get(2), inputObjects.get(3), inputObjects.get(4), inputObjects.get(5),
+                        inputObjects.get(6), inputObjects.get(7), inputObjects.get(8), inputObjects.get(9), inputObjects.get(10));
                 break;
             case 12:
-                task.streamIn(inputObjects.get(0), inputObjects.get(1), inputObjects.get(2), inputObjects.get(3), inputObjects.get(4), inputObjects.get(5), inputObjects.get(6), inputObjects.get(7),
-                        inputObjects.get(8), inputObjects.get(9), inputObjects.get(10), inputObjects.get(11));
+                task.transferToDevice(dataTransferMode, inputObjects.get(0), inputObjects.get(1), inputObjects.get(2), inputObjects.get(3), inputObjects.get(4), inputObjects.get(5),
+                        inputObjects.get(6), inputObjects.get(7), inputObjects.get(8), inputObjects.get(9), inputObjects.get(10), inputObjects.get(11));
                 break;
             case 13:
-                task.streamIn(inputObjects.get(0), inputObjects.get(1), inputObjects.get(2), inputObjects.get(3), inputObjects.get(4), inputObjects.get(5), inputObjects.get(6), inputObjects.get(7),
-                        inputObjects.get(8), inputObjects.get(9), inputObjects.get(10), inputObjects.get(11), inputObjects.get(12));
+                task.transferToDevice(dataTransferMode, inputObjects.get(0), inputObjects.get(1), inputObjects.get(2), inputObjects.get(3), inputObjects.get(4), inputObjects.get(5),
+                        inputObjects.get(6), inputObjects.get(7), inputObjects.get(8), inputObjects.get(9), inputObjects.get(10), inputObjects.get(11), inputObjects.get(12));
                 break;
             case 14:
-                task.streamIn(inputObjects.get(0), inputObjects.get(1), inputObjects.get(2), inputObjects.get(3), inputObjects.get(4), inputObjects.get(5), inputObjects.get(6), inputObjects.get(7),
-                        inputObjects.get(8), inputObjects.get(9), inputObjects.get(10), inputObjects.get(11), inputObjects.get(12), inputObjects.get(13));
+                task.transferToDevice(dataTransferMode, inputObjects.get(0), inputObjects.get(1), inputObjects.get(2), inputObjects.get(3), inputObjects.get(4), inputObjects.get(5),
+                        inputObjects.get(6), inputObjects.get(7), inputObjects.get(8), inputObjects.get(9), inputObjects.get(10), inputObjects.get(11), inputObjects.get(12), inputObjects.get(13));
                 break;
             case 15:
-                task.streamIn(inputObjects.get(0), inputObjects.get(1), inputObjects.get(2), inputObjects.get(3), inputObjects.get(4), inputObjects.get(5), inputObjects.get(6), inputObjects.get(7),
-                        inputObjects.get(8), inputObjects.get(9), inputObjects.get(10), inputObjects.get(11), inputObjects.get(12), inputObjects.get(13), inputObjects.get(14));
+                task.transferToDevice(dataTransferMode, inputObjects.get(0), inputObjects.get(1), inputObjects.get(2), inputObjects.get(3), inputObjects.get(4), inputObjects.get(5),
+                        inputObjects.get(6), inputObjects.get(7), inputObjects.get(8), inputObjects.get(9), inputObjects.get(10), inputObjects.get(11), inputObjects.get(12), inputObjects.get(13),
+                        inputObjects.get(14));
                 break;
             default:
                 System.out.println("COPY-IN Not supported yet: " + numObjectsCopyIn);
@@ -281,62 +294,63 @@ public class TornadoTaskGraph implements AbstractTaskGraph {
             case 0:
                 break;
             case 1:
-                task.streamOut(outputArrays.get(0));
+                task.transferToHost(outputArrays.get(0));
                 break;
             case 2:
-                task.streamOut(outputArrays.get(0), outputArrays.get(1));
+                task.transferToHost(outputArrays.get(0), outputArrays.get(1));
                 break;
             case 3:
-                task.streamOut(outputArrays.get(0), outputArrays.get(1), outputArrays.get(2));
+                task.transferToHost(outputArrays.get(0), outputArrays.get(1), outputArrays.get(2));
                 break;
             case 4:
-                task.streamOut(outputArrays.get(0), outputArrays.get(1), outputArrays.get(2), outputArrays.get(3));
+                task.transferToHost(outputArrays.get(0), outputArrays.get(1), outputArrays.get(2), outputArrays.get(3));
                 break;
             case 5:
-                task.streamOut(outputArrays.get(0), outputArrays.get(1), outputArrays.get(2), outputArrays.get(3), outputArrays.get(4));
+                task.transferToHost(outputArrays.get(0), outputArrays.get(1), outputArrays.get(2), outputArrays.get(3), outputArrays.get(4));
                 break;
             case 6:
-                task.streamOut(outputArrays.get(0), outputArrays.get(1), outputArrays.get(2), outputArrays.get(3), outputArrays.get(4), outputArrays.get(5));
+                task.transferToHost(outputArrays.get(0), outputArrays.get(1), outputArrays.get(2), outputArrays.get(3), outputArrays.get(4), outputArrays.get(5));
                 break;
             case 7:
-                task.streamOut(outputArrays.get(0), outputArrays.get(1), outputArrays.get(2), outputArrays.get(3), outputArrays.get(4), outputArrays.get(5), outputArrays.get(6));
+                task.transferToHost(outputArrays.get(0), outputArrays.get(1), outputArrays.get(2), outputArrays.get(3), outputArrays.get(4), outputArrays.get(5), outputArrays.get(6));
                 break;
             case 8:
-                task.streamOut(outputArrays.get(0), outputArrays.get(1), outputArrays.get(2), outputArrays.get(3), outputArrays.get(4), outputArrays.get(5), outputArrays.get(6), outputArrays.get(7));
+                task.transferToHost(outputArrays.get(0), outputArrays.get(1), outputArrays.get(2), outputArrays.get(3), outputArrays.get(4), outputArrays.get(5), outputArrays.get(6),
+                        outputArrays.get(7));
                 break;
             case 9:
-                task.streamOut(outputArrays.get(0), outputArrays.get(1), outputArrays.get(2), outputArrays.get(3), outputArrays.get(4), outputArrays.get(5), outputArrays.get(6), outputArrays.get(7),
-                        outputArrays.get(8));
+                task.transferToHost(outputArrays.get(0), outputArrays.get(1), outputArrays.get(2), outputArrays.get(3), outputArrays.get(4), outputArrays.get(5), outputArrays.get(6),
+                        outputArrays.get(7), outputArrays.get(8));
                 break;
             case 10:
-                task.streamOut(outputArrays.get(0), outputArrays.get(1), outputArrays.get(2), outputArrays.get(3), outputArrays.get(4), outputArrays.get(5), outputArrays.get(6), outputArrays.get(7),
-                        outputArrays.get(8), outputArrays.get(9));
+                task.transferToHost(outputArrays.get(0), outputArrays.get(1), outputArrays.get(2), outputArrays.get(3), outputArrays.get(4), outputArrays.get(5), outputArrays.get(6),
+                        outputArrays.get(7), outputArrays.get(8), outputArrays.get(9));
                 break;
             case 11:
-                task.streamOut(outputArrays.get(0), outputArrays.get(1), outputArrays.get(2), outputArrays.get(3), outputArrays.get(4), outputArrays.get(5), outputArrays.get(6), outputArrays.get(7),
-                        outputArrays.get(8), outputArrays.get(9), outputArrays.get(10));
+                task.transferToHost(outputArrays.get(0), outputArrays.get(1), outputArrays.get(2), outputArrays.get(3), outputArrays.get(4), outputArrays.get(5), outputArrays.get(6),
+                        outputArrays.get(7), outputArrays.get(8), outputArrays.get(9), outputArrays.get(10));
                 break;
             case 12:
-                task.streamOut(outputArrays.get(0), outputArrays.get(1), outputArrays.get(2), outputArrays.get(3), outputArrays.get(4), outputArrays.get(5), outputArrays.get(6), outputArrays.get(7),
-                        outputArrays.get(8), outputArrays.get(9), outputArrays.get(10), outputArrays.get(11));
+                task.transferToHost(outputArrays.get(0), outputArrays.get(1), outputArrays.get(2), outputArrays.get(3), outputArrays.get(4), outputArrays.get(5), outputArrays.get(6),
+                        outputArrays.get(7), outputArrays.get(8), outputArrays.get(9), outputArrays.get(10), outputArrays.get(11));
                 break;
             case 13:
-                task.streamOut(outputArrays.get(0), outputArrays.get(1), outputArrays.get(2), outputArrays.get(3), outputArrays.get(4), outputArrays.get(5), outputArrays.get(6), outputArrays.get(7),
-                        outputArrays.get(8), outputArrays.get(9), outputArrays.get(10), outputArrays.get(11), outputArrays.get(12));
+                task.transferToHost(outputArrays.get(0), outputArrays.get(1), outputArrays.get(2), outputArrays.get(3), outputArrays.get(4), outputArrays.get(5), outputArrays.get(6),
+                        outputArrays.get(7), outputArrays.get(8), outputArrays.get(9), outputArrays.get(10), outputArrays.get(11), outputArrays.get(12));
                 break;
             case 14:
-                task.streamOut(outputArrays.get(0), outputArrays.get(1), outputArrays.get(2), outputArrays.get(3), outputArrays.get(4), outputArrays.get(5), outputArrays.get(6), outputArrays.get(7),
-                        outputArrays.get(8), outputArrays.get(9), outputArrays.get(10), outputArrays.get(11), outputArrays.get(12), outputArrays.get(13));
+                task.transferToHost(outputArrays.get(0), outputArrays.get(1), outputArrays.get(2), outputArrays.get(3), outputArrays.get(4), outputArrays.get(5), outputArrays.get(6),
+                        outputArrays.get(7), outputArrays.get(8), outputArrays.get(9), outputArrays.get(10), outputArrays.get(11), outputArrays.get(12), outputArrays.get(13));
                 break;
             case 15:
-                task.streamOut(outputArrays.get(0), outputArrays.get(1), outputArrays.get(2), outputArrays.get(3), outputArrays.get(4), outputArrays.get(5), outputArrays.get(6), outputArrays.get(7),
-                        outputArrays.get(8), outputArrays.get(9), outputArrays.get(10), outputArrays.get(11), outputArrays.get(12), outputArrays.get(13), outputArrays.get(14));
+                task.transferToHost(outputArrays.get(0), outputArrays.get(1), outputArrays.get(2), outputArrays.get(3), outputArrays.get(4), outputArrays.get(5), outputArrays.get(6),
+                        outputArrays.get(7), outputArrays.get(8), outputArrays.get(9), outputArrays.get(10), outputArrays.get(11), outputArrays.get(12), outputArrays.get(13), outputArrays.get(14));
                 break;
             default:
                 System.out.println("COPY-OUT Not supported yet: " + numObjectsCopyOut);
                 break;
         }
-    }    
+    }
 
     @Override
     public String getTaskScheduleName() {
@@ -351,26 +365,29 @@ public class TornadoTaskGraph implements AbstractTaskGraph {
             }
             i++;
         }
+        argumentsLookUp.remove(oldRef);
+        argumentsLookUp.add(newRef);
     }
 
     @Override
-    public void updateReference(Object oldRef, Object newRef) {
+    public void replaceParameter(Object oldParameter, Object newParameter) {
         // 1. Update from the streamIn list of objects
-        updateReference(oldRef, newRef, streamInObjects);
+        updateReference(oldParameter, newParameter, streamInObjects);
 
         // 2. Update from the stream out list of objects
-        updateReference(oldRef, newRef, streamOutObjects);
+        updateReference(oldParameter, newParameter, streamOutObjects);
 
         // 3. Update from graphContext and replace the object state.
-        // Otherwise, if the object is copied in (via COPY_IN), we might think the object is already on the device heap.
-        executionContext.replaceObjectState(oldRef, newRef);
+        // Otherwise, if the object is copied in (via COPY_IN), we might think the
+        // object is already on the device heap.
+        executionContext.replaceObjectState(oldParameter, newParameter);
 
         // 4. Update the global states array in the vm.
         if (vm != null) {
             vm.fetchGlobalStates();
         }
 
-        // 5. Set the update data flag to true in order to create a new wrapper
+        // 5. Set the update data flag to true in order to create a new call wrapper
         // on the device.
         updateData = true;
 
@@ -379,8 +396,8 @@ public class TornadoTaskGraph implements AbstractTaskGraph {
         for (TaskPackage tp : taskPackages) {
             Object[] params = tp.getTaskParameters();
             for (int k = 1; k < params.length; k++) {
-                if (params[k].equals(oldRef)) {
-                    params[k] = newRef;
+                if (params[k].equals(oldParameter)) {
+                    params[k] = newParameter;
                 }
             }
         }
@@ -397,6 +414,11 @@ public class TornadoTaskGraph implements AbstractTaskGraph {
     @Override
     public boolean isFinished() {
         return this.isFinished;
+    }
+
+    @Override
+    public HashSet<Object> getArgumentsLookup() {
+        return argumentsLookUp;
     }
 
     @Override
@@ -443,7 +465,7 @@ public class TornadoTaskGraph implements AbstractTaskGraph {
                 unlockObjectFromDevice(localState, oldDevice);
                 lockObjectInMemoryOnDevice(localState, device);
             }
-        }     
+        }
     }
 
     private void triggerRecompile() {
@@ -459,7 +481,7 @@ public class TornadoTaskGraph implements AbstractTaskGraph {
             vm.clearInstalledCode();
             vm.setCompileUpdate();
         }
-    }    
+    }
 
     @Override
     public TornadoAcceleratorDevice getDeviceForTask(String id) {
@@ -470,6 +492,7 @@ public class TornadoTaskGraph implements AbstractTaskGraph {
     public void setDeviceForTask(String id, TornadoDevice mapping) {
         
     }
+    
 
     private void updateInner(int index, SchedulableTask task) {
         int driverIndex = task.meta().getDriverIndex();
@@ -535,14 +558,14 @@ public class TornadoTaskGraph implements AbstractTaskGraph {
         // launch code
         hlBuffer.put(TornadoGraphBitcodes.LAUNCH.index());
     }
-    
+
     private void logTaskMethodHandle(SchedulableTask task) {
         if ((task.getTaskName() != null) && (task.getId() != null)) {
             String methodName = (task instanceof PrebuiltTask) ? ((PrebuiltTask) task).getFilename()
                     : ((CompilableTask) task).getMethod().getDeclaringClass().getSimpleName() + "." + task.getTaskName();
             timeProfiler.registerMethodHandle(ProfilerType.METHOD, task.getId(), methodName);
         }
-    }    
+    }
 
     private void updateDeviceContext(TornadoGraph graph) {
         BitSet deviceContexts = graph.filter(ContextNode.class);
@@ -577,7 +600,7 @@ public class TornadoTaskGraph implements AbstractTaskGraph {
             tornadoGraph.print();
             result.dump();
         }
-        
+
         return tornadoVM;
     }
 
@@ -636,13 +659,16 @@ public class TornadoTaskGraph implements AbstractTaskGraph {
             timeProfiler.stop(ProfilerType.TOTAL_BYTE_CODE_GENERATION);
         }
         executionContext.addLastDevice(meta().getLogicDevice());
-        
+
         vm = vmTable.get(meta().getLogicDevice());
 
-        /* Set the grid task outside the constructor of the {@link uk.ac.manchester.tornado.runtime.TornadoVM}
-           object. The same TornadoVM object will be used for different grid task objects, if the 
-           TornadoTaskSchedule::compile method is not called in different runs of the same TaskSchedule.
-        */
+        /*
+         * Set the grid scheduler outside the constructor of the {@link
+         * uk.ac.manchester.tornado.runtime.TornadoVM} object. The same TornadoVM object
+         * will be used for different grid scheduler objects, if the
+         * TornadoTaskSchedule::compile method is not called in different runs of the
+         * same TaskSchedule.
+         */
         vm.setGridScheduler(gridScheduler);
 
         if (updateData) {
@@ -786,6 +812,7 @@ public class TornadoTaskGraph implements AbstractTaskGraph {
             executionContext.getDevices().stream().filter(Objects::nonNull).forEach(TornadoDevice::sync);
         }
     }
+    
 
     @Override
     public CompletableFuture<AbstractTaskGraph> waitAsyncOn(Executor executor) {
@@ -830,34 +857,38 @@ public class TornadoTaskGraph implements AbstractTaskGraph {
                 result.failure(error); 
             }  
         });
-    }
+    }    
 
     @Override
-    public void streamInInner(Object... objects) {
+    public void transferToDevice(final int mode, Object... objects) {
         for (Object object : objects) {
             if (object == null) {
                 warn("null object passed into streamIn() in schedule %s", executionContext.getId());
                 continue;
             }
-            streamInObjects.add(object);
-            executionContext.getObjectState(object).setStreamIn(true);
-        }
-    }
 
-    @Override
-    public void forceStreamInInner(Object... objects) {
-        for (Object object : objects) {
-            if (object == null) {
-                warn("null object passed into streamIn() in schedule %s", executionContext.getId());
+            if (object instanceof Number) {
                 continue;
             }
-            streamInObjects.add(object);
-            executionContext.getObjectState(object).setForceStreamIn(true);
+
+            // Only add the object is the streamIn list if the data transfer mode is set to
+            // EVERY_EXECUTION
+            if (mode == DataTransferMode.EVERY_EXECUTION) {
+                streamInObjects.add(object);
+                executionContext.getObjectState(object).setStreamIn(true);
+            } else {
+                // Add to COPY-ONLY list
+                executionContext.getObjectState(object).setStreamIn(false);
+            }
+            argumentsLookUp.add(object);
+
+            // List of input objects for the dynamic reconfiguration
+            streamingInputObjects.add(new StreamingObject(mode, object));
         }
     }
 
     @Override
-    public void streamOutInner(Object... objects) {
+    public void transferToHost(Object... objects) {
         for (Object object : objects) {
             if (object == null) {
                 warn("null object passed into streamIn() in schedule %s", executionContext.getId());
@@ -865,6 +896,7 @@ public class TornadoTaskGraph implements AbstractTaskGraph {
             }
             streamOutObjects.add(object);
             executionContext.getObjectState(object).setStreamOut(true);
+            argumentsLookUp.add(object);
         }
     }
 
@@ -1047,7 +1079,7 @@ public class TornadoTaskGraph implements AbstractTaskGraph {
     }
 
     private void rewriteTaskForReduceSkeleton(MetaReduceCodeAnalysis analysisTaskSchedule) {
-        reduceTaskScheduleMeta = new ReduceTaskGraph(this, taskPackages, streamInObjects, streamOutObjects, graph);
+        reduceTaskScheduleMeta = new ReduceTaskGraph(this, taskPackages, streamInObjects, streamingInputObjects, streamOutObjects, graph);
         reduceTaskScheduleMeta.scheduleWithReduction(analysisTaskSchedule);
         reduceExpressionRewritten = true;
     }
@@ -1081,6 +1113,25 @@ public class TornadoTaskGraph implements AbstractTaskGraph {
         isFinished = true;
     }
 
+    private boolean checkAllArgumentsPerTask() {
+        for (TaskPackage task : taskPackages) {
+            Object[] taskParameters = task.getTaskParameters();
+            // Note: the first element in the object list is a lambda expression
+            // (computation)
+            for (int i = 1; i < (taskParameters.length - 1); i++) {
+                Object parameter = taskParameters[i];
+                if (parameter instanceof Number || parameter instanceof KernelContext) {
+                    continue;
+                }
+                if (!argumentsLookUp.contains(parameter)) {
+                    throw new TornadoTaskRuntimeException(
+                            "Parameter #" + i + " <" + parameter + "> from task <" + task.getId() + "> not specified either in transferToDevice or transferToHost functions");
+                }
+            }
+        }
+        return true;
+    }
+
     @Override
     public AbstractTaskGraph schedule() {
 
@@ -1104,6 +1155,16 @@ public class TornadoTaskGraph implements AbstractTaskGraph {
         if (executionGraph != null) {
             return executionGraph;
         }
+
+        // check parameter list
+        if (TornadoOptions.FORCE_CHECK_PARAMETERS) {
+            try {
+                checkAllArgumentsPerTask();
+            } catch (TornadoTaskRuntimeException tre) {
+                throw tre;
+            }
+        }
+
         analysisTaskSchedule = null;
         scheduleInner();
         cleanUp();
@@ -1232,7 +1293,7 @@ public class TornadoTaskGraph implements AbstractTaskGraph {
                 deviceWinnerIndex = position;
                 break;
             default:
-                throw new TornadoRuntimeException("Policy " + policy + " not defined yet");
+                throw new TornadoDynamicReconfigurationException("Policy " + policy + " not defined yet");
         }
 
         return deviceWinnerIndex;
@@ -1297,7 +1358,9 @@ public class TornadoTaskGraph implements AbstractTaskGraph {
             TaskGraph task = new TaskGraph(newTaskScheduleName);
             
             long start = timer.time();
-            performStreamInThread(task, streamInObjects);
+            for (StreamingObject streamingObject : streamingInputObjects) {
+                performStreamInObject(task, streamingObject.object, streamingObject.mode);
+            }
             for (TaskPackage taskPackage : taskPackages) {
                 String taskID = taskPackage.getId();
                 /*
@@ -1401,7 +1464,7 @@ public class TornadoTaskGraph implements AbstractTaskGraph {
             if (TornadoOptions.DEBUG_POLICY) {
                 System.out.println(getListDevices(driver));
                 System.out.println("BEST Position: #" + deviceWinnerIndex + " " + Arrays.toString(totalTimers));
-            }            
+            }
         }
     }
 
@@ -1411,13 +1474,16 @@ public class TornadoTaskGraph implements AbstractTaskGraph {
         }
     }
 
-    private TaskGraph taskRecompilation(TornadoDriver driver, int deviceWinnerIndex) {
+    private TaskGraph recompileTask(TornadoDriver driver, int deviceWinnerIndex) {
         // Force re-compilation in device <deviceWinnerIndex>
         String newTaskScheduleName = TASK_SCHEDULE_PREFIX + deviceWinnerIndex;
         TaskGraph taskToCompile = new TaskGraph(newTaskScheduleName);
-        performStreamInThread(taskToCompile, streamInObjects);
+        performStreamInObject(taskToCompile, streamInObjects, DataTransferMode.EVERY_EXECUTION);
         for (TaskPackage taskPackage : taskPackages) {
             String taskID = taskPackage.getId();
+            /*
+            TornadoRuntime.setProperty(newTaskScheduleName + "." + taskID + ".device", "0:" + deviceWinnerIndex);
+            */
             taskToCompile.addTask(taskPackage)
                          .setDeviceForTask(newTaskScheduleName + "." + taskID, driver.getDevice(deviceWinnerIndex));
         }
@@ -1435,7 +1501,7 @@ public class TornadoTaskGraph implements AbstractTaskGraph {
                 // This is only if compilation is not using Partial Evaluation
                 task = globalTaskScheduleIndex.get(deviceWinnerIndex);
             } else {
-                task = taskRecompilation(driver, deviceWinnerIndex);
+                task = recompileTask(driver, deviceWinnerIndex);
                 // Save the TaskSchedule in cache
                 taskScheduleIndex.put(deviceWinnerIndex, task);
             }
@@ -1467,7 +1533,7 @@ public class TornadoTaskGraph implements AbstractTaskGraph {
         } else if (o instanceof int[]) {
             return ((int[]) o).clone();
         } else {
-            throw new TornadoRuntimeException("Data type cloning not supported");
+            throw new RuntimeException("Data type cloning not supported");
         }
     }
 
@@ -1477,8 +1543,8 @@ public class TornadoTaskGraph implements AbstractTaskGraph {
         int numDevices = driver.getDeviceCount();
         // Clone objects (only outputs) for each device
         for (int deviceNumber = 0; deviceNumber < numDevices; deviceNumber++) {
-            ArrayList<Object> newInObjects = new ArrayList<>();
-            ArrayList<Object> newOutObjects = new ArrayList<>();
+            List<Object> newInObjects = new ArrayList<>();
+            List<Object> newOutObjects = new ArrayList<>();
 
             for (int i = 0; i < streamInObjects.size(); i++) {
                 Object in = streamInObjects.get(i);
@@ -1516,7 +1582,7 @@ public class TornadoTaskGraph implements AbstractTaskGraph {
         totalTimers[indexSequential] = (endSequentialCode - startSequential);
     }
 
-    private void runAllTaskSchedulesInAcceleratorsSequentually(TornadoDriver driver, int numDevices, Timer timer, Policy policy, long[] totalTimers) {
+    private void runAllTaskSchedulesInAcceleratorsSequentially(TornadoDriver driver, int numDevices, Timer timer, Policy policy, long[] totalTimers) {
         String[] ignoreTaskNames = System.getProperties().getProperty("tornado.ignore.tasks", "").split(",");
 
         // Running sequentially for all the devices
@@ -1525,11 +1591,14 @@ public class TornadoTaskGraph implements AbstractTaskGraph {
             TaskGraph task = new TaskGraph(taskScheduleName);
 
             long start = timer.time();
-            performStreamInThread(task, streamInObjects);
+            for (StreamingObject streamingObject : streamingInputObjects) {
+                performStreamInObject(task, streamingObject.object, streamingObject.mode);
+            }
 
             boolean ignoreTask = false;
             for (TaskPackage taskPackage : taskPackages) {
                 String taskID = taskPackage.getId();
+
                 String name = taskScheduleName + "." + taskID;
                 for (String s : ignoreTaskNames) {
                     if (s.equals(name)) {
@@ -1538,14 +1607,13 @@ public class TornadoTaskGraph implements AbstractTaskGraph {
                         break;
                     }
                 }
-
-                /*
-                TornadoRuntime.setProperty(taskScheduleName + "." + taskID + ".device", driverIndex + ":" + taskNumber);
-                */
                 if (Tornado.DEBUG) {
-                    int driverIndex = TornadoRuntime.getTornadoRuntime().getDriverIndex(driver.getClass());
+                    int driverIndex = getTornadoRuntime().getDriverIndex(driver.getClass());
                     System.out.println("SET DEVICE: " + taskScheduleName + "." + taskID + ".device=" + driverIndex + ":" + taskNumber);
                 }
+                /*
+                TornadoRuntime.setProperty(taskScheduleName + "." + taskID + ".device", "0:" + taskNumber);
+                */
                 task.addTask(taskPackage)
                     .setDeviceForTask(taskScheduleName + "." + taskID, driver.getDevice(taskNumber));
             }
@@ -1653,7 +1721,7 @@ public class TornadoTaskGraph implements AbstractTaskGraph {
         runSequentialTaskSchedule(policy, timer, totalTimers, numDevices);
 
         // Run Task Schedules on the accelerator
-        runAllTaskSchedulesInAcceleratorsSequentually(driver, numDevices, timer, policy, totalTimers);
+        runAllTaskSchedulesInAcceleratorsSequentially(driver, numDevices, timer, policy, totalTimers);
 
         if (policy == Policy.PERFORMANCE || policy == Policy.END_2_END) {
             int deviceWinnerIndex = synchronizeWithPolicy(policy, totalTimers);
@@ -1681,7 +1749,7 @@ public class TornadoTaskGraph implements AbstractTaskGraph {
         if (policyTimeTable.get(policy) < numDevices) {
             // link output
             int deviceWinnerIndex = policyTimeTable.get(policy);
-            ArrayList<Object> deviceOutputObjects = multiHeapManagerOutputs.get(deviceWinnerIndex);
+            List<Object> deviceOutputObjects = multiHeapManagerOutputs.get(deviceWinnerIndex);
             for (int i = 0; i < streamOutObjects.size(); i++) {
                 @SuppressWarnings("unused") Object output = streamOutObjects.get(i);
                 output = deviceOutputObjects.get(i);
@@ -1732,7 +1800,7 @@ public class TornadoTaskGraph implements AbstractTaskGraph {
         if (!executionHistoryPolicy.containsKey(policy)) {
             runWithSequentialProfiler(driver, policy);
 
-            if (EXEPERIMENTAL_MULTI_HOST_HEAP) {
+            if (EXPERIMENTAL_MULTI_HOST_HEAP) {
                 restoreVarsIntoJavaHeap(policy, numDevices);
             }
 
@@ -1786,7 +1854,7 @@ public class TornadoTaskGraph implements AbstractTaskGraph {
         if (policyTimeTable.get(policy) == null) {
             runWithSequentialProfiler(driver, policy);
 
-            if (EXEPERIMENTAL_MULTI_HOST_HEAP) {
+            if (EXPERIMENTAL_MULTI_HOST_HEAP) {
                 restoreVarsIntoJavaHeap(policy, numDevices);
             }
 

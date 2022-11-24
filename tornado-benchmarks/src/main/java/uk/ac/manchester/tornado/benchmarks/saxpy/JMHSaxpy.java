@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, APT Group, Department of Computer Science,
+ * Copyright (c) 2020, 2022, APT Group, Department of Computer Science,
  * The University of Manchester.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,8 +40,17 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
 
 import uk.ac.manchester.tornado.api.TaskGraph;
+import uk.ac.manchester.tornado.api.enums.DataTransferMode;
 import uk.ac.manchester.tornado.benchmarks.LinearAlgebraArrays;
 
+/**
+ * <p>
+ * How to run in isolation?
+ * </p>
+ * <code>
+ *    tornado -jar benchmarks/target/jmhbenchmarks.jar uk.ac.manchester.tornado.benchmarks.saxpy.JMHSaxpy
+ * </code>
+ */
 public class JMHSaxpy {
     @State(Scope.Thread)
     public static class BenchmarkSetup {
@@ -51,7 +60,7 @@ public class JMHSaxpy {
         private float[] y;
         private final float alpha = 2f;
 
-        private TaskGraph ts;
+        private TaskGraph taskGraph;
 
         @Setup(Level.Trial)
         public void doSetup() {
@@ -62,11 +71,11 @@ public class JMHSaxpy {
                 x[i] = i;
             }
 
-            ts = new TaskGraph("benchmark") //
-                    .streamIn(x) //
+            taskGraph = new TaskGraph("benchmark") //
+                    .transferToDevice(DataTransferMode.EVERY_EXECUTION, x) //
                     .task("saxpy", LinearAlgebraArrays::saxpy, alpha, x, y) //
-                    .streamOut(y);
-            ts.warmup();
+                    .transferToHost(y);
+            taskGraph.warmup();
         }
     }
 
@@ -87,9 +96,9 @@ public class JMHSaxpy {
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     @Fork(1)
     public void saxpyTornado(BenchmarkSetup state, Blackhole blackhole) {
-        TaskGraph t = state.ts;
-        t.execute();
-        blackhole.consume(t);
+        TaskGraph taskGraph = state.taskGraph;
+        taskGraph.execute();
+        blackhole.consume(taskGraph);
     }
 
     public static void main(String[] args) throws RunnerException {

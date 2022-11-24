@@ -26,9 +26,10 @@
 package uk.ac.manchester.tornado.drivers.opencl.mm;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
+import java.nio.IntBuffer;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import uk.ac.manchester.tornado.api.exceptions.TornadoMemoryException;
 import uk.ac.manchester.tornado.api.exceptions.TornadoOutOfMemoryException;
@@ -74,7 +75,13 @@ public class AtomicsBuffer implements ObjectBuffer {
 
     @Override
     public int read(Object reference, long hostOffset, int[] events, boolean useDeps) {
-        throw new TornadoRuntimeException("Not implemented");
+        long size = Integer.BYTES *  atomicsList.length;
+        int returnEvent = deviceContext.readBuffer(toAtomicAddress(), OFFSET, size, atomicsList, 0, events);
+        if (null != reference && returnEvent > 0) {
+            int indexFromGlobalRegion = (int)hostOffset;
+            ((AtomicInteger)reference).set(getIntBuffer()[indexFromGlobalRegion]);
+        }
+        return useDeps ? returnEvent : -1;
     }
 
     @Override
@@ -85,7 +92,15 @@ public class AtomicsBuffer implements ObjectBuffer {
     @Override
     public int enqueueRead(Object reference, long hostOffset, int[] events, boolean useDeps) {
         long size = Integer.BYTES *  atomicsList.length;
-        return deviceContext.readBuffer(toAtomicAddress(), OFFSET, size, atomicsList, 0, events);
+        ByteBuffer offHeapBuffer = deviceContext.newDirectByteBuffer(size);
+        return deviceContext.enqueueReadBuffer(toAtomicAddress(), OFFSET, size, offHeapBuffer, events, true, buffer -> {
+            IntBuffer onHeapBuffer = IntBuffer.wrap(atomicsList, div(OFFSET, Integer.BYTES), div(size, Integer.BYTES));
+            onHeapBuffer.put(buffer.asIntBuffer());
+            if (null != reference) {
+                int indexFromGlobalRegion = (int)hostOffset;
+                ((AtomicInteger)reference).set(getIntBuffer()[indexFromGlobalRegion]);                
+            }
+         });
     }
 
     @Override
@@ -97,7 +112,7 @@ public class AtomicsBuffer implements ObjectBuffer {
         long size = Integer.BYTES *  atomicsList.length;
         ByteBuffer buffer = deviceContext.newDirectByteBuffer(size);
         buffer.asIntBuffer().put(atomicsList);
-        return new ArrayList<>(deviceContext.enqueueWriteBuffer(toAtomicAddress(), OFFSET, size, buffer, events, true));
+        return Collections.singletonList(deviceContext.enqueueWriteBuffer(toAtomicAddress(), OFFSET, size, buffer, events, true));
     }
 
     @Override
@@ -112,7 +127,7 @@ public class AtomicsBuffer implements ObjectBuffer {
 
     @Override
     public long size() {
-        return atomicsList.length * 4;
+        return atomicsList.length * Integer.BYTES;
     }
 
     @Override
@@ -124,5 +139,9 @@ public class AtomicsBuffer implements ObjectBuffer {
     public void setIntBuffer(int[] arr) {
         this.atomicsList = arr;
     }
-
+    
+    private static int div(long a, int b) {
+        long result = a / b;
+        return (int)result;
+    }
 }

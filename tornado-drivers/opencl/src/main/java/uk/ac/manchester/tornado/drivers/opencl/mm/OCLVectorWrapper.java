@@ -29,7 +29,7 @@ import static uk.ac.manchester.tornado.runtime.common.Tornado.info;
 import static uk.ac.manchester.tornado.runtime.common.Tornado.warn;
 
 import java.lang.reflect.Array;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import jdk.vm.ci.meta.JavaKind;
@@ -155,13 +155,10 @@ public class OCLVectorWrapper implements ObjectBuffer {
     public List<Integer> enqueueWrite(final Object value, long batchSize, long hostOffset, final int[] events, boolean useDeps) {
         TornadoInternalError.guarantee(value instanceof PrimitiveStorage, "Expecting a PrimitiveStorage type");
         final Object array = TornadoUtils.getAnnotatedObjectFromField(value, Payload.class);
-        ArrayList<Integer> listEvents = new ArrayList<>();
-
         if (array == null) {
             throw new TornadoRuntimeException("ERROR] Data to be copied is NULL");
         }
-        final int returnEvent = enqueueWriteArrayData(toBuffer(), bufferOffset, bufferSize, array, hostOffset, (useDeps) ? events : null);
-        listEvents.add(returnEvent);
+        List<Integer> listEvents = Collections.singletonList(enqueueWriteArrayData(toBuffer(), bufferOffset, bufferSize, array, hostOffset, (useDeps) ? events : null));
         return useDeps ? listEvents : null;
     }
 

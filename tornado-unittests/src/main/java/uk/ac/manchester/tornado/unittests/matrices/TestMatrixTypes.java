@@ -1,19 +1,19 @@
 /*
- * Copyright (c) 2013-2020, APT Group, Department of Computer Science,
+ * Copyright (c) 2013-2020, 2022, APT Group, Department of Computer Science,
  * The University of Manchester.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *    http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
+ *
  */
 
 package uk.ac.manchester.tornado.unittests.matrices;
@@ -34,8 +34,20 @@ import uk.ac.manchester.tornado.api.collections.types.Matrix2DFloat4;
 import uk.ac.manchester.tornado.api.collections.types.Matrix2DInt;
 import uk.ac.manchester.tornado.api.collections.types.Matrix3DFloat;
 import uk.ac.manchester.tornado.api.collections.types.Matrix3DFloat4;
+import uk.ac.manchester.tornado.api.collections.types.VectorDouble;
+import uk.ac.manchester.tornado.api.collections.types.VectorFloat;
+import uk.ac.manchester.tornado.api.collections.types.VectorInt;
+import uk.ac.manchester.tornado.api.enums.DataTransferMode;
 import uk.ac.manchester.tornado.unittests.common.TornadoTestBase;
 
+/**
+ * <p>
+ * How to run?
+ * </p>
+ * <code>
+ *     tornado-test -V uk.ac.manchester.tornado.unittests.matrices.TestMatrixTypes
+ * </code>
+ */
 public class TestMatrixTypes extends TornadoTestBase {
 
     public static void computeMatrixSum(Matrix2DFloat a, Matrix2DFloat b, final int N) {
@@ -91,10 +103,10 @@ public class TestMatrixTypes extends TornadoTestBase {
     }
 
     public static void computeMatrixMultiplication(Matrix2DFloat a, Matrix2DFloat b, Matrix2DFloat c) {
-        for (@Parallel int i = 0; i < a.M(); i++) {
-            for (@Parallel int j = 0; j < a.N(); j++) {
+        for (@Parallel int i = 0; i < a.getNumRows(); i++) {
+            for (@Parallel int j = 0; j < a.getNumColumns(); j++) {
                 float sum = 0.0f;
-                for (int k = 0; k < a.N(); k++) {
+                for (int k = 0; k < a.getNumColumns(); k++) {
                     sum += a.get(i, k) + a.get(k, j);
                 }
                 c.set(i, j, sum);
@@ -104,7 +116,7 @@ public class TestMatrixTypes extends TornadoTestBase {
 
     /**
      * Computing with Matrix and vector types.
-     * 
+     *
      * @param a
      * @param b
      */
@@ -127,6 +139,189 @@ public class TestMatrixTypes extends TornadoTestBase {
     }
 
     @Test
+    public void testMatrixRowInt01() {
+        int[][] array = new int[3][2];
+        array[0][0] = 1;
+        array[0][1] = 2;
+        array[1][0] = 3;
+        array[1][1] = 4;
+        array[2][0] = 5;
+        array[2][1] = 6;
+
+        Matrix2DInt matrix = new Matrix2DInt(array);
+
+        VectorInt row0 = matrix.row(0);
+        VectorInt row1 = matrix.row(1);
+        VectorInt row2 = matrix.row(2);
+
+        assertEquals(1, row0.getArray()[0]);
+        assertEquals(2, row0.getArray()[1]);
+        assertEquals(3, row1.getArray()[0]);
+        assertEquals(4, row1.getArray()[1]);
+        assertEquals(5, row2.getArray()[0]);
+        assertEquals(6, row2.getArray()[1]);
+    }
+
+    @Test
+    public void testMatrixRowInt02() {
+        int[][] array = new int[2][3];
+        array[0][0] = 1;
+        array[0][1] = 2;
+        array[0][2] = 3;
+        array[1][0] = 4;
+        array[1][1] = 5;
+        array[1][2] = 6;
+
+        Matrix2DInt matrix = new Matrix2DInt(array);
+
+        VectorInt row0 = matrix.row(0);
+        VectorInt row1 = matrix.row(1);
+
+        assertEquals(1, row0.getArray()[0]);
+        assertEquals(2, row0.getArray()[1]);
+        assertEquals(3, row0.getArray()[2]);
+        assertEquals(4, row1.getArray()[0]);
+        assertEquals(5, row1.getArray()[1]);
+        assertEquals(6, row1.getArray()[2]);
+    }
+
+    @Test
+    public void testMatrixRowFloat01() {
+        float[][] array = new float[3][2];
+        array[0][0] = 1.0f;
+        array[0][1] = 2.0f;
+        array[1][0] = 3.0f;
+        array[1][1] = 4.0f;
+        array[2][0] = 5.0f;
+        array[2][1] = 6.0f;
+
+        Matrix2DFloat matrix = new Matrix2DFloat(array);
+
+        VectorFloat row0 = matrix.row(0);
+        VectorFloat row1 = matrix.row(1);
+        VectorFloat row2 = matrix.row(2);
+
+        assertEquals(1, row0.getArray()[0], 0.01f);
+        assertEquals(2, row0.getArray()[1], 0.01f);
+        assertEquals(3, row1.getArray()[0], 0.01f);
+        assertEquals(4, row1.getArray()[1], 0.01f);
+        assertEquals(5, row2.getArray()[0], 0.01f);
+        assertEquals(6, row2.getArray()[1], 0.01f);
+    }
+
+    @Test
+    public void testMatrixRowFloat02() {
+        float[][] array = new float[2][3];
+        array[0][0] = 1.0f;
+        array[0][1] = 2.0f;
+        array[0][2] = 3.0f;
+        array[1][0] = 4.0f;
+        array[1][1] = 5.0f;
+        array[1][2] = 6.0f;
+
+        Matrix2DFloat matrix = new Matrix2DFloat(array);
+
+        VectorFloat row0 = matrix.row(0);
+        VectorFloat row1 = matrix.row(1);
+
+        assertEquals(1, row0.getArray()[0], 0.01f);
+        assertEquals(2, row0.getArray()[1], 0.01f);
+        assertEquals(3, row0.getArray()[2], 0.01f);
+        assertEquals(4, row1.getArray()[0], 0.01f);
+        assertEquals(5, row1.getArray()[1], 0.01f);
+        assertEquals(6, row1.getArray()[2], 0.01f);
+    }
+
+    @Test
+    public void testMatrixRowFloat4() {
+        float[] array = new float[6];
+        array[0] = 1.0f;
+        array[1] = 2.0f;
+        array[2] = 3.0f;
+        array[3] = 4.0f;
+        array[4] = 5.0f;
+        array[5] = 6.0f;
+
+        Matrix2DFloat4 matrix = new Matrix2DFloat4(2, 3, array);
+
+        VectorFloat row0 = matrix.row(0);
+        VectorFloat row1 = matrix.row(1);
+
+        assertEquals(1, row0.getArray()[0], 0.01f);
+        assertEquals(2, row0.getArray()[1], 0.01f);
+        assertEquals(3, row0.getArray()[2], 0.01f);
+        assertEquals(4, row1.getArray()[0], 0.01f);
+        assertEquals(5, row1.getArray()[1], 0.01f);
+        assertEquals(6, row1.getArray()[2], 0.01f);
+    }
+
+    @Test
+    public void testMatrixRowDouble01() {
+        double[][] array = new double[3][2];
+        array[0][0] = 1.0f;
+        array[0][1] = 2.0f;
+        array[1][0] = 3.0f;
+        array[1][1] = 4.0f;
+        array[2][0] = 5.0f;
+        array[2][1] = 6.0f;
+
+        Matrix2DDouble matrix = new Matrix2DDouble(array);
+
+        VectorDouble row0 = matrix.row(0);
+        VectorDouble row1 = matrix.row(1);
+        VectorDouble row2 = matrix.row(2);
+
+        assertEquals(1.0f, row0.getArray()[0], 0.01f);
+        assertEquals(2.0f, row0.getArray()[1], 0.01f);
+        assertEquals(3.0f, row1.getArray()[0], 0.01f);
+        assertEquals(4.0f, row1.getArray()[1], 0.01f);
+        assertEquals(5.0f, row2.getArray()[0], 0.01f);
+        assertEquals(6.0f, row2.getArray()[1], 0.01f);
+    }
+
+    @Test
+    public void testMatrixRowDouble02() {
+        double[][] array = new double[2][3];
+        array[0][0] = 1.0f;
+        array[0][1] = 2.0f;
+        array[0][2] = 3.0f;
+        array[1][0] = 4.0f;
+        array[1][1] = 5.0f;
+        array[1][2] = 6.0f;
+
+        Matrix2DDouble matrix = new Matrix2DDouble(array);
+
+        VectorDouble row0 = matrix.row(0);
+        VectorDouble row1 = matrix.row(1);
+
+        assertEquals(1.0f, row0.getArray()[0], 0.01f);
+        assertEquals(2.0f, row0.getArray()[1], 0.01f);
+        assertEquals(3.0f, row0.getArray()[2], 0.01f);
+        assertEquals(4.0f, row1.getArray()[0], 0.01f);
+        assertEquals(5.0f, row1.getArray()[1], 0.01f);
+        assertEquals(6.0f, row1.getArray()[2], 0.01f);
+    }
+
+    @Test
+    public void testMatrix00() {
+        Matrix2DInt matrix = new Matrix2DInt(2, 3);
+        matrix.set(0, 0, 1);
+        matrix.set(0, 1, 2);
+        matrix.set(0, 2, 3);
+
+        matrix.set(1, 0, 4);
+        matrix.set(1, 1, 5);
+        matrix.set(1, 2, 6);
+
+        assertEquals(1, matrix.get(0, 0));
+        assertEquals(2, matrix.get(0, 1));
+        assertEquals(3, matrix.get(0, 2));
+        assertEquals(4, matrix.get(1, 0));
+        assertEquals(5, matrix.get(1, 1));
+        assertEquals(6, matrix.get(1, 2));
+    }
+
+    @Test
     public void testMatrix01() {
         final int N = 256;
         Matrix2DFloat matrixA = new Matrix2DFloat(N, N);
@@ -138,10 +333,11 @@ public class TestMatrixTypes extends TornadoTestBase {
             }
         }
 
-        TaskGraph ts = new TaskGraph("s0");
-        ts.task("t0", TestMatrixTypes::computeMatrixSum, matrixA, matrixB, N);
-        ts.streamOut(matrixB);
-        ts.execute();
+        TaskGraph taskGraph = new TaskGraph("s0");
+        taskGraph.transferToDevice(DataTransferMode.FIRST_EXECUTION, matrixA);
+        taskGraph.task("t0", TestMatrixTypes::computeMatrixSum, matrixA, matrixB, N);
+        taskGraph.transferToHost(matrixB);
+        taskGraph.execute();
 
         for (int i = 0; i < N; i++) {
             for (int j = 0; j < N; j++) {
@@ -162,10 +358,11 @@ public class TestMatrixTypes extends TornadoTestBase {
         }
         Matrix2DFloat matrixA = new Matrix2DFloat(a);
         Matrix2DFloat matrixB = new Matrix2DFloat(N, N);
-        TaskGraph ts = new TaskGraph("s0");
-        ts.task("t0", TestMatrixTypes::computeMatrixSum, matrixA, matrixB, N);
-        ts.streamOut(matrixB);
-        ts.execute();
+        TaskGraph taskGraph = new TaskGraph("s0");
+        taskGraph.transferToDevice(DataTransferMode.FIRST_EXECUTION, matrixA);
+        taskGraph.task("t0", TestMatrixTypes::computeMatrixSum, matrixA, matrixB, N);
+        taskGraph.transferToHost(matrixB);
+        taskGraph.execute();
 
         for (int i = 0; i < N; i++) {
             for (int j = 0; j < N; j++) {
@@ -189,10 +386,11 @@ public class TestMatrixTypes extends TornadoTestBase {
             }
         }
 
-        TaskGraph ts = new TaskGraph("s0");
-        ts.task("t0", TestMatrixTypes::computeMatrixMultiplication, matrixA, matrixB, matrixC);
-        ts.streamOut(matrixC);
-        ts.execute();
+        TaskGraph taskGraph = new TaskGraph("s0");
+        taskGraph.transferToDevice(DataTransferMode.FIRST_EXECUTION, matrixA, matrixB);
+        taskGraph.task("t0", TestMatrixTypes::computeMatrixMultiplication, matrixA, matrixB, matrixC);
+        taskGraph.transferToHost(matrixC);
+        taskGraph.execute();
 
         computeMatrixMultiplication(matrixA, matrixB, sequential);
 
@@ -217,10 +415,11 @@ public class TestMatrixTypes extends TornadoTestBase {
             }
         }
 
-        TaskGraph ts = new TaskGraph("s0");
-        ts.task("t0", TestMatrixTypes::computeMatrixSum, matrixA, matrixB, N);
-        ts.streamOut(matrixB);
-        ts.execute();
+        TaskGraph taskGraph = new TaskGraph("s0");
+        taskGraph.transferToDevice(DataTransferMode.FIRST_EXECUTION, matrixA, matrixB);
+        taskGraph.task("t0", TestMatrixTypes::computeMatrixSum, matrixA, matrixB, N);
+        taskGraph.transferToHost(matrixB);
+        taskGraph.execute();
 
         for (int i = 0; i < N; i++) {
             for (int j = 0; j < N; j++) {
@@ -245,10 +444,11 @@ public class TestMatrixTypes extends TornadoTestBase {
             }
         }
 
-        TaskGraph ts = new TaskGraph("s0");
-        ts.task("t0", TestMatrixTypes::computeMatrixSum, matrixA, matrixB, X, Y);
-        ts.streamOut(matrixB);
-        ts.execute();
+        TaskGraph taskGraph = new TaskGraph("s0");
+        taskGraph.transferToDevice(DataTransferMode.FIRST_EXECUTION, matrixA);
+        taskGraph.task("t0", TestMatrixTypes::computeMatrixSum, matrixA, matrixB, X, Y);
+        taskGraph.transferToHost(matrixB);
+        taskGraph.execute();
 
         for (int i = 0; i < X; i++) {
             for (int j = 0; j < Y; j++) {
@@ -302,10 +502,11 @@ public class TestMatrixTypes extends TornadoTestBase {
             }
         }
 
-        TaskGraph ts = new TaskGraph("s0");
-        ts.task("t0", TestMatrixTypes::computeMatrixSum, matrixA, matrixB, X, Y, Z);
-        ts.streamOut(matrixB);
-        ts.execute();
+        TaskGraph taskGraph = new TaskGraph("s0");
+        taskGraph.transferToDevice(DataTransferMode.FIRST_EXECUTION, matrixA);
+        taskGraph.task("t0", TestMatrixTypes::computeMatrixSum, matrixA, matrixB, X, Y, Z);
+        taskGraph.transferToHost(matrixB);
+        taskGraph.execute();
 
         for (int i = 0; i < X; i++) {
             for (int j = 0; j < Y; j++) {
@@ -365,10 +566,11 @@ public class TestMatrixTypes extends TornadoTestBase {
             }
         }
 
-        TaskGraph ts = new TaskGraph("s0");
-        ts.task("t0", TestMatrixTypes::computeMatrixSum, matrixA, matrixB, SMALL_SIZE, SMALL_SIZE, SMALL_SIZE);
-        ts.streamOut(matrixB);
-        ts.execute();
+        TaskGraph taskGraph = new TaskGraph("s0");
+        taskGraph.transferToDevice(DataTransferMode.FIRST_EXECUTION, matrixA);
+        taskGraph.task("t0", TestMatrixTypes::computeMatrixSum, matrixA, matrixB, SMALL_SIZE, SMALL_SIZE, SMALL_SIZE);
+        taskGraph.transferToHost(matrixB);
+        taskGraph.execute();
 
         for (int i = 0; i < SMALL_SIZE; i++) {
             for (int j = 0; j < SMALL_SIZE; j++) {
@@ -401,10 +603,11 @@ public class TestMatrixTypes extends TornadoTestBase {
         }
         Matrix3DFloat matrixA = new Matrix3DFloat(a);
         Matrix3DFloat matrixB = new Matrix3DFloat(X, Y, Z);
-        TaskGraph ts = new TaskGraph("s0");
-        ts.task("t0", TestMatrixTypes::computeMatrixSum, matrixA, matrixB, X, Y, Z);
-        ts.streamOut(matrixB);
-        ts.execute();
+        TaskGraph taskGraph = new TaskGraph("s0");
+        taskGraph.transferToDevice(DataTransferMode.FIRST_EXECUTION, matrixA);
+        taskGraph.task("t0", TestMatrixTypes::computeMatrixSum, matrixA, matrixB, X, Y, Z);
+        taskGraph.transferToHost(matrixB);
+        taskGraph.execute();
 
         for (int i = 0; i < X; i++) {
             for (int j = 0; j < Y; j++) {
@@ -425,10 +628,11 @@ public class TestMatrixTypes extends TornadoTestBase {
         }
         Matrix2DFloat matrixA = new Matrix2DFloat(a);
         Matrix2DFloat matrixB = new Matrix2DFloat(X, Y);
-        TaskGraph ts = new TaskGraph("s0");
-        ts.task("t0", TestMatrixTypes::computeMatrixSum, matrixA, matrixB, X, Y);
-        ts.streamOut(matrixB);
-        ts.execute();
+        TaskGraph taskGraph = new TaskGraph("s0");
+        taskGraph.transferToDevice(DataTransferMode.FIRST_EXECUTION, matrixA);
+        taskGraph.task("t0", TestMatrixTypes::computeMatrixSum, matrixA, matrixB, X, Y);
+        taskGraph.transferToHost(matrixB);
+        taskGraph.execute();
 
         for (int i = 0; i < X; i++) {
             for (int j = 0; j < Y; j++) {
@@ -467,10 +671,11 @@ public class TestMatrixTypes extends TornadoTestBase {
         }
         Matrix2DInt matrixA = new Matrix2DInt(a);
         Matrix2DInt matrixB = new Matrix2DInt(X, Y);
-        TaskGraph ts = new TaskGraph("s0");
-        ts.task("t0", TestMatrixTypes::computeMatrixSum, matrixA, matrixB, X, Y);
-        ts.streamOut(matrixB);
-        ts.execute();
+        TaskGraph taskGraph = new TaskGraph("s0");
+        taskGraph.transferToDevice(DataTransferMode.FIRST_EXECUTION, matrixA);
+        taskGraph.task("t0", TestMatrixTypes::computeMatrixSum, matrixA, matrixB, X, Y);
+        taskGraph.transferToHost(matrixB);
+        taskGraph.execute();
 
         for (int i = 0; i < X; i++) {
             for (int j = 0; j < Y; j++) {
@@ -504,10 +709,11 @@ public class TestMatrixTypes extends TornadoTestBase {
         }
         Matrix2DDouble matrixA = new Matrix2DDouble(a);
         Matrix2DDouble matrixB = new Matrix2DDouble(X, Y);
-        TaskGraph ts = new TaskGraph("s0");
-        ts.task("t0", TestMatrixTypes::computeMatrixSum, matrixA, matrixB, X, Y);
-        ts.streamOut(matrixB);
-        ts.execute();
+        TaskGraph taskGraph = new TaskGraph("s0");
+        taskGraph.transferToDevice(DataTransferMode.FIRST_EXECUTION, matrixA);
+        taskGraph.task("t0", TestMatrixTypes::computeMatrixSum, matrixA, matrixB, X, Y);
+        taskGraph.transferToHost(matrixB);
+        taskGraph.execute();
 
         for (int i = 0; i < X; i++) {
             for (int j = 0; j < Y; j++) {
@@ -545,10 +751,11 @@ public class TestMatrixTypes extends TornadoTestBase {
         }
         Matrix2DFloat matrixA = new Matrix2DFloat(a);
         Matrix2DFloat matrixB = new Matrix2DFloat(X, Y);
-        TaskGraph ts = new TaskGraph("s0");
-        ts.task("t0", TestMatrixTypes::computeMatrixSum, matrixA, matrixB, X, Y);
-        ts.streamOut(matrixB);
-        ts.execute();
+        TaskGraph taskGraph = new TaskGraph("s0");
+        taskGraph.transferToDevice(DataTransferMode.FIRST_EXECUTION, matrixA);
+        taskGraph.task("t0", TestMatrixTypes::computeMatrixSum, matrixA, matrixB, X, Y);
+        taskGraph.transferToHost(matrixB);
+        taskGraph.execute();
 
         for (int i = 0; i < X; i++) {
             for (int j = 0; j < Y; j++) {
@@ -571,10 +778,11 @@ public class TestMatrixTypes extends TornadoTestBase {
         }
         Matrix2DFloat matrixA = new Matrix2DFloat(a);
         Matrix2DFloat matrixB = new Matrix2DFloat(X, Y);
-        TaskGraph ts = new TaskGraph("s0");
-        ts.task("t0", TestMatrixTypes::computeMatrixSum, matrixA, matrixB, X, Y);
-        ts.streamOut(matrixB);
-        ts.execute();
+        TaskGraph taskGraph = new TaskGraph("s0");
+        taskGraph.transferToDevice(DataTransferMode.FIRST_EXECUTION, matrixA);
+        taskGraph.task("t0", TestMatrixTypes::computeMatrixSum, matrixA, matrixB, X, Y);
+        taskGraph.transferToHost(matrixB);
+        taskGraph.execute();
 
         for (int i = 0; i < X; i++) {
             for (int j = 0; j < Y; j++) {
