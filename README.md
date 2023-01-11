@@ -26,7 +26,7 @@ Information about previous releases can be found [here](tornado-assembly/src/doc
 
 In Linux and Mac OSx, TornadoVM can be installed automatically with the [installation script](INSTALL.md#a-automatic-installation). For example:
 ```bash
-$ ./scripts/tornadovmInstaller.sh 
+$ ./scripts/tornadoVMInstaller.sh 
 TornadoVM installer for Linux and OSx
 $ ./scripts/tornadoVMInstaller.sh <JDK> <BACKENDS>
 JDK (select one):
@@ -60,10 +60,10 @@ Example of installation:
 
 ```bash
 # Install the OpenCL backend with OpenJDK 17
-$ ./scripts/tornadovmInstaller.sh --jdk17 --opencl 
+$ ./scripts/tornadoVMInstaller.sh --jdk17 --opencl 
 
 # It is also possible to combine different backends:
-$ ./scripts/tornadovmInstaller.sh --jdk17 --opencl --spirv --ptx
+$ ./scripts/tornadoVMInstaller.sh --jdk17 --opencl --spirv --ptx
 ```
 
 Alternatively, TornadoVM can be installed either manually [from source](INSTALL.md#b-manual-installation) or by [using Docker](tornado-assembly/src/docs/13_INSTALL_WITH_DOCKER.md).
@@ -272,15 +272,15 @@ Selected publications can be found [here](tornado-assembly/src/docs/14_PUBLICATI
 ## 8. Acknowledgments
 
 This work is partially funded by [Intel corporation](https://www.intel.com/content/www/us/en/homepage.html).
-In addition, it has been supported by the following EU grants (most recent first):
-- [EU Horizon ENCRYPT 101070670](https://encrypt-project.eu).
-- [EU Horizon TANGO 101070052](https://cordis.europa.eu/project/id/101070052).
-- [EU Horizon 2020 ELEGANT 957286](https://www.elegant-h2020.eu/).
-- [EU Horizon 2020 E2Data 780245](https://e2data.eu).
-- [EU Horizon 2020 ACTiCLOUD 732366](https://acticloud.eu).
+In addition, it has been supported by the following EU & UKRI grants (most recent first):
+- EU Horizon Europe & UKRI [ENCRYPT 101070670](https://encrypt-project.eu).
+- EU Horizon Europe & UKRI [TANGO 101070052](https://cordis.europa.eu/project/id/101070052).
+- EU Horizon 2020 [ELEGANT 957286](https://www.elegant-h2020.eu/).
+- EU Horizon 2020 [E2Data 780245](https://e2data.eu).
+- EU Horizon 2020 [ACTiCLOUD 732366](https://acticloud.eu).
 
 Furthermore, TornadoVM has been supported by the following [EPSRC](https://www.ukri.org/councils/epsrc/) grants:
-- [EPSRC PAMELA EP/K008730/1](http://apt.cs.manchester.ac.uk/projects/PAMELA/).
+- [PAMELA EP/K008730/1](http://apt.cs.manchester.ac.uk/projects/PAMELA/).
 - [AnyScale Apps EP/L000725/1](https://gow.epsrc.ukri.org/NGBOViewGrant.aspx?GrantRef=EP/L000725/1).
 
 
