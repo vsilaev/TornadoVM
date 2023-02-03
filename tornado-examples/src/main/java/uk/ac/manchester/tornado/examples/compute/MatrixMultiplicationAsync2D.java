@@ -20,7 +20,9 @@ package uk.ac.manchester.tornado.examples.compute;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 
+import uk.ac.manchester.tornado.api.ImmutableTaskGraph;
 import uk.ac.manchester.tornado.api.TaskGraph;
+import uk.ac.manchester.tornado.api.TornadoExecutionPlan;
 import uk.ac.manchester.tornado.api.annotations.Parallel;
 import uk.ac.manchester.tornado.api.collections.types.Matrix2DFloat;
 import uk.ac.manchester.tornado.api.enums.DataTransferMode;
@@ -74,8 +76,11 @@ public class MatrixMultiplicationAsync2D {
                 .transferToDevice(DataTransferMode.FIRST_EXECUTION, matrixA)  
                 .transferToDevice(DataTransferMode.FIRST_EXECUTION, matrixB)
                 .transferToDevice(DataTransferMode.FIRST_EXECUTION, matrixC)    
-                .transferToHost(matrixC);
+                .transferToHost(DataTransferMode.EVERY_EXECUTION, matrixC);
         //@formatter:on
+        ImmutableTaskGraph immutableTaskGraph = t.snapshot();
+        TornadoExecutionPlan executor = new TornadoExecutionPlan(immutableTaskGraph);
+        executor.withWarmUp();
 
         double flops = 2 * Math.pow(size, 3);
 
@@ -83,7 +88,7 @@ public class MatrixMultiplicationAsync2D {
 
         // 1. Warm up Tornado
         for (int i = 0; i < WARMING_UP_ITERATIONS; i++) {
-            t.execute();
+            executor.execute();
         }
 
         // 2. Run parallel on the GPU with Tornado

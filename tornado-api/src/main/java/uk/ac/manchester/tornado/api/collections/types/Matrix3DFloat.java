@@ -45,6 +45,8 @@ import java.nio.FloatBuffer;
 
 public class Matrix3DFloat extends Matrix3DType implements PrimitiveStorage<FloatBuffer> {
 
+    private static final long serialVersionUID = 1L;
+
     /**
      * backing array
      */

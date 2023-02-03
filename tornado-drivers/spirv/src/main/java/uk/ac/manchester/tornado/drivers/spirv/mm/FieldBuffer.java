@@ -31,7 +31,7 @@ import static uk.ac.manchester.tornado.runtime.common.Tornado.warn;
 import java.lang.reflect.Field;
 import java.util.List;
 
-import uk.ac.manchester.tornado.api.mm.ObjectBuffer;
+import uk.ac.manchester.tornado.api.memory.ObjectBuffer;
 
 // FIXME <REFACTOR> This entire class can be common for all three backends
 public class FieldBuffer {

@@ -44,6 +44,9 @@ package uk.ac.manchester.tornado.api.collections.types;
 import java.nio.FloatBuffer;
 
 public class Matrix3DFloat4 extends Matrix3DType implements PrimitiveStorage<FloatBuffer> {
+    
+    private static final long serialVersionUID = 1L;
+
     /**
      * backing array
      */

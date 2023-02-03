@@ -1,30 +1,29 @@
 # TornadoVM
 
-<img align="right" width="250" height="250" src="etc/tornadoVM_Logo.jpg">
+<img align="left" width="250" height="250" src="etc/tornadoVM_Logo.jpg">
 
-TornadoVM is a plug-in to OpenJDK and GraalVM that allows programmers to automatically run Java programs on
-heterogeneous hardware. TornadoVM currently targets OpenCL-compatible devices and it runs on multi-core CPUs, dedicated
-GPUs (NVIDIA, AMD), integrated GPUs (Intel HD Graphics and ARM Mali), and FPGAs (Intel and Xilinx).
+TornadoVM is a plug-in to OpenJDK and GraalVM that allows programmers to automatically run Java programs on heterogeneous hardware. 
+TornadoVM targets OpenCL, PTX and SPIR-V compatible devices which include multi-core CPUs, dedicated
+GPUs (Intel, NVIDIA, AMD), integrated GPUs (Intel HD Graphics and ARM Mali), and FPGAs (Intel and Xilinx).
 
 
-TornadoVM currently has three backends: OpenCL, NVIDIA CUDA PTX and SPIR-V.
-Developers can chose which backends to install and run.
+TornadoVM has three backends that generate OpenCL C, NVIDIA CUDA PTX assembly, and SPIR-V binary.
+Developers can choose which backends to install and run.
 
 ----------------------
 
 **Website**: [tornadovm.org](https://www.tornadovm.org)
 
-For a quick introduction please read the following [FAQ](tornado-assembly/src/docs/15_FAQ.md).
+For a quick introduction please read the following [FAQ](https://tornadovm.readthedocs.io/en/latest/).
 
-**Latest Release:** TornadoVM 0.14.1 - 29/09/2022 : See [CHANGELOG](tornado-assembly/src/docs/CHANGELOG.md#tornadovm-0.14.1).
-
-Information about previous releases can be found [here](tornado-assembly/src/docs/Releases.md).
+**Latest Release:** TornadoVM 0.15 - 27/01/2023 : See [CHANGELOG](https://tornadovm.readthedocs.io/en/latest/CHANGELOG.html).
 
 ----------------------
 
 ## 1. Installation
 
-In Linux and Mac OSx, TornadoVM can be installed automatically with the [installation script](INSTALL.md#a-automatic-installation). For example:
+In Linux and Mac OSx, TornadoVM can be installed automatically with the [installation script](https://tornadovm.readthedocs.io/en/latest/installation.html). For example:
+
 ```bash
 $ ./scripts/tornadoVMInstaller.sh 
 TornadoVM installer for Linux and OSx
@@ -66,11 +65,11 @@ $ ./scripts/tornadoVMInstaller.sh --jdk17 --opencl
 $ ./scripts/tornadoVMInstaller.sh --jdk17 --opencl --spirv --ptx
 ```
 
-Alternatively, TornadoVM can be installed either manually [from source](INSTALL.md#b-manual-installation) or by [using Docker](tornado-assembly/src/docs/13_INSTALL_WITH_DOCKER.md).
+Alternatively, TornadoVM can be installed either manually [from source](https://tornadovm.readthedocs.io/en/latest/installation.html#b-manual-installation) or by [using Docker](https://tornadovm.readthedocs.io/en/latest/docker.html).
 
 If you are planning to use Docker with TornadoVM on GPUs, you can also follow [these](https://github.com/beehive-lab/docker-tornado#docker-for-tornadovm) guidelines.
 
-You can also run TornadoVM on Amazon AWS CPUs, GPUs, and FPGAs following the instructions [here](tornado-assembly/src/docs/17_AWS.md).
+You can also run TornadoVM on Amazon AWS CPUs, GPUs, and FPGAs following the instructions [here](https://tornadovm.readthedocs.io/en/latest/cloud.html).
 
 ## 2. Usage Instructions
 
@@ -84,12 +83,12 @@ We also have a set of [examples](https://github.com/beehive-lab/TornadoVM/tree/m
 
 **Additional Information**
 
- - [General Documentation](tornado-assembly/src/docs)
- - [Benchmarks](tornado-assembly/src/docs/4_BENCHMARKS.md)
- - [How TornadoVM executes reductions](tornado-assembly/src/docs/5_REDUCTIONS.md)
- - [Execution Flags](tornado-assembly/src/docs/6_TORNADO_FLAGS.md) 
- - [FPGA execution](tornado-assembly/src/docs/7_FPGA.md)
- - [Profiler Usage](tornado-assembly/src/docs/9_PROFILER.md)
+ - [General Documentation](https://tornadovm.readthedocs.io/en/latest/introduction.html)
+ - [Benchmarks](https://tornadovm.readthedocs.io/en/latest/benchmarking.html)
+ - [How TornadoVM executes reductions](https://tornadovm.readthedocs.io/en/latest/programming.html#parallel-reductions)
+ - [Execution Flags](https://tornadovm.readthedocs.io/en/latest/flags.html) 
+ - [FPGA execution](https://tornadovm.readthedocs.io/en/latest/fpga-programming.html)
+ - [Profiler Usage](https://tornadovm.readthedocs.io/en/latest/profiler.html)
 
 
 ## 3. Programming Model
@@ -120,17 +119,27 @@ public class Compute {
 
     public void run(Matrix2DFloat A, Matrix2DFloat B, Matrix2DFloat C, final int size) {
         TaskGraph taskGraph = new TaskGraph("s0")
-                .transferToDevice(DataTransferMode.FIRST_EXECUTION, A, B) // Stream data from host to device and mark buffers as read-only
-                .task("t0", Compute::mxmLoop, A, B, C, size)             // Each task points to an existing Java method
-                .transferToHost(C);                                      // sync arrays with the host side
-        taskGraph.execute();   // It will execute the code on the default device (e.g. a GPU)
+                .transferToDevice(DataTransferMode.FIRST_EXECUTION, A, B) // Transfer data from host to device only in the first execution
+                .task("t0", Compute::mxmLoop, A, B, C, size)              // Each task points to an existing Java method
+                .transferToHost(DataTransferMode.EVERY_EXECUTION, C);     // Transfer data from device to host
+        // Create an immutable task-graph
+        ImmutableTaskGraph immutableTaskGraph = taskGraph.snaphot();
+
+        // Create an execution plan from an immutable task-graph
+        TornadoExecutionPlan executionPlan = new TornadoExecutionPlan(immutableTaskGraph);
+
+        // Execute the execution plan
+        TorandoExecutionResult executionResult = executionPlan.execute();
     }
 }
 ```
 
 #### b) Kernel API 
 
-Another way to express compute-kernels in TornadoVM is via the **kernel API**. To do so, TornadoVM exposes a `KernelContext` with which the application can directly access the thread-id, allocate memory in local memory (shared memory on NVIDIA devices), and insert barriers. This model is similar to programming compute-kernels in OpenCL and CUDA. Therefore, this API is more suitable for GPU/FPGA expert programmers that want more control or want to port existing CUDA/OpenCL compute kernels into TornadoVM.
+Another way to express compute-kernels in TornadoVM is via the **kernel API**. 
+To do so, TornadoVM exposes a `KernelContext` with which the application can directly access the thread-id, allocate memory in local memory (shared memory on NVIDIA devices), and insert barriers. 
+This model is similar to programming compute-kernels in OpenCL and CUDA. 
+Therefore, this API is more suitable for GPU/FPGA expert programmers that want more control or want to port existing CUDA/OpenCL compute kernels into TornadoVM.
 
 The following code-snippet shows the Matrix Multiplication example using the kernel-parallel API:
 
@@ -155,10 +164,19 @@ public class Compute {
         workerGrid.setLocalWork(32, 32, 1);                      // Set the local-group size
 
         TaskGraph taskGraph = new TaskGraph("s0")
-                .transferToDevice(DataTransferMode.FIRST_EXECUTION, A, B) // Stream data from host to device
+                .transferToDevice(DataTransferMode.FIRST_EXECUTION, A, B) // Transfer data from host to device only in the first execution
                 .task("t0", Compute::mxmKernel, context, A, B, C, size)   // Each task points to an existing Java method
-                .transferToHost(C);                                       // sync arrays with the host side
-        taskGraph.execute(gridScheduler);   // Execute with a GridScheduler
+                .transferToHost(DataTransferMode.EVERY_EXECUTION, C);     // Transfer data from device to host
+
+        // Create an immutable task-graph
+        ImmutableTaskGraph immutableTaskGraph = taskGraph.snaphot();
+
+        // Create an execution plan from an immutable task-graph
+        TornadoExecutionPlan executionPlan = new TornadoExecutionPlan(immutableTaskGraph);
+
+        // Execute the execution plan
+        executionPlan.withGridScheduler(gridScheduler)
+                     .execute();
     }
 }
 ```
@@ -178,11 +196,13 @@ efficiently. GPUs are very good at exploiting SIMD applications, and FPGAs are v
 applications. If your applications follow those models, TornadoVM will likely select heterogeneous hardware. Otherwise,
 it will stay on the CPU using the default compilers (C2 or Graal).
 
-To use the dynamic reconfiguration, you can execute using TornadoVM policies. For example:
+To use the dynamic reconfiguration, you can execute using TornadoVM policies. 
+For example:
 
 ```java
 // TornadoVM will execute the code in the best accelerator.
-ts.execute(Policy.PERFORMANCE);
+executionPlan.withDynamicReconfiguration(Policy.PERFORMANCE, DRMode.PARALLEL)
+             .execute();
 ```
 
 Further details and instructions on how to enable this feature can be found here.
@@ -210,12 +230,12 @@ You can import the TornadoVM API by setting this the following dependency in the
 <dependency>
     <groupId>tornado</groupId>
     <artifactId>tornado-api</artifactId>
-    <version>0.14.1</version>
+    <version>0.15</version>
 </dependency>
 <dependency>
     <groupId>tornado</groupId>
     <artifactId>tornado-matrices</artifactId>
-    <version>0.14.1</version>
+    <version>0.15</version>
 </dependency>
 </dependencies>
 ```
@@ -224,7 +244,7 @@ To run TornadoVM, you need to either install the TornadoVM extension for GraalVM
 
 ## 6. Additional Resources
 
-[Here](tornado-assembly/src/docs/16_RESOURCES.md) you can find videos, presentations, tech-articles and artefacts describing TornadoVM, and how to use it.
+[Here](https://tornadovm.readthedocs.io/en/latest/resources.html) you can find videos, presentations, tech-articles and artefacts describing TornadoVM, and how to use it.
 
 ## 7. Academic Publications
 
@@ -267,14 +287,16 @@ If you are using **Tornado 0.1** (Initial release), please use the following cit
 
 ```
 
-Selected publications can be found [here](tornado-assembly/src/docs/14_PUBLICATIONS.md).
+Selected publications can be found [here](https://tornadovm.readthedocs.io/en/latest/publications.html).
 
 ## 8. Acknowledgments
 
 This work is partially funded by [Intel corporation](https://www.intel.com/content/www/us/en/homepage.html).
 In addition, it has been supported by the following EU & UKRI grants (most recent first):
+- EU Horizon Europe & UKRI [AERO 101092850](https://cordis.europa.eu/project/id/101092850).
+- EU Horizon Europe & UKRI [INCODE 101093069](https://cordis.europa.eu/project/id/101093069).
 - EU Horizon Europe & UKRI [ENCRYPT 101070670](https://encrypt-project.eu).
-- EU Horizon Europe & UKRI [TANGO 101070052](https://cordis.europa.eu/project/id/101070052).
+- EU Horizon Europe & UKRI [TANGO 101070052](https://tango-project.eu).
 - EU Horizon 2020 [ELEGANT 957286](https://www.elegant-h2020.eu/).
 - EU Horizon 2020 [E2Data 780245](https://e2data.eu).
 - EU Horizon 2020 [ACTiCLOUD 732366](https://acticloud.eu).
@@ -290,7 +312,7 @@ We welcome collaborations! Please see how to contribute to the project in the [C
 
 ### Write your questions and proposals:
 
-Additionally, you can open new proposals on the GitHub discussions page:[https://github.com/beehive-lab/TornadoVM/discussions](https://github.com/beehive-lab/TornadoVM/discussions)
+Additionally, you can open new proposals on the GitHub discussions page:[https://github.com/beehive-lab/TornadoVM/discussions](https://github.com/beehive-lab/TornadoVM/discussions).
 
 
 Alternatively, you can share a Google document with us. 

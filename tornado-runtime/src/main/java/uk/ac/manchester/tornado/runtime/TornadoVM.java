@@ -54,7 +54,7 @@ import uk.ac.manchester.tornado.api.exceptions.TornadoDeviceFP64NotSupported;
 import uk.ac.manchester.tornado.api.exceptions.TornadoFailureException;
 import uk.ac.manchester.tornado.api.exceptions.TornadoInternalError;
 import uk.ac.manchester.tornado.api.exceptions.TornadoRuntimeException;
-import uk.ac.manchester.tornado.api.mm.ObjectBuffer;
+import uk.ac.manchester.tornado.api.memory.ObjectBuffer;
 import uk.ac.manchester.tornado.api.profiler.ProfilerType;
 import uk.ac.manchester.tornado.api.profiler.TornadoProfiler;
 import uk.ac.manchester.tornado.runtime.common.ColoursTerminal;
@@ -130,8 +130,7 @@ public class TornadoVM extends TornadoLogger {
         debug("loading tornado vm...");
 
         TornadoInternalError.guarantee(buffer.get() == TornadoVMBytecode.INIT.value(), "invalid code");
-        contexts = new ArrayList<>();
-        contexts.addAll(graphContext.getDevices());
+        contexts = new ArrayList<>(graphContext.getDevices());
         
         buffer.getInt();
         int taskCount = buffer.getInt();
@@ -514,9 +513,6 @@ public class TornadoVM extends TornadoLogger {
         } else {
             atomicsArray = device.checkAtomicsForTask(task);
         }
-
-        @SuppressWarnings("unused")
-        final Object accesses = task.getArgumentsAccess();
 
         HashMap<Integer, Integer> map = new HashMap<>();
         if (gridScheduler != null && gridScheduler.get(task.getId()) != null) {

@@ -138,20 +138,6 @@ public final class Short3 implements PrimitiveStorage<ShortBuffer> {
         return toString(NUMBER_FORMAT);
     }
 
-    private static Short3 loadFromArray(final short[] array, int index) {
-        final Short3 result = new Short3();
-        result.setX(array[index]);
-        result.setY(array[index + 1]);
-        result.setZ(array[index + 2]);
-        return result;
-    }
-
-    private void storeToArray(final short[] array, int index) {
-        array[index] = getX();
-        array[index + 1] = getY();
-        array[index + 2] = getZ();
-    }
-
     @Override
     public void loadFromBuffer(ShortBuffer buffer) {
         asBuffer().put(buffer);

@@ -1,5 +1,5 @@
 /*
- * This file is part of Tornado: A heterogeneous programming framework: 
+ * This file is part of Tornado: A heterogeneous programming framework:
  * https://github.com/beehive-lab/tornadovm
  *
  * Copyright (c) 2020, APT Group, Department of Computer Science,
@@ -46,7 +46,7 @@ import jdk.vm.ci.hotspot.HotSpotResolvedJavaField;
 import jdk.vm.ci.hotspot.HotSpotResolvedJavaType;
 import uk.ac.manchester.tornado.api.exceptions.TornadoMemoryException;
 import uk.ac.manchester.tornado.api.exceptions.TornadoOutOfMemoryException;
-import uk.ac.manchester.tornado.api.mm.ObjectBuffer;
+import uk.ac.manchester.tornado.api.memory.ObjectBuffer;
 import uk.ac.manchester.tornado.api.type.annotations.Vector;
 import uk.ac.manchester.tornado.drivers.common.mm.PrimitiveSerialiser;
 import uk.ac.manchester.tornado.drivers.opencl.OCLDeviceContext;
@@ -54,8 +54,6 @@ import uk.ac.manchester.tornado.runtime.common.RuntimeUtilities;
 import uk.ac.manchester.tornado.runtime.utils.TornadoUtils;
 
 public class OCLObjectWrapper implements ObjectBuffer {
-
-    private static final int OPENCL_OBJECT_ALIGNMENT = 64;
 
     private long bufferId;
     private long bufferOffset;
@@ -72,6 +70,7 @@ public class OCLObjectWrapper implements ObjectBuffer {
     private final OCLDeviceContext deviceContext;
 
     private static final int BYTES_OBJECT_REFERENCE = 8;
+    private long setSubRegionSize;
 
     public OCLObjectWrapper(final OCLDeviceContext device, Object object) {
         this.objectType = object.getClass();
@@ -143,7 +142,6 @@ public class OCLObjectWrapper implements ObjectBuffer {
         this.bufferId = deviceContext.getBufferProvider().getBufferWithSize(size());
         this.bufferOffset = 0;
         setBuffer(new ObjectBufferWrapper(bufferId, bufferOffset));
-
 
         if (DEBUG) {
             debug("object: object=0x%x @ bufferId 0x%x", reference.hashCode(), bufferId);
@@ -428,6 +426,16 @@ public class OCLObjectWrapper implements ObjectBuffer {
             }
         }
         return size;
+    }
+
+    @Override
+    public void setSizeSubRegion(long batchSize) {
+        this.setSubRegionSize = batchSize;
+    }
+
+    @Override
+    public long getSizeSubRegion() {
+        return setSubRegionSize;
     }
 
 }

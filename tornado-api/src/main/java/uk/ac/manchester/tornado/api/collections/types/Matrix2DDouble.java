@@ -45,6 +45,9 @@ import java.nio.DoubleBuffer;
 import java.util.Arrays;
 
 public class Matrix2DDouble extends Matrix2DType implements PrimitiveStorage<DoubleBuffer> {
+    
+    private static final long serialVersionUID = 1L;
+
     /**
      * backing array
      */

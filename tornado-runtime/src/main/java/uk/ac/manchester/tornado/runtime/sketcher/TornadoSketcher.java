@@ -1,5 +1,5 @@
 /*
- * This file is part of Tornado: A heterogeneous programming framework: 
+ * This file is part of Tornado: A heterogeneous programming framework:
  * https://github.com/beehive-lab/tornadovm
  *
  * Copyright (c) 2020, APT Group, Department of Computer Science,
@@ -107,7 +107,7 @@ public class TornadoSketcher {
 
     private static HashSet<String> openCLTokens = new HashSet<>();
     static {
-        // XXX: To be completed
+        // FIXME: To be completed
         openCLTokens.add("kernel");
         openCLTokens.add("__kernel");
         openCLTokens.add("__global");
@@ -115,6 +115,7 @@ public class TornadoSketcher {
         openCLTokens.add("local");
         openCLTokens.add("__local");
         openCLTokens.add("private");
+        openCLTokens.add("__private");
         openCLTokens.add("half");
         openCLTokens.add("dot");
         openCLTokens.add("uniform");
@@ -198,7 +199,8 @@ public class TornadoSketcher {
         sketches.add(new TornadoSketcherCacheEntry(request.driverIndex, request.deviceIndex, result));
     }
 
-    private static Sketch buildSketch(ResolvedJavaMethod resolvedMethod, Providers providers, PhaseSuite<HighTierContext> graphBuilderSuite, TornadoSketchTier sketchTier, int driverIndex, int deviceIndex) {
+    private static Sketch buildSketch(ResolvedJavaMethod resolvedMethod, Providers providers, PhaseSuite<HighTierContext> graphBuilderSuite, TornadoSketchTier sketchTier, int driverIndex,
+            int deviceIndex) {
         info("Building sketch of %s", resolvedMethod.getName());
         TornadoCompilerIdentifier id = new TornadoCompilerIdentifier("sketch-" + resolvedMethod.getName(), sketchId.getAndIncrement());
         Builder builder = new Builder(getOptions(), getDebugContext(), AllowAssumptions.YES);
@@ -254,14 +256,16 @@ public class TornadoSketcher {
     }
 
     /**
-     * Merges the {@param calleeAccesses} into the {@param callerAccesses}. For example, given the two {@link Access} arrays below, a merge will look like:
+     * Merges the {@param calleeAccesses} into the {@param callerAccesses}. For
+     * example, given the two {@link Access} arrays below, a merge will look like:
      *
-     * Caller accesses:         NONE, READ,       WRITE, NONE,       READ_WRITE
-     * Callee accesses:         READ, WRITE,      NONE,  READ_WRITE, NONE
+     * Caller accesses: NONE, READ, WRITE, NONE, READ_WRITE Callee accesses: READ,
+     * WRITE, NONE, READ_WRITE, NONE
      *
      * Updated caller accesses: READ, READ_WRITE, WRITE, READ_WRITE, READ_WRITE
      *
-     * This is needed since caller parameters can have different accesses in a callee.
+     * This is needed since caller parameters can have different accesses in a
+     * callee.
      */
     private static void mergeAccesses(Access[] callerAccesses, CallTargetNode callTarget, Access[] calleeAccesses) {
         List<ValueNode> callArgs = callTarget.arguments().snapshot();
@@ -274,7 +278,7 @@ public class TornadoSketcher {
                 continue;
             }
             ParameterNode param = (ParameterNode) callArg;
-            int paramIndex =  param.index();
+            int paramIndex = param.index();
 
             Access calleeAcc = calleeAccesses[index];
             Access callerAcc = callerAccesses[paramIndex];

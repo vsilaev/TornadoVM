@@ -19,8 +19,10 @@
 package uk.ac.manchester.tornado.unittests.common;
 
 import org.junit.Before;
+import org.junit.BeforeClass;
 
 import uk.ac.manchester.tornado.api.TornadoDriver;
+import uk.ac.manchester.tornado.api.TornadoRuntimeInterface;
 import uk.ac.manchester.tornado.api.common.TornadoDevice;
 import uk.ac.manchester.tornado.api.enums.TornadoVMBackendType;
 import uk.ac.manchester.tornado.api.runtime.TornadoRuntime;
@@ -30,15 +32,8 @@ public abstract class TornadoTestBase {
 
     protected static boolean wasDeviceInspected = false;
 
-    @Before
-    public void before() {
-        for (int i = 0; i < TornadoRuntime.getTornadoRuntime().getNumDrivers(); i++) {
-            final TornadoDriver driver = TornadoRuntime.getTornadoRuntime().getDriver(i);
-            for (int j = 0; j < driver.getDeviceCount(); j++) {
-                driver.getDevice(j).reset();
-            }
-        }
-
+    @BeforeClass
+    public static void setup() {
         /*
          * Virtual Device execution assumes an environment with a single device.
          * Therefore, there is no need to change the device even if a different device
@@ -54,19 +49,34 @@ public abstract class TornadoTestBase {
             int deviceIndex = pairDriverDevice.f1();
             if (deviceIndex != 0) {
                 // We swap the default device for the selected one
-                TornadoDriver driver = TornadoRuntime.getTornadoRuntime().getDriver(0);
+                TornadoDriver driver = TornadoRuntime.getTornadoRuntime().getDriver(driverIndex);
                 driver.setDefaultDevice(deviceIndex);
             }
             wasDeviceInspected = true;
         }
     }
 
-    private boolean getVirtualDeviceEnabled() {
+    @Before
+    public void before() {
+        for (int i = 0; i < TornadoRuntime.getTornadoRuntime().getNumDrivers(); i++) {
+            final TornadoDriver driver = TornadoRuntime.getTornadoRuntime().getDriver(i);
+            for (int j = 0; j < driver.getDeviceCount(); j++) {
+                driver.getDevice(j).reset();
+            }
+        }
+    }
+    
+    public static TornadoRuntimeInterface getTornadoRuntime() {
+        return TornadoRuntime.getTornadoRuntime();
+    }
+
+    private static boolean getVirtualDeviceEnabled() {
         return Boolean.parseBoolean(System.getProperty("tornado.virtual.device", "False"));
     }
 
-    protected Tuple2<Integer, Integer> getDriverAndDeviceIndex() {
-        String driverAndDevice = System.getProperty("tornado.unittests.device", "0:0");
+    protected static Tuple2<Integer, Integer> getDriverAndDeviceIndex() {
+        String defaultDeviceAndDriver = TornadoRuntime.getProperty("tornado.driver", "0") + ":" + TornadoRuntime.getProperty("tornado.device", "0");
+        String driverAndDevice = System.getProperty("tornado.unittests.device", defaultDeviceAndDriver);
         String[] propertyValues = driverAndDevice.split(":");
         return new Tuple2<>(Integer.parseInt(propertyValues[0]), Integer.parseInt(propertyValues[1]));
     }

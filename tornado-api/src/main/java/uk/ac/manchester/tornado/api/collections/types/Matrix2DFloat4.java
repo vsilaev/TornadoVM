@@ -47,6 +47,9 @@ import java.util.Arrays;
 import uk.ac.manchester.tornado.api.exceptions.TornadoRuntimeException;
 
 public class Matrix2DFloat4 extends Matrix2DType implements PrimitiveStorage<FloatBuffer> {
+
+    private static final long serialVersionUID = 1L;
+
     /**
      * backing array
      */

@@ -25,12 +25,12 @@ package uk.ac.manchester.tornado.runtime.tasks;
 
 import java.util.concurrent.CompletableFuture;
 
-import uk.ac.manchester.tornado.api.AbstractTaskGraph;
+import uk.ac.manchester.tornado.api.TornadoTaskGraphInterface;
 import uk.ac.manchester.tornado.api.exceptions.TornadoRuntimeException;
 
-class TornadoExecutionFuture extends CompletableFuture<AbstractTaskGraph> {
+class TornadoExecutionFuture extends CompletableFuture<TornadoTaskGraphInterface> {
     @Override 
-    public boolean complete(AbstractTaskGraph result) {
+    public boolean complete(TornadoTaskGraphInterface result) {
         throw new UnsupportedOperationException("Explicit completion of " + getClass().getName() + " is forbidden");
     }
 
@@ -39,7 +39,7 @@ class TornadoExecutionFuture extends CompletableFuture<AbstractTaskGraph> {
         throw new UnsupportedOperationException("Explicit completion of " + getClass().getName() + " is forbidden");
     }
 
-    boolean success(AbstractTaskGraph result) {
+    boolean success(TornadoTaskGraphInterface result) {
         return super.complete(result);
     }
 
