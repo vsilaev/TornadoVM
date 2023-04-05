@@ -30,9 +30,17 @@ import org.graalvm.compiler.lir.asm.DataBuilder;
 import jdk.vm.ci.meta.Constant;
 
 public class PTXDataBuilder extends DataBuilder {
+
+    private static final int MAX_DATA_ALIGNMENT = 64;
+
     @Override
     public DataSection.Data createDataItem(Constant c) {
         unimplemented();
         return null;
+    }
+
+    @Override
+    public int getMaxSupportedAlignment() {
+        return MAX_DATA_ALIGNMENT;
     }
 }

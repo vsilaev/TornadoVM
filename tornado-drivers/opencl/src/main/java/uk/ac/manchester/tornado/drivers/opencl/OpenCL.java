@@ -1,8 +1,8 @@
 /*
- * This file is part of Tornado: A heterogeneous programming framework: 
+ * This file is part of Tornado: A heterogeneous programming framework:
  * https://github.com/beehive-lab/tornadovm
  *
- * Copyright (c) 2013-2020, APT Group, Department of Computer Science,
+ * Copyright (c) 2013-2020, 2023 APT Group, Department of Computer Science,
  * The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -19,8 +19,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Authors: James Clarkson
  *
  */
 package uk.ac.manchester.tornado.drivers.opencl;
@@ -69,7 +67,7 @@ public class OpenCL {
                 // Loading JNI OpenCL library
                 System.loadLibrary(OpenCL.OPENCL_JNI_LIBRARY);
             } catch (final UnsatisfiedLinkError e) {
-                throw e;
+                throw new TornadoRuntimeException("OpenCL JNI Library not found");
             }
 
             try {
@@ -83,11 +81,11 @@ public class OpenCL {
         }
     }
 
-    native static boolean registerCallback();
+    static native boolean registerCallback();
 
-    native static int clGetPlatformCount();
+    static native int clGetPlatformCount();
 
-    native static int clGetPlatformIDs(long[] platformIds);
+    static native int clGetPlatformIDs(long[] platformIds);
 
     public static void cleanup() {
         if (initialised) {
@@ -147,7 +145,7 @@ public class OpenCL {
 
     /**
      * Execute an OpenCL code compiled by Tornado on the target device
-     * 
+     *
      * @param tornadoDevice
      *            OpenCL device to run the application.
      * @param openCLCode
@@ -158,7 +156,7 @@ public class OpenCL {
      *            Access of each parameter
      * @param parameters
      *            List of parameters.
-     * 
+     *
      */
     public static void run(OCLTornadoDevice tornadoDevice, OCLInstalledCode openCLCode, TaskMetaData taskMeta, Access[] accesses, Object... parameters) {
         if (parameters.length != accesses.length) {
