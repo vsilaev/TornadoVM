@@ -230,7 +230,6 @@ public class TornadoFloatingReadReplacement extends PostRunCanonicalizationPhase
     }
 
     @Override
-    @SuppressWarnings("try")
     protected void run(StructuredGraph graph, CoreProviders context) {
         EconomicSet<ValueNode> initMemory = EconomicSet.create(Equivalence.IDENTITY);
 
@@ -264,7 +263,6 @@ public class TornadoFloatingReadReplacement extends PostRunCanonicalizationPhase
         graphState.setAfterStage(GraphState.StageFlag.FLOATING_READS);
     }
 
-    @SuppressWarnings("try")
     public static TornadoFloatingReadReplacement.MemoryMapImpl mergeMemoryMaps(AbstractMergeNode merge, List<? extends MemoryMap> states) {
         TornadoFloatingReadReplacement.MemoryMapImpl newState = new TornadoFloatingReadReplacement.MemoryMapImpl();
 
@@ -451,7 +449,6 @@ public class TornadoFloatingReadReplacement extends PostRunCanonicalizationPhase
             predecessor.replaceFirstSuccessor(nextNode, fixedWithNextNode);
         }
 
-        @SuppressWarnings("try")
         private void processFloatable(FloatableAccessNode accessNode, TornadoFloatingReadReplacement.MemoryMapImpl state) {
             StructuredGraph graph = accessNode.graph();
             LocationIdentity locationIdentity = accessNode.getLocationIdentity();
@@ -530,7 +527,6 @@ public class TornadoFloatingReadReplacement extends PostRunCanonicalizationPhase
             return loopInfo.exitStates;
         }
 
-        @SuppressWarnings("try")
         private static void createMemoryPhi(LoopBeginNode loop, TornadoFloatingReadReplacement.MemoryMapImpl initialState, EconomicMap<LocationIdentity, MemoryPhiNode> phis,
                 LocationIdentity location) {
             try (DebugCloseable position = loop.withNodeSourcePosition()) {

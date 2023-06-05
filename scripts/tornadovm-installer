@@ -92,7 +92,9 @@ class TornadoInstaller():
             url = config.CMAKE[__LINUX__][__X86_64__]
         elif (self.hardware == __ARM__ and self.osPlatform == __LINUX__ ):
             url = config.CMAKE[__LINUX__][__ARM__]
-        elif (self.osPlatform == __APPLE__):
+        elif (self.hardware == __X86_64__ and self.osPlatform == __APPLE__):
+            url = config.CMAKE[__APPLE__][__X86_64__]
+        elif (self.hardware == __ARM__ and self.osPlatform == __APPLE__):
             url = config.CMAKE[__APPLE__][__ARM__]
         
         fileName = self.processFileName(url)
@@ -124,11 +126,15 @@ class TornadoInstaller():
             url = config.MAVEN[__LINUX__][__X86_64__]
         elif (self.hardware == __ARM__ and self.osPlatform == __LINUX__ ):
             url = config.MAVEN[__LINUX__][__ARM__]
-        elif (self.osPlatform == __APPLE__):
+        elif (self.hardware == __ARM__ and self.osPlatform == __APPLE__):
             url = config.MAVEN[__APPLE__][__ARM__]
             if (url == None):
                 return
-            
+        elif (self.hardware == __X86_64__ and self.osPlatform == __APPLE__):
+            url = config.MAVEN[__APPLE__][__X86_64__]
+            if (url == None):
+                return
+
         fileName = self.processFileName(url)
         print("\nChecking dependency: " + fileName)
         fullPath = self.workDirName + "/" + fileName
@@ -164,9 +170,11 @@ class TornadoInstaller():
             url = config.JDK[jdk][__LINUX__][__X86_64__]
         elif (self.hardware == __ARM__ and self.osPlatform == __LINUX__ ):
             url = config.JDK[jdk][__LINUX__][__ARM__]
-        elif (self.osPlatform == __APPLE__):
+        elif (self.hardware == __ARM__ and self.osPlatform == __APPLE__):
             url = config.JDK[jdk][__APPLE__][__ARM__]
-        
+        elif (self.hardware == __X86_64__ and self.osPlatform == __APPLE__):
+                   url = config.JDK[jdk][__APPLE__][__X86_64__]
+
         fileName = self.processFileName(url)
         print("\nChecking dependency: " + fileName)
         fullPath = self.workDirName + "/" + fileName
@@ -298,11 +306,11 @@ def listSupportedJDKs():
     print("""
     jdk11            : Install TornadoVM with OpenJDK 11 (Oracle OpenJDK)"
     jdk17            : Install TornadoVM with OpenJDK 17 (Oracle OpenJDK)"
-    graalvm-jdk-11   : Install TornadoVM with GraalVM and JDK 11 (GraalVM 22.3.1)"
-    graalvm-jdk-17   : Install TornadoVM with GraalVM and JDK 17 (GraalVM 22.3.1)"
+    graalvm-jdk-11   : Install TornadoVM with GraalVM and JDK 11 (GraalVM 22.3.2)"
+    graalvm-jdk-17   : Install TornadoVM with GraalVM and JDK 17 (GraalVM 22.3.2)"
     corretto-jdk-11  : Install TornadoVM with Corretto JDK 11"
     corretto-jdk-17  : Install TornadoVM with Corretto JDK 17"
-    mandrel-jdk-17   : Install TornadoVM with Mandrel 22.3.1 (JDK 17)"
+    mandrel-jdk-17   : Install TornadoVM with Mandrel 22.3.2 (JDK 17)"
     microsoft-jdk-11 : Install TornadoVM with Microsoft JDK 11"
     microsoft-jdk-17 : Install TornadoVM with Microsoft JDK 17"
     zulu-jdk-11      : Install TornadoVM with Azul Zulu JDK 11"
