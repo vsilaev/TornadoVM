@@ -17,7 +17,9 @@
  * limitations under the License.
  *
  */
+
 package uk.ac.manchester.tornado.examples.polyglot.node;
+
 import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
 import java.io.File;

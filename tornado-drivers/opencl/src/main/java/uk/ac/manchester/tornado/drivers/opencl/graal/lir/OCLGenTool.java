@@ -1,5 +1,5 @@
 /*
- * This file is part of Tornado: A heterogeneous programming framework: 
+ * This file is part of Tornado: A heterogeneous programming framework:
  * https://github.com/beehive-lab/tornadovm
  *
  * Copyright (c) 2020, APT Group, Department of Computer Science,
@@ -52,6 +52,7 @@ import uk.ac.manchester.tornado.drivers.opencl.graal.lir.OCLLIRStmt.VectorLoadSt
 import uk.ac.manchester.tornado.drivers.opencl.graal.lir.OCLUnary.MemoryAccess;
 import uk.ac.manchester.tornado.drivers.opencl.graal.lir.OCLUnary.OCLAddressCast;
 import uk.ac.manchester.tornado.drivers.opencl.graal.nodes.vector.VectorUtil;
+import uk.ac.manchester.tornado.runtime.common.OCLTokens;
 
 public class OCLGenTool {
 
@@ -68,19 +69,25 @@ public class OCLGenTool {
         gen.append(new VectorLoadStmt(result, op, index, cast, address));
     }
 
+    private String getParameterName(Local local) {
+        String parameterName = local.getName();
+        if (OCLTokens.openCLTokens.contains(parameterName)) {
+            parameterName = "_" + parameterName;
+        }
+        return parameterName;
+    }
+
     public Value emitParameterLoad(Local local, ParameterNode paramNode) {
 
         Logger.traceBuildLIR(Logger.BACKEND.OpenCL, "emitParameterLoad: stamp=%s", paramNode.stamp(NodeView.DEFAULT));
 
-        // assert !(paramValue instanceof Variable) : "Creating a copy of a
-        // variable via this method is not supported (and potentially a bug): "
-        // + paramValue;
         LIRKind lirKind = gen.getLIRKind(paramNode.stamp(NodeView.DEFAULT));
         OCLKind oclKind = (OCLKind) lirKind.getPlatformKind();
         OCLTargetDescription oclTarget = gen.target();
 
         Variable result = (oclKind.isVector()) ? gen.newVariable(LIRKind.value(oclTarget.getOCLKind(JavaKind.Object))) : gen.newVariable(lirKind);
-        gen.append(new AssignStmt(result, new OCLNullary.Parameter(OCLUnaryOp.CAST_TO_ULONG + local.getName(), lirKind)));
+        String parameterName = getParameterName(local);
+        gen.append(new AssignStmt(result, new OCLNullary.Parameter(OCLUnaryOp.CAST_TO_ULONG + parameterName, lirKind)));
         parameterToVariable.put(paramNode, result);
 
         if (oclKind.isVector()) {
