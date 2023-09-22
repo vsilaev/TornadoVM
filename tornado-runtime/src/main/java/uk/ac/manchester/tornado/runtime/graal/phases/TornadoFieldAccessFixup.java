@@ -22,7 +22,9 @@
 package uk.ac.manchester.tornado.runtime.graal.phases;
 
 import java.util.ArrayDeque;
+import java.util.Optional;
 
+import org.graalvm.compiler.nodes.GraphState;
 import org.graalvm.compiler.nodes.ParameterNode;
 import org.graalvm.compiler.nodes.PiNode;
 import org.graalvm.compiler.nodes.StructuredGraph;
@@ -37,17 +39,18 @@ import uk.ac.manchester.tornado.api.exceptions.TornadoInternalError;
 import uk.ac.manchester.tornado.runtime.graal.nodes.calc.TornadoAddressArithmeticNode;
 
 public class TornadoFieldAccessFixup extends BasePhase<TornadoHighTierContext> {
+    @Override
+    public Optional<NotApplicable> notApplicableTo(GraphState graphState) {
+        return ALWAYS_APPLICABLE;
+    }
 
     @Override
     protected void run(StructuredGraph graph, TornadoHighTierContext context) {
         ArrayDeque<LoadFieldNode> worklist = new ArrayDeque<>();
         graph.getNodes().filter(ParameterNode.class).forEach(parameterNode -> {
             worklist.addAll(parameterNode.usages().filter(LoadFieldNode.class).snapshot());
-            parameterNode.usages()
-                    .filter(usage -> usage instanceof PiNode && ((PiNode) usage).object() instanceof ParameterNode)
-                    .forEach(usage ->
-                            worklist.addAll(usage.usages().filter(LoadFieldNode.class).snapshot())
-                    );
+            parameterNode.usages().filter(usage -> usage instanceof PiNode && ((PiNode) usage).object() instanceof ParameterNode)
+                    .forEach(usage -> worklist.addAll(usage.usages().filter(LoadFieldNode.class).snapshot()));
         });
 
         while (!worklist.isEmpty()) {

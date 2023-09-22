@@ -100,6 +100,7 @@ public class EulerTornado extends BenchmarkDriver {
     }
 
     private void runParallel(int size, long[] input, long[] outputA, long[] outputB, long[] outputC, long[] outputD, long[] outputE, TornadoDevice device) {
+        @SuppressWarnings("unused")
         TaskGraph graph = new TaskGraph("s0") //
                 .task("s0", ComputeKernels::euler, size, input, outputA, outputB, outputC, outputD, outputE) //
                 .transferToHost(DataTransferMode.EVERY_EXECUTION, outputA, outputB, outputC, outputD, outputE);

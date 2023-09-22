@@ -45,7 +45,7 @@ public class PTXInstalledCode extends InstalledCode implements TornadoInstalledC
 
     @Override
     public int launchWithDependencies(KernelArgs callWrapper, ObjectBuffer atomicSpace, TaskMetaData meta, long batchThreads, int[] waitEvents) {
-        unimplemented("launch with deps");
+        unimplemented("PTX launch with deps");
         return 0;
     }
 

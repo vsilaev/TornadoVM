@@ -25,6 +25,7 @@
 package uk.ac.manchester.tornado.drivers.ptx.graal.lir;
 
 import static uk.ac.manchester.tornado.drivers.ptx.graal.PTXCodeUtil.getFPURoundingMode;
+import static uk.ac.manchester.tornado.drivers.ptx.graal.asm.PTXAssembler.PTXNullaryTemplate;
 import static uk.ac.manchester.tornado.drivers.ptx.graal.asm.PTXAssemblerConstants.COMMA;
 import static uk.ac.manchester.tornado.drivers.ptx.graal.asm.PTXAssemblerConstants.CONVERT;
 import static uk.ac.manchester.tornado.drivers.ptx.graal.asm.PTXAssemblerConstants.DOT;
@@ -38,7 +39,6 @@ import org.graalvm.compiler.lir.Variable;
 
 import uk.ac.manchester.tornado.drivers.ptx.graal.asm.PTXAssembler;
 import uk.ac.manchester.tornado.drivers.ptx.graal.asm.PTXAssembler.PTXNullaryOp;
-import uk.ac.manchester.tornado.drivers.ptx.graal.asm.PTXAssembler.PTXNullaryTemplate;
 import uk.ac.manchester.tornado.drivers.ptx.graal.compiler.PTXCompilationResultBuilder;
 
 public class PTXNullary {

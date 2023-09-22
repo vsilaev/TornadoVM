@@ -120,9 +120,9 @@ public class JMHBlurFilter {
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     @Fork(1)
     public void blurFilterJava(BenchmarkSetup state) {
-        ComputeKernels.channelConvolution(state.redChannel, state.redFilter, state.size, state.size, state.filter, state.FILTER_WIDTH);
-        ComputeKernels.channelConvolution(state.greenChannel, state.greenFilter, state.size, state.size, state.filter, state.FILTER_WIDTH);
-        ComputeKernels.channelConvolution(state.blueChannel, state.blueFilter, state.size, state.size, state.filter, state.FILTER_WIDTH);
+        ComputeKernels.channelConvolution(state.redChannel, state.redFilter, state.size, state.size, state.filter, BenchmarkSetup.FILTER_WIDTH);
+        ComputeKernels.channelConvolution(state.greenChannel, state.greenFilter, state.size, state.size, state.filter, BenchmarkSetup.FILTER_WIDTH);
+        ComputeKernels.channelConvolution(state.blueChannel, state.blueFilter, state.size, state.size, state.filter, BenchmarkSetup.FILTER_WIDTH);
     }
 
     @Benchmark

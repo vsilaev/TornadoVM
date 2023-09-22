@@ -38,11 +38,6 @@ public class OCLFrameContext extends TornadoLogger implements FrameContext {
     }
 
     @Override
-    public boolean hasFrame() {
-        return false;
-    }
-
-    @Override
     public void leave(CompilationResultBuilder crb) {
         trace("FrameContext.leave()");
 

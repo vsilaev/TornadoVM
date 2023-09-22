@@ -23,8 +23,11 @@ package uk.ac.manchester.tornado.drivers.ptx.graal.phases;
 
 import static uk.ac.manchester.tornado.runtime.TornadoCoreRuntime.getDebugContext;
 
+import java.util.Optional;
+
 import org.graalvm.compiler.debug.DebugContext;
 import org.graalvm.compiler.nodes.ConstantNode;
+import org.graalvm.compiler.nodes.GraphState;
 import org.graalvm.compiler.nodes.StructuredGraph;
 import org.graalvm.compiler.nodes.calc.AddNode;
 import org.graalvm.compiler.nodes.calc.MulNode;
@@ -33,6 +36,7 @@ import org.graalvm.compiler.phases.BasePhase;
 import uk.ac.manchester.tornado.drivers.ptx.graal.nodes.GlobalThreadIdNode;
 import uk.ac.manchester.tornado.drivers.ptx.graal.nodes.GlobalThreadSizeNode;
 import uk.ac.manchester.tornado.drivers.ptx.runtime.PTXTornadoDevice;
+import uk.ac.manchester.tornado.runtime.common.TornadoSchedulingStrategy;
 import uk.ac.manchester.tornado.runtime.graal.nodes.AbstractParallelNode;
 import uk.ac.manchester.tornado.runtime.graal.nodes.ParallelOffsetNode;
 import uk.ac.manchester.tornado.runtime.graal.nodes.ParallelRangeNode;
@@ -54,6 +58,11 @@ public class TornadoParallelScheduler extends BasePhase<TornadoHighTierContext> 
         offset.safeDelete();
     }
 
+    @Override
+    public Optional<NotApplicable> notApplicableTo(GraphState graphState) {
+        return ALWAYS_APPLICABLE;
+    }
+
     private void replaceStrideNode(StructuredGraph graph, ParallelStrideNode stride) {
         final ConstantNode index = graph.addOrUnique(ConstantNode.forInt(stride.index()));
         final GlobalThreadSizeNode threadCount = graph.addOrUnique(new GlobalThreadSizeNode(index));
@@ -72,9 +81,7 @@ public class TornadoParallelScheduler extends BasePhase<TornadoHighTierContext> 
         }
 
         PTXTornadoDevice device = (PTXTornadoDevice) context.getDeviceMapping();
-        /*
         final TornadoSchedulingStrategy strategy = device.getPreferredSchedule();
-        */
         long[] maxWorkItemSizes = device.getPhysicalDevice().getDeviceMaxWorkItemSizes();
 
         graph.getNodes().filter(ParallelRangeNode.class).forEach(node -> {

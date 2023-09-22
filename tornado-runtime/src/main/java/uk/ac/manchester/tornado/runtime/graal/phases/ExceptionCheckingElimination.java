@@ -23,8 +23,11 @@
  */
 package uk.ac.manchester.tornado.runtime.graal.phases;
 
+import java.util.Optional;
+
 import org.graalvm.compiler.graph.Node;
 import org.graalvm.compiler.nodes.ConstantNode;
+import org.graalvm.compiler.nodes.GraphState;
 import org.graalvm.compiler.nodes.GuardNode;
 import org.graalvm.compiler.nodes.LogicConstantNode;
 import org.graalvm.compiler.nodes.LogicNode;
@@ -36,6 +39,10 @@ import org.graalvm.compiler.nodes.extended.GuardedNode;
 import org.graalvm.compiler.phases.BasePhase;
 
 public class ExceptionCheckingElimination extends BasePhase<TornadoMidTierContext> {
+    @Override
+    public Optional<NotApplicable> notApplicableTo(GraphState graphState) {
+        return ALWAYS_APPLICABLE;
+    }
 
     /**
      * Removes all exception checking - loop bounds and null checks

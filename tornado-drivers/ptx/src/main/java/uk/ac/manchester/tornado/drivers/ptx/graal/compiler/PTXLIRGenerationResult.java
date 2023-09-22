@@ -24,8 +24,10 @@ package uk.ac.manchester.tornado.drivers.ptx.graal.compiler;
 
 import static uk.ac.manchester.tornado.api.exceptions.TornadoInternalError.guarantee;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -41,18 +43,8 @@ import uk.ac.manchester.tornado.drivers.ptx.graal.lir.PTXKind;
 
 public class PTXLIRGenerationResult extends LIRGenerationResult {
 
-    public static class VariableData {
-        public boolean isArray;
-        public Variable variable;
-
-        public VariableData(Variable variable, boolean isArray) {
-            this.variable = variable;
-            this.isArray = isArray;
-        }
-    }
-
     private final Map<PTXKind, Set<VariableData>> variableTable;
-    private final Map<PTXKind, Variable> returnVariables;
+    private final Map<PTXKind, List<Variable>> returnVariables;
 
     public PTXLIRGenerationResult(CompilationIdentifier identifier, LIR lir, FrameMapBuilder frameMapBuilder, RegisterAllocationConfig registerAllocationConfig, CallingConvention callingConvention) {
         super(identifier, lir, frameMapBuilder, registerAllocationConfig, callingConvention);
@@ -61,11 +53,11 @@ public class PTXLIRGenerationResult extends LIRGenerationResult {
         returnVariables = new HashMap<>();
     }
 
-    public int insertVariableAndGetIndex(Variable var, boolean isArray) {
-        guarantee(var.getPlatformKind() instanceof PTXKind, "invalid variable kind: %s", var.getValueKind());
-        PTXKind kind = (PTXKind) var.getPlatformKind();
+    public int insertVariableAndGetIndex(Variable variable, boolean isArray) {
+        guarantee(variable.getPlatformKind() instanceof PTXKind, "invalid variable kind: %s", variable.getValueKind());
+        PTXKind kind = (PTXKind) variable.getPlatformKind();
 
-        variableTable.computeIfAbsent(kind, k -> new HashSet<>()).add(new VariableData(var, isArray));
+        variableTable.computeIfAbsent(kind, k -> new HashSet<>()).add(new VariableData(variable, isArray));
         int arrayCount = isArray ? 0 : (int) variableTable.get(kind).stream().filter(varData -> varData.isArray).count();
         return variableTable.get(kind).size() - arrayCount - 1;
     }
@@ -74,15 +66,22 @@ public class PTXLIRGenerationResult extends LIRGenerationResult {
         return variableTable;
     }
 
-    public void setReturnVariable(Variable var) {
-        PTXKind ptxKind = (PTXKind) var.getPlatformKind();
-
-        if (!returnVariables.containsKey(ptxKind)) {
-            returnVariables.put(ptxKind, var);
-        }
+    public void setReturnVariable(Variable variable) {
+        PTXKind ptxKind = (PTXKind) variable.getPlatformKind();
+        returnVariables.computeIfAbsent(ptxKind, k -> new ArrayList<>()).add(variable);
     }
 
-    public Variable getReturnVariable(PTXKind kind) {
+    public List<Variable> getReturnVariables(PTXKind kind) {
         return returnVariables.get(kind);
+    }
+
+    public static class VariableData {
+        public boolean isArray;
+        public Variable variable;
+
+        public VariableData(Variable variable, boolean isArray) {
+            this.variable = variable;
+            this.isArray = isArray;
+        }
     }
 }

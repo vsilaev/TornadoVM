@@ -36,12 +36,11 @@ import uk.ac.manchester.tornado.runtime.common.Tornado;
  * userspace object.
  */
 public class OCLByteBuffer {
-    protected ByteBuffer buffer;
-    private final long oclBufferId;
     protected final long bytes;
-    private final long offset;
-
     protected final OCLDeviceContext deviceContext;
+    private final long oclBufferId;
+    private final long offset;
+    protected ByteBuffer buffer;
 
     public OCLByteBuffer(final OCLDeviceContext deviceContext, final long oclBufferId, final long offset, final long numBytes) {
         this.deviceContext = deviceContext;

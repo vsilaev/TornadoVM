@@ -71,7 +71,7 @@ public class LoopCanonicalizer {
         index = 0;
         for (final PhiNode oldPhi : oldPhiNodes) {
             PhiNode newPhi = (PhiNode) oldPhi.copyWithInputs(true);
-            newPhi.clearValues();
+            newPhi.clearInputs();
             newPhi.setMerge(mergeNode);
 
             for (int i = 0; i < numBackedges; i++) {

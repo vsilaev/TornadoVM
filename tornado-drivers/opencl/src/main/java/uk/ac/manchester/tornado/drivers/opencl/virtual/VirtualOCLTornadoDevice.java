@@ -196,7 +196,7 @@ public class VirtualOCLTornadoDevice implements TornadoAcceleratorDevice {
             return null;
         } catch (Exception e) {
             TornadoLogger.fatal("unable to compile %s for device %s", task.getId(), getDeviceName());
-            TornadoLogger.fatal("exception occured when compiling %s", ((CompilableTask) task).getMethod().getName());
+            TornadoLogger.fatal("exception occurred when compiling %s", ((CompilableTask) task).getMethod().getName());
             TornadoLogger.fatal("exception: %s", e.toString());
             throw new TornadoBailoutRuntimeException("[Error During the Task Compilation] ", e);
         }

@@ -24,10 +24,13 @@ package uk.ac.manchester.tornado.drivers.ptx.graal.phases;
 import static uk.ac.manchester.tornado.api.exceptions.TornadoInternalError.shouldNotReachHere;
 import static uk.ac.manchester.tornado.api.exceptions.TornadoInternalError.unimplemented;
 
+import java.util.Optional;
+
 import org.graalvm.compiler.graph.NodeInputList;
 import org.graalvm.compiler.graph.iterators.NodeIterable;
 import org.graalvm.compiler.nodes.CallTargetNode;
 import org.graalvm.compiler.nodes.ConstantNode;
+import org.graalvm.compiler.nodes.GraphState;
 import org.graalvm.compiler.nodes.InvokeNode;
 import org.graalvm.compiler.nodes.StructuredGraph;
 import org.graalvm.compiler.nodes.ValueNode;
@@ -57,6 +60,11 @@ public class TornadoPTXIntrinsicsReplacements extends BasePhase<TornadoHighTierC
     public TornadoPTXIntrinsicsReplacements(MetaAccessProvider metaAccess) {
         super();
         this.metaAccess = metaAccess;
+    }
+
+    @Override
+    public Optional<NotApplicable> notApplicableTo(GraphState graphState) {
+        return ALWAYS_APPLICABLE;
     }
 
     private ConstantNode getConstantNodeFromArguments(InvokeNode invoke, int index) {

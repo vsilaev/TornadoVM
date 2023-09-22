@@ -57,7 +57,7 @@ public enum ProfilerType {
     BACKEND("Backend");
     // @formatter:on
 
-    String description;
+    private final String description;
 
     ProfilerType(String description) {
         this.description = description;

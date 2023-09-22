@@ -104,6 +104,7 @@ public class RenderTrackTornado extends BenchmarkDriver {
                 inputValidation.set(i, j, new Float3(i, j, value));
             }
         }
+        @SuppressWarnings("unused")
         TaskGraph s0 = new TaskGraph("s0")//
                 .task("t0", ComputeKernels::renderTrack, outputTornado, inputValidation) //
                 .transferToHost(DataTransferMode.EVERY_EXECUTION, outputTornado);

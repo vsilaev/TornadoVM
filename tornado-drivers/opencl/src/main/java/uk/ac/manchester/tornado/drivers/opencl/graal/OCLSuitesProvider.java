@@ -30,7 +30,7 @@ import org.graalvm.compiler.nodes.graphbuilderconf.GraphBuilderConfiguration;
 import org.graalvm.compiler.nodes.graphbuilderconf.GraphBuilderConfiguration.Plugins;
 import org.graalvm.compiler.options.OptionValues;
 import org.graalvm.compiler.phases.PhaseSuite;
-import org.graalvm.compiler.phases.common.AddressLoweringPhase.AddressLowering;
+import org.graalvm.compiler.phases.common.AddressLoweringByNodePhase.AddressLowering;
 import org.graalvm.compiler.phases.tiers.HighTierContext;
 
 import jdk.vm.ci.meta.MetaAccessProvider;
