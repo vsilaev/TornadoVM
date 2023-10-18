@@ -43,23 +43,23 @@ import static uk.ac.manchester.tornado.api.collections.types.Float2.add;
 import static uk.ac.manchester.tornado.api.collections.types.Float2.loadFromArray;
 
 import java.nio.FloatBuffer;
+import java.util.Arrays;
 
 public class VectorFloat2 implements PrimitiveStorage<FloatBuffer> {
     private static final long serialVersionUID = 1L;    
 
+    private static final int ELEMENT_SIZE = 2;
     /**
-     * backing array
+     * backing array.
      */
     protected final float[] storage;
-
     /**
-     * number of elements in the storage
+     * number of elements in the storage.
      */
     private final int numElements;
-    private static final int ELEMENT_SIZE = 2;
 
     /**
-     * Creates a vector using the provided backing array
+     * Creates a vector using the provided backing array.
      *
      * @param numElements
      * @param array
@@ -70,14 +70,14 @@ public class VectorFloat2 implements PrimitiveStorage<FloatBuffer> {
     }
 
     /**
-     * Creates a vector using the provided backing array
+     * Creates a vector using the provided backing array.
      */
     public VectorFloat2(float[] array) {
         this(array.length / ELEMENT_SIZE, array);
     }
 
     /**
-     * Creates an empty vector with
+     * Creates an empty vector.
      *
      * @param numElements
      */
@@ -90,7 +90,7 @@ public class VectorFloat2 implements PrimitiveStorage<FloatBuffer> {
     }
 
     /**
-     * Returns the float at the given index of this vector
+     * Returns the float at the given index of this vector.
      *
      * @param index
      * @return value
@@ -100,7 +100,7 @@ public class VectorFloat2 implements PrimitiveStorage<FloatBuffer> {
     }
 
     /**
-     * Sets the float at the given index of this vector
+     * Sets the float at the given index of this vector.
      *
      * @param index
      * @param value
@@ -110,7 +110,7 @@ public class VectorFloat2 implements PrimitiveStorage<FloatBuffer> {
     }
 
     /**
-     * Sets the elements of this vector to that of the provided vector
+     * Sets the elements of this vector to that of the provided vector.
      *
      * @param values
      */
@@ -121,7 +121,7 @@ public class VectorFloat2 implements PrimitiveStorage<FloatBuffer> {
     }
 
     /**
-     * Sets the elements of this vector to that of the provided array
+     * Sets the elements of this vector to that of the provided array.
      *
      * @param values
      */
@@ -133,15 +133,13 @@ public class VectorFloat2 implements PrimitiveStorage<FloatBuffer> {
     }
 
     public void fill(float value) {
-        for (int i = 0; i < storage.length; i++) {
-            storage[i] = value;
-        }
+        Arrays.fill(storage, value);
     }
 
     /**
-     * Duplicates this vector
+     * Duplicates this vector.
      *
-     * @return
+     * @return vector
      */
     public VectorFloat2 duplicate() {
         VectorFloat2 vector = new VectorFloat2(numElements);

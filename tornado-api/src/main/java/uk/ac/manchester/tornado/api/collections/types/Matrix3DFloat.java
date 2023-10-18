@@ -42,23 +42,24 @@
 package uk.ac.manchester.tornado.api.collections.types;
 
 import java.nio.FloatBuffer;
+import java.util.Arrays;
 
 public class Matrix3DFloat extends Matrix3DType implements PrimitiveStorage<FloatBuffer> {
 
     private static final long serialVersionUID = 1L;
 
     /**
-     * backing array
+     * backing array.
      */
     protected final float[] storage;
 
     /**
-     * number of elements in the storage
+     * number of elements in the storage.
      */
     private final int numElements;
 
     /**
-     * Storage format for matrix
+     * Storage format for matrix.
      *
      * @param rows
      *            number of rows
@@ -74,7 +75,7 @@ public class Matrix3DFloat extends Matrix3DType implements PrimitiveStorage<Floa
     }
 
     /**
-     * Storage format for matrix
+     * Storage format for matrix.
      *
      * @param rows
      *            number of columns
@@ -89,6 +90,12 @@ public class Matrix3DFloat extends Matrix3DType implements PrimitiveStorage<Floa
         this(matrix.length, matrix[0].length, matrix[0][0].length, StorageFormats.toRowMajor3D(matrix));
     }
 
+    public static void scale(Matrix3DFloat matrix, float value) {
+        for (int i = 0; i < matrix.storage.length; i++) {
+            matrix.storage[i] *= value;
+        }
+    }
+
     public float get(int i, int j, int k) {
         return storage[StorageFormats.toRowMajor3D(i, j, k, DEPTH, COLUMNS)];
     }
@@ -98,9 +105,7 @@ public class Matrix3DFloat extends Matrix3DType implements PrimitiveStorage<Floa
     }
 
     public void fill(float value) {
-        for (int i = 0; i < storage.length; i++) {
-            storage[i] = value;
-        }
+        Arrays.fill(storage, value);
     }
 
     public Matrix3DFloat duplicate() {
@@ -135,12 +140,6 @@ public class Matrix3DFloat extends Matrix3DType implements PrimitiveStorage<Floa
             result += "\n" + toString(FloatOps.FMT);
         }
         return result;
-    }
-
-    public static void scale(Matrix3DFloat matrix, float value) {
-        for (int i = 0; i < matrix.storage.length; i++) {
-            matrix.storage[i] *= value;
-        }
     }
 
     @Override

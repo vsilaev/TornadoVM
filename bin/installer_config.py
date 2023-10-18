@@ -25,7 +25,7 @@
 import platform
 
 __X86_64__ = "x86_64"
-if (platform.system().lower().startswith("darwin")):
+if platform.system().lower().startswith("darwin"):
     __ARM__ = "arm64"
 else:
     __ARM__ = "aarch64"
@@ -36,8 +36,7 @@ __JDK17__ = "jdk17"
 __JDK21__ = "jdk21"
 __GRAALVM17__ = "graalvm-jdk-17"
 __GRAALVM21__ = "graalvm-jdk-21"
-__MANDREL17__ = "mandrel-jdk-17"
-__MANDREL20__ = "mandrel-jdk-20"
+__MANDREL21__ = "mandrel-jdk-21"
 __CORRETTO17__ = "corretto-jdk-17"
 __CORRETTO21__ = "corretto-jdk-21"
 __MICROSOFT17__ = "microsoft-jdk-17"
@@ -45,7 +44,7 @@ __MICROSOFT20__ = "microsoft-jdk-20"
 __ZULU17__ = "zulu-jdk-17"
 __ZULU21__ = "zulu-jdk-21"
 
-## cmake 
+## cmake
 CMAKE = {
     __LINUX__: {
         __X86_64__: "https://github.com/Kitware/CMake/releases/download/v3.25.2/cmake-3.25.2-linux-x86_64.tar.gz",
@@ -54,19 +53,19 @@ CMAKE = {
     __APPLE__: {
         __X86_64__: "https://github.com/Kitware/CMake/releases/download/v3.25.2/cmake-3.25.2-macos-universal.tar.gz",
         __ARM__: "https://github.com/Kitware/CMake/releases/download/v3.25.2/cmake-3.25.2-macos-universal.tar.gz",
-    }
+    },
 }
 
-## Maven 
+## Maven
 MAVEN = {
     __LINUX__: {
         __X86_64__: "https://archive.apache.org/dist/maven/maven-3/3.9.3/binaries/apache-maven-3.9.3-bin.tar.gz",
-        __ARM__:    "https://archive.apache.org/dist/maven/maven-3/3.9.3/binaries/apache-maven-3.9.3-bin.tar.gz",
+        __ARM__: "https://archive.apache.org/dist/maven/maven-3/3.9.3/binaries/apache-maven-3.9.3-bin.tar.gz",
     },
     __APPLE__: {
         __X86_64__: None,
         __ARM__: None,
-    }
+    },
 }
 
 ## JDK
@@ -79,7 +78,7 @@ JDK = {
         __APPLE__: {
             __X86_64__: "https://download.oracle.com/java/17/latest/jdk-17_macos-x64_bin.tar.gz",
             __ARM__: "https://download.oracle.com/java/17/latest/jdk-17_macos-aarch64_bin.tar.gz",
-        }
+        },
     },
     __JDK21__: {
         __LINUX__: {
@@ -89,7 +88,7 @@ JDK = {
         __APPLE__: {
             __X86_64__: "https://download.oracle.com/java/21/latest/jdk-21_macos-x64_bin.tar.gz",
             __ARM__: "https://download.oracle.com/java/21/latest/jdk-21_macos-aarch64_bin.tar.gz",
-        }
+        },
     },
     __GRAALVM17__: {
         __LINUX__: {
@@ -99,7 +98,7 @@ JDK = {
         __APPLE__: {
             __X86_64__: "https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-17.0.8/graalvm-community-jdk-17.0.8_macos-x64_bin.tar.gz",
             __ARM__: "https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-17.0.8/graalvm-community-jdk-17.0.8_macos-aarch64_bin.tar.gz",
-        }
+        },
     },
     __GRAALVM21__: {
         __LINUX__: {
@@ -109,7 +108,7 @@ JDK = {
         __APPLE__: {
             __X86_64__: "https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-21.0.0/graalvm-community-jdk-21.0.0_macos-x64_bin.tar.gz",
             __ARM__: "https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-21.0.0/graalvm-community-jdk-21.0.0_macos-aarch64_bin.tar.gz",
-        }
+        },
     },
     __CORRETTO17__: {
         __LINUX__: {
@@ -119,7 +118,7 @@ JDK = {
         __APPLE__: {
             __X86_64__: "https://corretto.aws/downloads/latest/amazon-corretto-17-x64-macos-jdk.tar.gz",
             __ARM__: "https://corretto.aws/downloads/latest/amazon-corretto-17-aarch64-macos-jdk.tar.gz",
-        }
+        },
     },
     __CORRETTO21__: {
         __LINUX__: {
@@ -129,25 +128,16 @@ JDK = {
         __APPLE__: {
             __X86_64__: "https://corretto.aws/downloads/latest/amazon-corretto-21-x64-macos-jdk.tar.gz",
             __ARM__: "https://corretto.aws/downloads/latest/amazon-corretto-21-aarch64-macos-jdk.tar.gz",
-        }
+        },
     },
-    __MANDREL17__: {
+    __MANDREL21__: {
         __LINUX__: {
-            __X86_64__: "https://github.com/graalvm/mandrel/releases/download/mandrel-23.0.0.0-Final/mandrel-java17-linux-amd64-23.0.0.0-Final.tar.gz",
-            __ARM__: "https://github.com/graalvm/mandrel/releases/download/mandrel-23.0.0.0-Final/mandrel-java17-linux-aarch64-23.0.0.0-Final.tar.gz",
+            __X86_64__: "https://github.com/graalvm/mandrel/releases/download/mandrel-23.1.0.0-Final/mandrel-java21-linux-amd64-23.1.0.0-Final.tar.gz",
+            __ARM__: "https://github.com/graalvm/mandrel/releases/download/mandrel-23.1.0.0-Final/mandrel-java21-linux-aarch64-23.1.0.0-Final.tar.gz",
         },
         __APPLE__: {
             __ARM__: None,
-        }
-    },
-    __MANDREL20__: {
-        __LINUX__: {
-            __X86_64__: "https://github.com/graalvm/mandrel/releases/download/mandrel-23.0.0.0-Final/mandrel-java20-linux-amd64-23.0.0.0-Final.tar.gz",
-            __ARM__: "https://github.com/graalvm/mandrel/releases/download/mandrel-23.0.0.0-Final/mandrel-java20-linux-aarch64-23.0.0.0-Final.tar.gz",
         },
-        __APPLE__: {
-            __ARM__: None,
-        }
     },
     __MICROSOFT17__: {
         __LINUX__: {
@@ -157,7 +147,7 @@ JDK = {
         __APPLE__: {
             __X86_64__: "https://aka.ms/download-jdk/microsoft-jdk-17.0.8.1-macOS-x64.tar.gz",
             __ARM__: "https://aka.ms/download-jdk/microsoft-jdk-17.0.8.1-macOS-aarch64.tar.gz",
-        }
+        },
     },
     __MICROSOFT20__: {
         __LINUX__: {
@@ -167,7 +157,7 @@ JDK = {
         __APPLE__: {
             __X86_64__: None,
             __ARM__: None,
-        }
+        },
     },
     __ZULU17__: {
         __LINUX__: {
@@ -177,7 +167,7 @@ JDK = {
         __APPLE__: {
             __X86_64__: "https://cdn.azul.com/zulu/bin/zulu17.34.19-ca-jdk17.0.3-macosx_x64.tar.gz",
             __ARM__: "https://cdn.azul.com/zulu/bin/zulu17.34.19-ca-jdk17.0.3-macosx_aarch64.tar.gz",
-        }
+        },
     },
     __ZULU21__: {
         __LINUX__: {
@@ -187,6 +177,6 @@ JDK = {
         __APPLE__: {
             __X86_64__: "https://cdn.azul.com/zulu/bin/zulu21.28.85-ca-jdk21.0.0-macosx_x64.tar.gz",
             __ARM__: "https://cdn.azul.com/zulu/bin/zulu21.28.85-ca-jdk21.0.0-macosx_aarch64.tar.gz",
-        }
+        },
     },
 }

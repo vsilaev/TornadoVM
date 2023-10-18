@@ -44,21 +44,21 @@ import static uk.ac.manchester.tornado.api.collections.types.Int2.loadFromArray;
 import java.nio.DoubleBuffer;
 
 public class VectorInt2 implements PrimitiveStorage<DoubleBuffer> {
-    private static final long serialVersionUID = 1L;
     
+    private static final long serialVersionUID = 1L;
+
+    private static final int ELEMENT_SIZE = 2;
     /**
-     * backing array
+     * backing array.
      */
     protected final int[] storage;
-
     /**
-     * number of elements in the storage
+     * number of elements in the storage.
      */
     private final int numElements;
-    private static final int ELEMENT_SIZE = 2;
 
     /**
-     * Creates a vector using the provided backing arrayR R
+     * Creates a vector using the provided backing array.
      * 
      * @param numElements
      * @param array
@@ -69,14 +69,14 @@ public class VectorInt2 implements PrimitiveStorage<DoubleBuffer> {
     }
 
     /**
-     * Creates a vector using the provided backing array
+     * Creates a vector using the provided backing array.
      */
     public VectorInt2(int[] array) {
         this(array.length / ELEMENT_SIZE, array);
     }
 
     /**
-     * Creates an empty vector with
+     * Creates an empty vector with.
      *
      * @param numElements
      */
@@ -89,7 +89,7 @@ public class VectorInt2 implements PrimitiveStorage<DoubleBuffer> {
     }
 
     /**
-     * Returns the floatr at the given index of this vector
+     * Returns the floatr at the given index of this vector.
      *
      * @param index
      *
@@ -100,7 +100,7 @@ public class VectorInt2 implements PrimitiveStorage<DoubleBuffer> {
     }
 
     /**
-     * Sets the float at the given index of this vector
+     * Sets the float at the given index of this vector.
      *
      * @param index
      * @param value
@@ -110,7 +110,7 @@ public class VectorInt2 implements PrimitiveStorage<DoubleBuffer> {
     }
 
     /**
-     * Sets the elements of this vector to that of the provided vector
+     * Sets the elements of this vector to that of the provided vector.
      *
      * @param values
      */
@@ -121,7 +121,7 @@ public class VectorInt2 implements PrimitiveStorage<DoubleBuffer> {
     }
 
     /**
-     * Sets the elements of this vector to that of the provided array
+     * Sets the elements of this vector to that of the provided array.
      *
      * @param values
      */
@@ -139,7 +139,7 @@ public class VectorInt2 implements PrimitiveStorage<DoubleBuffer> {
     }
 
     /**
-     * Duplicates this vector
+     * Duplicates this vector.
      *
      * @return
      */

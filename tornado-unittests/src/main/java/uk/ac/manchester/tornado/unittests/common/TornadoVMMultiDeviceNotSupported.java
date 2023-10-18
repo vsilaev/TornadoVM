@@ -18,6 +18,9 @@
 package uk.ac.manchester.tornado.unittests.common;
 
 public class TornadoVMMultiDeviceNotSupported extends RuntimeException {
+    
+    private static final long serialVersionUID = 1L;
+    
     public TornadoVMMultiDeviceNotSupported(String message) {
         super(message);
     }

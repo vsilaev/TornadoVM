@@ -42,12 +42,13 @@
 package uk.ac.manchester.tornado.api.exceptions;
 
 public class TornadoBailoutRuntimeException extends RuntimeException {
+    
     private static final long serialVersionUID = 1L;
     
-    private final String message;
-    private Exception e;
     static final String RESET = "\u001B[0m";
     static final String RED = "\u001B[31m";
+    private final String message;
+    private Exception e;
 
     public TornadoBailoutRuntimeException(final String msg) {
         message = RED + msg + RESET;

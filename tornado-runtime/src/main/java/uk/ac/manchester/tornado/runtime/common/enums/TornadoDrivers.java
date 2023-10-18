@@ -41,7 +41,6 @@ public enum TornadoDrivers {
     SPIRV(SPIRV_BACKEND_PRIORITY, "under-development"); //
 
     private final int priority;
-    @SuppressWarnings("unused")
     private final String status;
 
     TornadoDrivers(int priority, String status) {

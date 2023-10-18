@@ -44,31 +44,29 @@ package uk.ac.manchester.tornado.api.collections.types;
 import java.nio.FloatBuffer;
 
 public class ImageFloat8 implements PrimitiveStorage<FloatBuffer>, Container<Float8> {
-    private static final long serialVersionUID = 1L;
     
+    private static final long serialVersionUID = 1L;
+
+    private static final int ELEMENT_SIZE = 8;
     /**
-     * backing array
+     * backing array.
      */
     protected final float[] storage;
-
     /**
-     * number of elements in the storage
-     */
-    private final int numElements;
-    private static final int ELEMENT_SIZE = 8;
-
-    /**
-     * Number of rows
+     * Number of rows.
      */
     protected final int Y;
-
     /**
-     * Number of columns
+     * Number of columns.
      */
     protected final int X;
+    /**
+     * number of elements in the storage.
+     */
+    private final int numElements;
 
     /**
-     * Storage format for matrix
+     * Storage format for matrix.
      * 
      * @param width
      *            number of rows
@@ -85,7 +83,7 @@ public class ImageFloat8 implements PrimitiveStorage<FloatBuffer>, Container<Flo
     }
 
     /**
-     * Storage format for matrix
+     * Storage format for matrix.
      * 
      * @param width
      *            number of rows
@@ -227,7 +225,7 @@ public class ImageFloat8 implements PrimitiveStorage<FloatBuffer>, Container<Flo
         return Float8.sqrt(varience);
     }
 
-    public String summerise() {
+    public String summarise() {
         return String.format("ImageFloat8<%dx%d>: min=%s, max=%s, mean=%s, sd=%s", X, Y, min(), max(), mean(), stdDev());
     }
 
@@ -251,9 +249,6 @@ public class ImageFloat8 implements PrimitiveStorage<FloatBuffer>, Container<Flo
         float minULP = Float.MAX_VALUE;
         float averageULP = 0f;
 
-        /*
-         * check to make sure dimensions match
-         */
         if (ref.X != X && ref.Y != Y) {
             return new FloatingPointError(-1f, 0f, 0f, 0f);
         }

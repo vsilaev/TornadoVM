@@ -54,17 +54,17 @@ public class Matrix2DFloat extends Matrix2DType implements PrimitiveStorage<Floa
     private static final long serialVersionUID = 1L;
 
     /**
-     * backing array
+     * backing array.
      */
     protected final float[] storage;
 
     /**
-     * number of elements in the storage
+     * number of elements in the storage.
      */
     private final int numElements;
 
     /**
-     * Storage format for matrix
+     * Storage format for matrix.
      *
      * @param rows
      *            number of rows
@@ -80,7 +80,7 @@ public class Matrix2DFloat extends Matrix2DType implements PrimitiveStorage<Floa
     }
 
     /**
-     * Storage format for matrix
+     * Storage format for matrix.
      *
      * @param rows
      *            number of rows
@@ -94,6 +94,31 @@ public class Matrix2DFloat extends Matrix2DType implements PrimitiveStorage<Floa
 
     public Matrix2DFloat(float[][] matrix) {
         this(matrix.length, matrix[0].length, toRowMajor(matrix));
+    }
+
+    /**
+     * Transposes the matrix in-place.
+     *
+     * @param matrix
+     *            matrix to transpose
+     */
+    public static void transpose(Matrix2DFloat matrix) {
+        if (matrix.COLUMNS == matrix.ROWS) {
+            // transpose square matrix
+            for (int i = 0; i < matrix.ROWS; i++) {
+                for (int j = 0; j < i; j++) {
+                    final float tmp = matrix.get(i, j);
+                    matrix.set(i, j, matrix.get(j, i));
+                    matrix.set(j, i, tmp);
+                }
+            }
+        }
+    }
+
+    public static void scale(Matrix2DFloat matrix, float value) {
+        for (int i = 0; i < matrix.storage.length; i++) {
+            matrix.storage[i] *= value;
+        }
     }
 
     public float get(int i, int j) {
@@ -127,9 +152,7 @@ public class Matrix2DFloat extends Matrix2DType implements PrimitiveStorage<Floa
     }
 
     public void fill(float value) {
-        for (int i = 0; i < this.storage.length; i++) {
-            this.storage[i] = value;
-        }
+        Arrays.fill(this.storage, value);
     }
 
     public void multiply(Matrix2DFloat a, Matrix2DFloat b) {
@@ -140,25 +163,6 @@ public class Matrix2DFloat extends Matrix2DType implements PrimitiveStorage<Floa
                     sum += a.get(row, k) * b.get(k, col);
                 }
                 set(row, col, sum);
-            }
-        }
-    }
-
-    /**
-     * Transposes the matrix in-place
-     *
-     * @param matrix
-     *            matrix to transpose
-     */
-    public static void transpose(Matrix2DFloat matrix) {
-        if (matrix.COLUMNS == matrix.ROWS) {
-            // transpose square matrix
-            for (int i = 0; i < matrix.ROWS; i++) {
-                for (int j = 0; j < i; j++) {
-                    final float tmp = matrix.get(i, j);
-                    matrix.set(i, j, matrix.get(j, i));
-                    matrix.set(j, i, tmp);
-                }
             }
         }
     }
@@ -193,12 +197,6 @@ public class Matrix2DFloat extends Matrix2DType implements PrimitiveStorage<Floa
             result += "\n" + toString(FMT);
         }
         return result;
-    }
-
-    public static void scale(Matrix2DFloat matrix, float value) {
-        for (int i = 0; i < matrix.storage.length; i++) {
-            matrix.storage[i] *= value;
-        }
     }
 
     @Override

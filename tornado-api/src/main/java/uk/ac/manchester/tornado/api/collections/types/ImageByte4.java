@@ -44,31 +44,29 @@ package uk.ac.manchester.tornado.api.collections.types;
 import java.nio.ByteBuffer;
 
 public class ImageByte4 implements PrimitiveStorage<ByteBuffer> {
-    private static final long serialVersionUID = 1L;
     
+    private static final long serialVersionUID = 1L;
+
+    private static final int elementSize = 4;
     /**
-     * backing array
+     * backing array.
      */
-    final protected byte[] storage;
+    protected final byte[] storage;
+    /**
+     * Number of rows.
+     */
+    protected final int Y;
+    /**
+     * Number of columns.
+     */
+    protected final int X;
+    /**
+     * number of elements in the storage.
+     */
+    private final int numElements;
 
     /**
-     * number of elements in the storage
-     */
-    final private int numElements;
-    final private static int elementSize = 4;
-
-    /**
-     * Number of rows
-     */
-    final protected int Y;
-
-    /**
-     * Number of columns
-     */
-    final protected int X;
-
-    /**
-     * Storage format for matrix
+     * Storage format for matrix.
      *
      * @param width
      *            number of rows
@@ -85,7 +83,7 @@ public class ImageByte4 implements PrimitiveStorage<ByteBuffer> {
     }
 
     /**
-     * Storage format for matrix
+     * Storage format for matrix.
      *
      * @param width
      *            number of rows
@@ -211,7 +209,7 @@ public class ImageByte4 implements PrimitiveStorage<ByteBuffer> {
         return Float4.sqrt(varience);
     }
 
-    public String summerise() {
+    public String summarise() {
         return String.format("ImageByte4<%dx%d>: min=%s, max=%s, mean=%s, sd=%s", X, Y, min(), max(), mean(), stdDev());
     }
 

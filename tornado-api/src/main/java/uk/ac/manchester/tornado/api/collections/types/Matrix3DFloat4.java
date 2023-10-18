@@ -42,28 +42,27 @@
 package uk.ac.manchester.tornado.api.collections.types;
 
 import java.nio.FloatBuffer;
+import java.util.Arrays;
 
 public class Matrix3DFloat4 extends Matrix3DType implements PrimitiveStorage<FloatBuffer> {
     
     private static final long serialVersionUID = 1L;
 
     /**
-     * backing array
+     * Vector-width each position in the matrix.
+     */
+    private static final int VECTOR_ELEMENTS = 4;
+    /**
+     * backing array.
      */
     protected final float[] storage;
-
     /**
-     * number of elements in the storage
+     * number of elements in the storage.
      */
     private final int numElements;
 
     /**
-     * Vector-width each position in the matrix
-     */
-    private static final int VECTOR_ELEMENTS = 4;
-
-    /**
-     * Storage format for matrix
+     * Storage format for matrix.
      *
      * @param rows
      *            number of rows
@@ -81,7 +80,7 @@ public class Matrix3DFloat4 extends Matrix3DType implements PrimitiveStorage<Flo
     }
 
     /**
-     * Storage format for matrix
+     * Storage format for matrix.
      *
      * @param rows
      *            number of rows
@@ -92,6 +91,12 @@ public class Matrix3DFloat4 extends Matrix3DType implements PrimitiveStorage<Flo
      */
     public Matrix3DFloat4(int rows, int columns, int depth) {
         this(rows, columns, depth, new float[rows * columns * depth * VECTOR_ELEMENTS]);
+    }
+
+    public static void scale(Matrix3DFloat4 matrix, float value) {
+        for (int i = 0; i < matrix.storage.length; i++) {
+            matrix.storage[i] *= value;
+        }
     }
 
     public Float4 get(int i, int j, int k) {
@@ -105,9 +110,7 @@ public class Matrix3DFloat4 extends Matrix3DType implements PrimitiveStorage<Flo
     }
 
     public void fill(float value) {
-        for (int i = 0; i < storage.length; i++) {
-            storage[i] = value;
-        }
+        Arrays.fill(storage, value);
     }
 
     public Matrix3DFloat4 duplicate() {
@@ -133,12 +136,6 @@ public class Matrix3DFloat4 extends Matrix3DType implements PrimitiveStorage<Flo
             str.append("\n");
         }
         return str.toString().trim();
-    }
-
-    public static void scale(Matrix3DFloat4 matrix, float value) {
-        for (int i = 0; i < matrix.storage.length; i++) {
-            matrix.storage[i] *= value;
-        }
     }
 
     @Override

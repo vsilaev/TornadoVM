@@ -216,6 +216,8 @@ __GC__ = "-Xmx6g "
 __BASE_OPTIONS__ = "-Dtornado.recover.bailout=False "
 __VERBOSE_OPTION__ = "-Dtornado.unittests.verbose="
 __TORNADOVM_PRINT_BC__ = "-Dtornado.print.bytecodes=True "
+__TORNADOVM_ENABLE_PROFILER_SILENT__    = " -Dtornado.profiler=True -Dtornado.log.profiler=True "
+__TORNADOVM_ENABLE_PROFILER_CONSOLE__   = " -Dtornado.profiler=True "
 # ################################################################################################################
 
 TORNADO_CMD = "tornado "
@@ -284,6 +286,15 @@ def composeAllOptions(args):
     if (args.jvmFlags != None):
         options = options + args.jvmFlags
 
+    if (args.enable_profiler != None):
+        if (args.enable_profiler == "silent"):
+            options = options + __TORNADOVM_ENABLE_PROFILER_SILENT__
+        elif (args.enable_profiler == "console"):
+            options = options + __TORNADOVM_ENABLE_PROFILER_CONSOLE__
+        else:
+            print("[ERROR] Please select --enableProfiler <silent|console>")
+            sys.exit(0)
+
     return options
 
 
@@ -294,9 +305,12 @@ def runSingleCommand(cmd, args):
     """
 
     cmd = cmd + " " + args.testClass
+    if os.name == "nt":
+        cmd = "python3 " + cmd
+    workDir = os.path.dirname(os.path.realpath(__file__))
 
     start = time.time()
-    p = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    p = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=os.environ.copy(), cwd=workDir)
     out, err = p.communicate()
     end = time.time()
     out = out.decode('utf-8')
@@ -352,7 +366,10 @@ def processStats(out, stats):
 
 def runCommandWithStats(command, stats):
     """ Run a command and update the stats dictionary """
-    p = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if os.name == "nt":
+        command = "python3 " + command
+    workDir = os.path.dirname(os.path.realpath(__file__))
+    p = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=os.environ.copy(), cwd=workDir)
     out, err = p.communicate()
     out = out.decode('utf-8')
     err = err.decode('utf-8')
@@ -361,7 +378,7 @@ def runCommandWithStats(command, stats):
         print(Colors.REVERSE)
         print("[!] RUNNING AGAIN BECAUSE OF A SEG FAULT")
         print(Colors.RESET)
-        p = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=os.environ.copy(), cwd=workDir)
         out, err = p.communicate()
         out = out.decode('utf-8')
         err = err.decode('utf-8')
@@ -519,6 +536,7 @@ def parseArguments():
                         help="Print OpenCL Kernel Execution Time")
     parser.add_argument('--jvm', "-J", dest="jvmFlags", required=False, default=None,
                         help="Pass options to the JVM e.g. -J=\"-Ds0.t0.device=0:1\"")
+    parser.add_argument('--enableProfiler', action="store", dest="enable_profiler", default=None, help="Enable the profiler {silent|console}")
     args = parser.parse_args()
     return args
 

@@ -67,7 +67,7 @@ import uk.ac.manchester.tornado.runtime.common.enums.TornadoDrivers;
 import uk.ac.manchester.tornado.runtime.graal.compiler.TornadoSnippetReflectionProvider;
 import uk.ac.manchester.tornado.runtime.tasks.GlobalObjectState;
 
-public class TornadoCoreRuntime extends TornadoLogger implements TornadoRuntimeInterface {
+public final class TornadoCoreRuntime extends TornadoLogger implements TornadoRuntimeInterface {
 
     private static final ThreadFactory executorThreadFactory = new ThreadFactory() {
         private final AtomicInteger threadId = new AtomicInteger(0);
@@ -149,7 +149,7 @@ public class TornadoCoreRuntime extends TornadoLogger implements TornadoRuntimeI
         opts.put(GraalOptions.RemoveNeverExecutedCode, false);
         opts.put(ConstantLoadOptimization.Options.LIROptConstantLoadOptimization, false);
         opts.put(PostAllocationOptimizationStage.Options.LIROptRedundantMoveElimination, false);
-        opts.put(GraalOptions.OptConvertDeoptsToGuards, true); 
+        opts.put(GraalOptions.OptConvertDeoptsToGuards, true);
 
         options = new OptionValues(opts);
     }

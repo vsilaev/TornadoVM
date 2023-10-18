@@ -53,9 +53,7 @@ public class ChromeEventJSonWriter extends JSonWriter<ChromeEventJSonWriter> {
         objectStart();
         arrayStart("traceEvents");
         object(() -> {
-            object("args", () ->
-                kv("name", "Tornado")
-            );
+            object("args", () -> kv("name", "Tornado"));
             kv("ph", "M");
             pidAndTid();
             kv("name", "tornadovm");
@@ -64,7 +62,7 @@ public class ChromeEventJSonWriter extends JSonWriter<ChromeEventJSonWriter> {
     }
 
     ChromeEventJSonWriter pidAndTid() {
-        return kv("pid", 0).kv("tid", Thread.currentThread().getId());
+        return kv("pid", 0).kv("tid", Thread.currentThread().threadId());
     }
 
     ChromeEventJSonWriter common(String phase, String name, String category) {
