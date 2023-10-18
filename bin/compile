@@ -73,9 +73,12 @@ def should_handle_graal_jars(jdk):
 
 def maven_cleanup():
     print("mvn -Popencl-backend,ptx-backend,spirv-backend clean")
+    command = ["mvn", "-Popencl-backend,ptx-backend,spirv-backend", "clean"]
+    if os.name == "nt":
+        command = ["bash"] + command
     subprocess.run(
-        ["mvn", "-Popencl-backend,ptx-backend,spirv-backend", "clean"],
-        stdout=subprocess.PIPE,
+        command,
+        stdout=subprocess.PIPE
     )
 
 
@@ -167,9 +170,13 @@ def build_tornadovm(jdk, backend_profiles, offline):
         options = "-o " + options
 
     print(f"mvn {options} install")
+    command = ["mvn"] + options.split() + ["install"]
+    if os.name == "nt":
+        command = ["bash"] + command
+
     try:
         result = subprocess.run(
-            ["mvn"] + options.split() + ["install"],
+            command,
             check=True,
             stderr=subprocess.PIPE,
             universal_newlines=True,
