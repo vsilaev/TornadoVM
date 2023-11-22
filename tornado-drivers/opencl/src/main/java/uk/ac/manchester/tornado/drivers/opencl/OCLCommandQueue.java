@@ -1,5 +1,5 @@
 /*
- * This file is part of Tornado: A heterogeneous programming framework: 
+ * This file is part of Tornado: A heterogeneous programming framework:
  * https://github.com/beehive-lab/tornadovm
  *
  * Copyright (c) 2013-2020, APT Group, Department of Computer Science,
@@ -61,7 +61,7 @@ public class OCLCommandQueue extends TornadoLogger {
 
     /**
      * Dispatch an OpenCL kernel via a JNI call.
-     * 
+     *
      * @param queueId
      *            OpenCL command queue object
      * @param kernelId
@@ -100,6 +100,8 @@ public class OCLCommandQueue extends TornadoLogger {
 
     static native long writeArrayToDevice(long queueId, double[] buffer, long hostOffset, boolean blocking, long offset, long bytes, long ptr, long[] events) throws OCLException;
 
+    static native long writeArrayToDeviceOffHeap(long queueId, long hostPointer, long hostOffset, boolean blocking, long offset, long bytes, long ptr, long[] events) throws OCLException;
+
     static native long readArrayFromDevice(long queueId, byte[] buffer, long hostOffset, boolean blocking, long offset, long bytes, long ptr, long[] events) throws OCLException;
 
     static native long readArrayFromDevice(long queueId, char[] buffer, long hostOffset, boolean blocking, long offset, long bytes, long ptr, long[] events) throws OCLException;
@@ -113,6 +115,8 @@ public class OCLCommandQueue extends TornadoLogger {
     static native long readArrayFromDevice(long queueId, float[] buffer, long hostOffset, boolean blocking, long offset, long bytes, long ptr, long[] events) throws OCLException;
 
     static native long readArrayFromDevice(long queueId, double[] buffer, long hostOffset, boolean blocking, long offset, long bytes, long ptr, long[] events) throws OCLException;
+
+    static native long readArrayFromDeviceOffHeap(long queueId, long hostPointer, long hostOffset, boolean blocking, long offset, long bytes, long ptr, long[] events) throws OCLException;
 
     /*
      * for OpenCL 1.1-specific implementations
@@ -348,7 +352,16 @@ public class OCLCommandQueue extends TornadoLogger {
         }
     }
 
-    
+    public long enqueueWrite(long devicePtr, boolean blocking, long offset, long bytes, long hostPointer, long hostOffset, long[] waitEvents) {
+        guarantee(hostPointer != 0, "null segment");
+        try {
+            return writeArrayToDeviceOffHeap(commandQueue, hostPointer, hostOffset, blocking, offset, bytes, devicePtr, waitEvents);
+        } catch (OCLException e) {
+            error(e.getMessage());
+        }
+        return -1;
+    }
+
     public long enqueueRead(long deviceBufferPtr, boolean blocking, long deviceBufferOffset, long bytesCount, ByteBuffer hostBuffer, long[] waitEvents) {
         guarantee(hostBuffer != null, "buffer is null");
         try {
@@ -357,6 +370,16 @@ public class OCLCommandQueue extends TornadoLogger {
             error(e.getMessage());
             return -1;
         }
+    }
+
+    public long enqueueRead(long devicePtr, boolean blocking, long offset, long bytes, long hostPointer, long hostOffset, long[] waitEvents) {
+        guarantee(hostPointer != 0, "segment is null");
+        try {
+            return readArrayFromDeviceOffHeap(commandQueue, hostPointer, hostOffset, blocking, offset, bytes, devicePtr, waitEvents);
+        } catch (OCLException e) {
+            error(e.getMessage());
+        }
+        return -1;
     }
 
     void aquireAsyncTransferLock() {

@@ -26,6 +26,7 @@ package uk.ac.manchester.tornado.runtime.tasks;
 import static uk.ac.manchester.tornado.api.profiler.ProfilerType.TOTAL_KERNEL_TIME;
 
 import java.io.IOException;
+import java.lang.foreign.MemorySegment;
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
@@ -93,6 +94,11 @@ import uk.ac.manchester.tornado.api.common.TornadoFunctions.Task6;
 import uk.ac.manchester.tornado.api.common.TornadoFunctions.Task7;
 import uk.ac.manchester.tornado.api.common.TornadoFunctions.Task8;
 import uk.ac.manchester.tornado.api.common.TornadoFunctions.Task9;
+import uk.ac.manchester.tornado.api.types.arrays.DoubleArray;
+import uk.ac.manchester.tornado.api.types.arrays.FloatArray;
+import uk.ac.manchester.tornado.api.types.arrays.IntArray;
+import uk.ac.manchester.tornado.api.types.arrays.LongArray;
+import uk.ac.manchester.tornado.api.types.arrays.ShortArray;
 import uk.ac.manchester.tornado.api.enums.DataTransferMode;
 import uk.ac.manchester.tornado.api.enums.ProfilerMode;
 import uk.ac.manchester.tornado.api.enums.TornadoDeviceType;
@@ -175,7 +181,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
     private Set<Object> argumentsLookUp;
 
     private List<StreamingObject> inputModesObjects; // List of objects with its data transfer mode (IN)
-    
+
     private List<StreamingObject> outputModeObjects; // List of objects with its data transfer mode (OUT)
     
     private ConcurrentHashMap<Policy, Integer> policyTimeTable = new ConcurrentHashMap<>();
@@ -198,11 +204,10 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
     private ProfilerMode profilerMode;
 
     /**
-     * Task Schedule implementation that uses GPU/FPGA and multicore backends. This
-     * constructor must be public. It is invoked using the reflection API.
+     * Task Schedule implementation that uses GPU/FPGA and multicore backends. This constructor must be public. It is invoked using the reflection API.
      *
      * @param taskScheduleName
-     *            Task-Schedule name
+     *     Task-Schedule name
      */
     public TornadoTaskGraph(String taskScheduleName) {
         executionContext = new TornadoExecutionContext(taskScheduleName);
@@ -290,7 +295,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
                 break;
         }
     }
-    
+
     static void performStreamOutThreads(final int mode, TaskGraph task, Object outputObject) {
         task.transferToHost(mode, outputObject);
     }
@@ -483,17 +488,15 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
         this.timeProfiler = null;
         this.profilerMode = null;
     }
-    
+
     @Override
     public SchedulableTask getTask(String id) {
         return executionContext.getTask(id);
     }
 
     /**
-     * Returns the device attached to any of the tasks. Currently, TornadoVM
-     * executes all tasks that belong to the same task-schedule on the same device.
-     * Therefore, this call returns the device attached to the first task or the
-     * first task is planning to be executed.
+     * Returns the device attached to any of the tasks. Currently, TornadoVM executes all tasks that belong to the same task-schedule on the same device. Therefore, this call returns the device
+     * attached to the first task or the first task is planning to be executed.
      *
      * @return {@link TornadoDevice}
      */
@@ -621,7 +624,8 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
 
     private void logTaskMethodHandle(SchedulableTask task) {
         if ((task.getTaskName() != null) && (task.getId() != null)) {
-            String methodName = (task instanceof PrebuiltTask) ? ((PrebuiltTask) task).getFilename()
+            String methodName = (task instanceof PrebuiltTask) 
+                    ? ((PrebuiltTask) task).getFilename()
                     : ((CompilableTask) task).getMethod().getDeclaringClass().getSimpleName() + "." + task.getTaskName();
             timeProfiler.registerMethodHandle(ProfilerType.METHOD, task.getId(), methodName);
         }
@@ -635,7 +639,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
      * Compile a {@link TaskGraph} into TornadoVM byte-code.
      *
      * @param setNewDevice:
-     *            boolean that specifies if set a new device or not.
+     *     boolean that specifies if set a new device or not.
      */
     private TornadoVM compile(boolean setNewDevice) {
         final ByteBuffer buffer = ByteBuffer.wrap(highLevelCode);
@@ -998,8 +1002,8 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
     @Override
     public void dump() {
         final int width = 16;
-        System.out.printf("code  : capacity = %s, in use = %s %n", RuntimeUtilities.humanReadableByteCount(hlBuffer.capacity(), true),
-                RuntimeUtilities.humanReadableByteCount(hlBuffer.position(), true));
+        System.out.printf("code  : capacity = %s, in use = %s %n", RuntimeUtilities.humanReadableByteCount(hlBuffer.capacity(), true), RuntimeUtilities.humanReadableByteCount(hlBuffer.position(),
+                true));
         for (int i = 0; i < hlBuffer.position(); i += width) {
             System.out.printf("[0x%04x]: ", i);
             for (int j = 0; j < Math.min(hlBuffer.capacity() - i, width); j++) {
@@ -1159,7 +1163,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
     }
 
     private void rewriteTaskForReduceSkeleton(MetaReduceCodeAnalysis analysisTaskSchedule) {
-        reduceTaskGraph = new ReduceTaskGraph(this, taskPackages, streamInObjects, inputModesObjects, streamOutObjects, outputModeObjects, compilationGraph, profilerMode);
+        reduceTaskGraph = new ReduceTaskGraph(this, taskPackages, streamInObjects, inputModesObjects, streamOutObjects, outputModeObjects, compilationGraph);
         reduceTaskGraph.scheduleWithReduction(analysisTaskSchedule);
         reduceExpressionRewritten = true;
     }
@@ -1167,7 +1171,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
     private TornadoTaskGraphInterface reduceAnalysis() {
         TornadoTaskGraphInterface abstractTaskGraph = null;
         if (analysisTaskGraph == null && !reduceAnalysis) {
-            analysisTaskGraph = ReduceCodeAnalysis.analysisTaskGraph(taskPackages);
+            analysisTaskGraph = ReduceCodeAnalysis.analyzeTaskGraph(taskPackages);
             reduceAnalysis = true;
             if (analysisTaskGraph != null && analysisTaskGraph.isValid()) {
                 rewriteTaskForReduceSkeleton(analysisTaskGraph);
@@ -1194,7 +1198,14 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
     }
 
     private boolean isArgumentIgnorable(Object parameter) {
-        return parameter instanceof Number || parameter instanceof KernelContext;
+        return parameter instanceof Number        || 
+               parameter instanceof KernelContext || 
+               parameter instanceof MemorySegment || 
+               parameter instanceof ShortArray    ||
+               parameter instanceof IntArray      || 
+               parameter instanceof LongArray     ||
+               parameter instanceof FloatArray    || 
+               parameter instanceof DoubleArray;
     }
 
     private boolean checkAllArgumentsPerTask() {
@@ -1208,8 +1219,8 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
                     continue;
                 }
                 if (!argumentsLookUp.contains(parameter)) {
-                    throw new TornadoTaskRuntimeException(
-                            "Parameter #" + i + " <" + parameter + "> from task <" + task.getId() + "> not specified either in transferToDevice or transferToHost functions");
+                    throw new TornadoTaskRuntimeException("Parameter #" + i + " <" + parameter + "> from task <" + task
+                            .getId() + "> not specified either in transferToDevice or transferToHost functions");
                 }
             }
         }
@@ -1870,13 +1881,12 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
     }
 
     /**
-     * Experimental method to sync all objects when making a clone copy for all
-     * output objects per device.
+     * Experimental method to sync all objects when making a clone copy for all output objects per device.
      *
      * @param policy
-     *            input policy
+     *     input policy
      * @param numDevices
-     *            number of devices
+     *     number of devices
      */
     private void restoreVarsIntoJavaHeap(Policy policy, int numDevices) {
         if (policyTimeTable.get(policy) < numDevices) {
@@ -1966,8 +1976,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
                 updateInner(index, TaskUtils.createTask(method, meta, id, (Task6) parameters[0], parameters[1], parameters[2], parameters[3], parameters[4], parameters[5], parameters[6]));
                 break;
             case 7:
-                updateInner(index,
-                        TaskUtils.createTask(method, meta, id, (Task7) parameters[0], parameters[1], parameters[2], parameters[3], parameters[4], parameters[5], parameters[6], parameters[7]));
+                updateInner(index, TaskUtils.createTask(method, meta, id, (Task7) parameters[0], parameters[1], parameters[2], parameters[3], parameters[4], parameters[5], parameters[6], parameters[7]));
                 break;
             case 8:
                 updateInner(index, TaskUtils.createTask(method, meta, id, (Task8) parameters[0], parameters[1], parameters[2], parameters[3], parameters[4], parameters[5], parameters[6],
@@ -2233,32 +2242,22 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
                 return reduceTaskGraph.getExecutionResult().getProfilerResult().getTornadoCompilerTime();
             case TOTAL_TASK_GRAPH_TIME:
                 return reduceTaskGraph.getExecutionResult().getProfilerResult().getTotalTime();
-            default:
-                return 0;
         }
+        return 0;
     }
 
     private long __getProfilerTime(ProfilerType profilerType) {
-        switch (profilerType) {
-            case TOTAL_KERNEL_TIME:
-                return timeProfiler.getTimer(TOTAL_KERNEL_TIME);
-            case TOTAL_DISPATCH_KERNEL_TIME:
-                return timeProfiler.getTimer(ProfilerType.TOTAL_DISPATCH_KERNEL_TIME);
-            case TOTAL_DISPATCH_DATA_TRANSFERS_TIME:
-                return timeProfiler.getTimer(ProfilerType.TOTAL_DISPATCH_DATA_TRANSFERS_TIME);
-            case COPY_OUT_TIME:
-                return timeProfiler.getTimer(ProfilerType.COPY_OUT_TIME);
-            case COPY_IN_TIME:
-                return timeProfiler.getTimer(ProfilerType.COPY_IN_TIME);
-            case TOTAL_DRIVER_COMPILE_TIME:
-                return timeProfiler.getTimer(ProfilerType.TOTAL_DRIVER_COMPILE_TIME);
-            case TOTAL_GRAAL_COMPILE_TIME:
-                return timeProfiler.getTimer(ProfilerType.TOTAL_GRAAL_COMPILE_TIME);
-            case TOTAL_TASK_GRAPH_TIME:
-                return timeProfiler.getTimer(ProfilerType.TOTAL_TASK_GRAPH_TIME);
-            default:
-                return 0;
-        }
+        return switch (profilerType) {
+            case TOTAL_KERNEL_TIME -> timeProfiler.getTimer(TOTAL_KERNEL_TIME);
+            case TOTAL_DISPATCH_KERNEL_TIME -> timeProfiler.getTimer(ProfilerType.TOTAL_DISPATCH_KERNEL_TIME);
+            case TOTAL_DISPATCH_DATA_TRANSFERS_TIME -> timeProfiler.getTimer(ProfilerType.TOTAL_DISPATCH_DATA_TRANSFERS_TIME);
+            case COPY_OUT_TIME -> timeProfiler.getTimer(ProfilerType.COPY_OUT_TIME);
+            case COPY_IN_TIME -> timeProfiler.getTimer(ProfilerType.COPY_IN_TIME);
+            case TOTAL_DRIVER_COMPILE_TIME -> timeProfiler.getTimer(ProfilerType.TOTAL_DRIVER_COMPILE_TIME);
+            case TOTAL_GRAAL_COMPILE_TIME -> timeProfiler.getTimer(ProfilerType.TOTAL_GRAAL_COMPILE_TIME);
+            case TOTAL_TASK_GRAPH_TIME -> timeProfiler.getTimer(ProfilerType.TOTAL_TASK_GRAPH_TIME);
+            default -> 0;
+        };
     }
 
     private long getProfilerTimer(ProfilerType profilerType) {
@@ -2318,10 +2317,8 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
     }
 
     /**
-     * Class that keeps the history of executions based on their data sizes. It has
-     * a sorted map (TreeMap) that keeps the relationship between the input size and
-     * the actual Tornado device in which the task was executed based on the
-     * profiler for the dynamic reconfiguration.
+     * Class that keeps the history of executions based on their data sizes. It has a sorted map (TreeMap) that keeps the relationship between the input size and the actual Tornado device in which the
+     * task was executed based on the profiler for the dynamic reconfiguration.
      */
     private static class HistoryTable {
         /**

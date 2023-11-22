@@ -10,7 +10,7 @@
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
  *
@@ -44,7 +44,6 @@ public class TornadoAddressArithmeticNode extends FloatingNode implements LIRLow
 
     @Node.Input
     protected ValueNode offset;
-
 
     public TornadoAddressArithmeticNode(ValueNode base, ValueNode offset) {
         super(TYPE, StampFactory.forKind(JavaKind.Long));

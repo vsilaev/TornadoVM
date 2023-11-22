@@ -33,6 +33,7 @@ public enum EventDescriptor {
     DESC_WRITE_LONG("writeToDevice - long[]"),
     DESC_WRITE_FLOAT("writeToDevice - float[]"),
     DESC_WRITE_DOUBLE("writeToDevice - double[]"),
+    DESC_WRITE_SEGMENT("writeToDevice - long"),
     DESC_READ_BYTE("readFromDevice - byte[]"),
     DESC_READ_SHORT("readFromDevice - short[]"),
     DESC_READ_CHAR("readFromDevice - char[]"),
@@ -40,6 +41,7 @@ public enum EventDescriptor {
     DESC_READ_LONG("readFromDevice - long[]"),
     DESC_READ_FLOAT("readFromDevice - float[]"),
     DESC_READ_DOUBLE("readFromDevice - double[]"),
+    DESC_READ_SEGMENT("readFromDevice - long"),
     DESC_SYNC_MARKER("sync - marker"),
     DESC_SYNC_BARRIER("sync - barrier"),
     EVENT_NONE("none");

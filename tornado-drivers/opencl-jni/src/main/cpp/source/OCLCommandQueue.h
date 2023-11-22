@@ -155,6 +155,14 @@ JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLCommandQ
 
 /*
  * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue
+ * Method:    writeArrayToDeviceOffHeap
+ * Signature: (JJJZJJJ[J)J
+ */
+JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue_writeArrayToDeviceOffHeap__JJJZJJJ_3J
+        (JNIEnv *, jclass, jlong, jlong, jlong, jboolean, jlong, jlong, jlong, jlongArray);
+
+/*
+ * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue
  * Method:    writeBufferToDevice
  * Signature: (JJZJJLjava/nio/ByteBuffer;[J)J
  */
@@ -220,12 +228,21 @@ JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLCommandQ
 
 /*
  * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue
+ * Method:    readArrayFromDeviceOffHeap
+ * Signature: (JJJZJJJ[J)J
+ */
+JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue_readArrayFromDeviceOffHeap__JJJZJJJ_3J
+        (JNIEnv *, jclass, jlong, jlong, jlong, jboolean, jlong, jlong, jlong, jlongArray);
+
+/*
+ * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue
  * Method:    readBufferFromDevice
  * Signature: (JJZJJLjava/nio/ByteBuffer;[J)J
  */
 JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue_readBufferFromDevice
        (JNIEnv *env, jclass clazz, jlong commandQueue, jlong devicePtr, jboolean blocking,
         jlong offset, jlong numBytes, jobject buffer, jlongArray javaArrayEvents);
+
 /*
  * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLCommandQueue
  * Method:    clEnqueueWaitForEvents

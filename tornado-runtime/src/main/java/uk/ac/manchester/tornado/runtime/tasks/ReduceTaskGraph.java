@@ -14,7 +14,7 @@
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
  *
@@ -61,6 +61,13 @@ import uk.ac.manchester.tornado.api.exceptions.TornadoRuntimeException;
 import uk.ac.manchester.tornado.api.exceptions.TornadoTaskRuntimeException;
 import uk.ac.manchester.tornado.api.memory.TaskMetaDataInterface;
 import uk.ac.manchester.tornado.api.runtime.TornadoRuntime;
+import uk.ac.manchester.tornado.api.types.arrays.ByteArray;
+import uk.ac.manchester.tornado.api.types.arrays.ShortArray;
+import uk.ac.manchester.tornado.api.types.arrays.CharArray;
+import uk.ac.manchester.tornado.api.types.arrays.IntArray;
+import uk.ac.manchester.tornado.api.types.arrays.LongArray;
+import uk.ac.manchester.tornado.api.types.arrays.FloatArray;
+import uk.ac.manchester.tornado.api.types.arrays.DoubleArray;
 import uk.ac.manchester.tornado.runtime.TornadoCoreRuntime;
 import uk.ac.manchester.tornado.runtime.analyzer.CodeAnalysis;
 import uk.ac.manchester.tornado.runtime.analyzer.MetaReduceCodeAnalysis;
@@ -105,18 +112,17 @@ class ReduceTaskGraph {
     private Map<Object, Object> neutralElementsOriginal = new HashMap<>();
     private TaskGraph rewrittenTaskGraph;
     private Map<Object, LinkedList<Integer>> reduceOperandTable;
-    private Graph sketchGraph;
+    private final Graph sketchGraph;
     private boolean hybridMode;
     private Map<Object, REDUCE_OPERATION> hybridMergeTable;
     private List<CompletableFuture<CompiledTaskPackage>> compilationHostJobs = new ArrayList<>();
     
     TornadoExecutionPlan executionPlan;
 
-    private ProfilerMode profilerMode;
     private TornadoExecutionResult executionResult;
     
     ReduceTaskGraph(TornadoTaskGraph owner, List<TaskPackage> taskPackages, List<Object> streamInObjects, List<StreamingObject> streamingObjects, List<Object> streamOutObjects, List<StreamingObject> outputModeObjects, 
-                    Graph graph, ProfilerMode profilerMode) {
+                    Graph graph) {
         this.owner = owner;
        
         // We need to make all lists mutable again in order to re-write the expressions
@@ -126,19 +132,18 @@ class ReduceTaskGraph {
         this.streamInObjects = new ArrayList<>(streamInObjects);
         this.inputModeObjects = new ArrayList<>(streamingObjects);
         this.streamOutObjects = new ArrayList<>(streamOutObjects);
-        this.outputModeObjects = new ArrayList<>(outputModeObjects);        
+        this.outputModeObjects = new ArrayList<>(outputModeObjects);
         
         this.sketchGraph = graph;
-        this.profilerMode = profilerMode;
     }
 
     /**
      * @param driverIndex
-     *            Index within the Tornado drivers' index
+     *     Index within the Tornado drivers' index
      * @param device
-     *            Index of the device within the Tornado's device list.
+     *     Index of the device within the Tornado's device list.
      * @param inputSize
-     *            Input size
+     *     Input size
      * @return Output array size
      */
     private static int obtainSizeArrayResult(int driverIndex, int device, int inputSize) {
@@ -160,9 +165,9 @@ class ReduceTaskGraph {
      * It computes the right local work group size for GPUs/FPGAs.
      *
      * @param device
-     *            Input device.
+     *     Input device.
      * @param globalWorkSize
-     *            Number of global threads to run.
+     *     Number of global threads to run.
      * @return Local Work Threads.
      */
     private static int calculateAcceleratorGroupSize(TornadoDevice device, long globalWorkSize) {
@@ -219,22 +224,22 @@ class ReduceTaskGraph {
             TornadoOptions.FPGA_BINARIES = originalBinaries;
         }
     }
-    
+
     private static boolean isAheadOfTime() {
         return TornadoOptions.FPGA_BINARIES != null;
     }
 
     private static void fillOutputArrayWithNeutral(Object reduceArray, Object neutral) {
-        if (reduceArray instanceof int[]) {
-            Arrays.fill((int[]) reduceArray, (int) neutral);
-        } else if (reduceArray instanceof float[]) {
-            Arrays.fill((float[]) reduceArray, (float) neutral);
-        } else if (reduceArray instanceof double[]) {
-            Arrays.fill((double[]) reduceArray, (double) neutral);
-        } else if (reduceArray instanceof long[]) {
-            Arrays.fill((long[]) reduceArray, (long) neutral);
-        } else {
-            throw new TornadoRuntimeException(EXCEPTION_MESSAGE_ERROR + reduceArray.getClass());
+        switch (reduceArray) {
+            case int[] ints -> Arrays.fill(ints, (int) neutral);
+            case float[] floats -> Arrays.fill(floats, (float) neutral);
+            case double[] doubles -> Arrays.fill(doubles, (double) neutral);
+            case long[] longs -> Arrays.fill(longs, (long) neutral);
+            case IntArray intArray -> intArray.init((int) neutral);
+            case FloatArray floatArray -> floatArray.init((float) neutral);
+            case DoubleArray doubleArray -> doubleArray.init((double) neutral);
+            case LongArray longArray -> longArray.init((long) neutral);
+            case null, default -> throw new TornadoRuntimeException(EXCEPTION_MESSAGE_ERROR + reduceArray.getClass());
         }
     }
 
@@ -242,45 +247,45 @@ class ReduceTaskGraph {
         if (size == 1) {
             return reduceVariable;
         }
-        if (reduceVariable instanceof int[]) {
-            return new int[size];
-        } else if (reduceVariable instanceof float[]) {
-            return new float[size];
-        } else if (reduceVariable instanceof double[]) {
-            return new double[size];
-        } else if (reduceVariable instanceof long[]) {
-            return new long[size];
-        } else {
-            throw new TornadoRuntimeException(EXCEPTION_MESSAGE_ERROR + reduceVariable.getClass());
-        }
+        return switch (reduceVariable) {
+            case int[] ints -> new int[size];
+            case float[] floats -> new float[size];
+            case double[] doubles -> new double[size];
+            case long[] longs -> new long[size];
+            case IntArray intArray -> new IntArray(size);
+            case FloatArray floatArray -> new FloatArray(size);
+            case DoubleArray doubleArray -> new DoubleArray(size);
+            case LongArray longArray -> new LongArray(size);
+            case null, default -> throw new TornadoRuntimeException(EXCEPTION_MESSAGE_ERROR + reduceVariable.getClass());
+        };
     }
 
     private static Object createNewReduceArray(Object reduceVariable) {
-        if (reduceVariable instanceof int[]) {
-            return new int[1];
-        } else if (reduceVariable instanceof float[]) {
-            return new float[1];
-        } else if (reduceVariable instanceof double[]) {
-            return new double[1];
-        } else if (reduceVariable instanceof long[]) {
-            return new long[1];
-        } else {
-            throw new TornadoRuntimeException(EXCEPTION_MESSAGE_ERROR + reduceVariable.getClass());
-        }
+        return switch (reduceVariable) {
+            case int[] ints -> new int[1];
+            case float[] floats -> new float[1];
+            case double[] doubles -> new double[1];
+            case long[] longs -> new long[1];
+            case IntArray intArray -> new IntArray(1);
+            case FloatArray floatArray -> new FloatArray(1);
+            case DoubleArray doubleArray -> new DoubleArray(1);
+            case LongArray longArray -> new LongArray(1);
+            case null, default -> throw new TornadoRuntimeException(EXCEPTION_MESSAGE_ERROR + reduceVariable.getClass());
+        };
     }
 
     private static Object getNeutralElement(Object originalArray) {
-        if (originalArray instanceof int[]) {
-            return ((int[]) originalArray)[0];
-        } else if (originalArray instanceof float[]) {
-            return ((float[]) originalArray)[0];
-        } else if (originalArray instanceof double[]) {
-            return ((double[]) originalArray)[0];
-        } else if (originalArray instanceof long[]) {
-            return ((long[]) originalArray)[0];
-        } else {
-            throw new TornadoRuntimeException(EXCEPTION_MESSAGE_ERROR + originalArray.getClass());
-        }
+        return switch (originalArray) {
+            case int[] ints -> ints[0];
+            case float[] floats -> floats[0];
+            case double[] doubles -> doubles[0];
+            case long[] longs -> longs[0];
+            case IntArray intArray -> intArray.get(0);
+            case FloatArray floatArray -> floatArray.get(0);
+            case DoubleArray doubleArray -> doubleArray.get(0);
+            case LongArray longArray -> longArray.get(0);
+            case null, default -> throw new TornadoRuntimeException(EXCEPTION_MESSAGE_ERROR + originalArray.getClass());
+        };
     }
 
     private static boolean isPowerOfTwo(final long number) {
@@ -318,12 +323,11 @@ class ReduceTaskGraph {
         }
     }
 
-    /**
-     * Returns true if the input size is not power of 2 and the target device is
+    /** Returns true if the input size is not power of 2 and the target device is
      * either the GPU or the FPGA.
      *
      * @param targetDeviceToRun
-     *            index of the target device within the Tornado device list.
+     *     index of the target device within the Tornado device list.
      * @return boolean
      */
     private boolean isTaskEligibleSplitHostAndDevice(int driverIndex, int targetDeviceToRun, long elementsReductionLeftOver) {
@@ -405,7 +409,7 @@ class ReduceTaskGraph {
         return hybridArray;
     }
     
-    private static Supplier<InstalledCode> createCompilationJob(TaskPackage taskPackage, long sizeTargetDevice) {
+    private static Supplier<InstalledCode> createCompilationJob(TaskPackage taskPackage, int sizeTargetDevice) {
         Object codeTask = taskPackage.getTaskParameters()[0];
         return () -> {
             StructuredGraph originalGraph = CodeAnalysis.buildHighLevelGraalGraph(codeTask);
@@ -427,7 +431,7 @@ class ReduceTaskGraph {
      * sub-range that does not fit into the power-of-two part.
      *
      * @param metaReduceTable
-     *            Metadata to create all new tasks for the reductions dynamically.
+     *     Metadata to create all new tasks for the reductions dynamically.
      * @return {@link TaskGraph} with the new reduction
      */
     TaskGraph scheduleWithReduction(MetaReduceCodeAnalysis metaReduceTable) {
@@ -446,7 +450,7 @@ class ReduceTaskGraph {
         }
         if (reduceOperandTable == null) {
             reduceOperandTable = new HashMap<>();
-        }        
+        }
         // Create new buffer variables and update the corresponding streamIn and
         // streamOut
         Executor executorService = TornadoCoreRuntime.getTornadoExecutor();
@@ -616,22 +620,13 @@ class ReduceTaskGraph {
                         inspectBinariesFPGA(taskScheduleReduceName, originalMeta, taskPackage.getId(), newTaskSequentialName);
 
                         switch (operation) {
-                            case SUM:
-                                ReduceFactory.handleAdd(newArray, rewrittenTaskGraph, sizeReduceArray, newTaskSequentialName);
-                                break;
-                            case MUL:
-                                ReduceFactory.handleMul(newArray, rewrittenTaskGraph, sizeReduceArray, newTaskSequentialName);
-                                break;
-                            case MAX:
-                                ReduceFactory.handleMax(newArray, rewrittenTaskGraph, sizeReduceArray, newTaskSequentialName);
-                                break;
-                            case MIN:
-                                ReduceFactory.handleMin(newArray, rewrittenTaskGraph, sizeReduceArray, newTaskSequentialName);
-                                break;
-                            default:
-                                throw new TornadoRuntimeException("[ERROR] Reduce operation not supported yet.");
+                            case SUM -> ReduceFactory.handleAdd(newArray, rewrittenTaskGraph, sizeReduceArray, newTaskSequentialName);
+                            case MUL -> ReduceFactory.handleMul(newArray, rewrittenTaskGraph, sizeReduceArray, newTaskSequentialName);
+                            case MAX -> ReduceFactory.handleMax(newArray, rewrittenTaskGraph, sizeReduceArray, newTaskSequentialName);
+                            case MIN -> ReduceFactory.handleMin(newArray, rewrittenTaskGraph, sizeReduceArray, newTaskSequentialName);
+                            default -> throw new TornadoRuntimeException("[ERROR] Reduce operation not supported yet.");
                         }
-                        
+
                         // Inherit device of the original task
                         rewrittenTaskGraph.setDeviceForTask(taskScheduleReduceName + "." + newTaskSequentialName, originalDevice);
 
@@ -665,8 +660,8 @@ class ReduceTaskGraph {
                     continue;
                 }
                 if (!rewrittenTaskGraph.getArgumentsLookup().contains(parameter)) {
-                    throw new TornadoTaskRuntimeException(
-                            "Parameter #" + i + " <" + parameter + "> from task <" + task.getId() + "> not specified either in `transferToDevice` or `transferToHost` functions");
+                    throw new TornadoTaskRuntimeException("Parameter #" + i + " <" + parameter + "> from task <" + task
+                            .getId() + "> not specified either in `transferToDevice` or `transferToHost` functions");
                 }
             }
         }
@@ -695,7 +690,7 @@ class ReduceTaskGraph {
         awaitSequentialHostJobs(runningHostJobs);
         updateOutputArray();
     }
-    
+
     private List<CompletableFuture<?>> forkSequentialHostJobs() {
         Executor executor = TornadoCoreRuntime.getTornadoExecutor();
         return compilationHostJobs
@@ -703,7 +698,7 @@ class ReduceTaskGraph {
                 .map(f -> f.thenAcceptAsync(ctp -> runBinaryCodeForReduction(ctp.task, ctp.code, hostHybridVariables), executor))
                 .collect(Collectors.toList());
     }
-    
+
     private static void awaitSequentialHostJobs(List<CompletableFuture<?>> runningHostJobs) {
         if (runningHostJobs != null && !runningHostJobs.isEmpty()) {
             CompletableFuture.allOf(runningHostJobs.toArray(new CompletableFuture[0])).whenComplete((__, ex) -> {
@@ -796,48 +791,62 @@ class ReduceTaskGraph {
     }
 
     private static void updateVariableFromAccelerator(Object originalReduceVariable, Object newArray) {
-        switch (newArray.getClass().getTypeName()) {
-            case "int[]":
-                ((int[]) originalReduceVariable)[0] = ((int[]) newArray)[0];
-                break;
-            case "float[]":
-                ((float[]) originalReduceVariable)[0] = ((float[]) newArray)[0];
-                break;
-            case "double[]":
-                ((double[]) originalReduceVariable)[0] = ((double[]) newArray)[0];
-                break;
-            case "long[]":
-                ((long[]) originalReduceVariable)[0] = ((long[]) newArray)[0];
-                break;
-            default:
-                throw new TornadoRuntimeException("[ERROR] Reduce data type not supported yet: " + newArray.getClass().getTypeName());
+        switch (newArray) {
+            case int[] intArray -> ((int[]) originalReduceVariable)[0] = intArray[0];
+            case float[] floatArray -> ((float[]) originalReduceVariable)[0] = floatArray[0];
+            case double[] doubleArray -> ((double[]) originalReduceVariable)[0] = doubleArray[0];
+            case long[] longArray -> ((long[]) originalReduceVariable)[0] = longArray[0];
+            case IntArray panamaIntArray -> ((IntArray) originalReduceVariable).set(0, panamaIntArray.get(0));
+            case FloatArray panamaFloatArray -> ((FloatArray) originalReduceVariable).set(0, panamaFloatArray.get(0));
+            case DoubleArray panamaDoubleArray -> ((DoubleArray) originalReduceVariable).set(0, panamaDoubleArray.get(0));
+            case LongArray panamaLongArray -> ((LongArray) originalReduceVariable).set(0, panamaLongArray.get(0));
+            default -> new TornadoRuntimeException("[ERROR] Reduce data type not supported yet: " + newArray.getClass().getTypeName());
         }
     }
 
     private void mergeHybridMode(Object originalReduceVariable, Object newArray) {
-        switch (newArray.getClass().getTypeName()) {
-            case "int[]":
-                int a = ((int[]) hostHybridVariables.get(newArray))[0];
-                int b = ((int[]) newArray)[0];
-                ((int[]) originalReduceVariable)[0] = operateFinalReduction(a, b, hybridMergeTable.get(newArray));
-                break;
-            case "float[]":
-                float af = ((float[]) hostHybridVariables.get(newArray))[0];
-                float bf = ((float[]) newArray)[0];
-                ((float[]) originalReduceVariable)[0] = operateFinalReduction(af, bf, hybridMergeTable.get(newArray));
-                break;
-            case "double[]":
-                double ad = ((double[]) hostHybridVariables.get(newArray))[0];
-                double bd = ((double[]) newArray)[0];
-                ((double[]) originalReduceVariable)[0] = operateFinalReduction(ad, bd, hybridMergeTable.get(newArray));
-                break;
-            case "long[]":
-                long al = ((long[]) hostHybridVariables.get(newArray))[0];
-                long bl = ((long[]) newArray)[0];
-                ((long[]) originalReduceVariable)[0] = operateFinalReduction(al, bl, hybridMergeTable.get(newArray));
-                break;
-            default:
-                throw new TornadoRuntimeException("[ERROR] Reduce data type not supported yet: " + newArray.getClass().getTypeName());
+        switch (newArray) {
+            case int[] intArray -> {
+                int a = ((int[]) hostHybridVariables.get(intArray))[0];
+                int b = intArray[0];
+                ((int[]) originalReduceVariable)[0] = operateFinalReduction(a, b, hybridMergeTable.get(intArray));
+            }
+            case float[] floatArray -> {
+                float af = ((float[]) hostHybridVariables.get(floatArray))[0];
+                float bf = floatArray[0];
+                ((float[]) originalReduceVariable)[0] = operateFinalReduction(af, bf, hybridMergeTable.get(floatArray));
+            }
+            case double[] doubleArray -> {
+                double ad = ((double[]) hostHybridVariables.get(doubleArray))[0];
+                double bd = doubleArray[0];
+                ((double[]) originalReduceVariable)[0] = operateFinalReduction(ad, bd, hybridMergeTable.get(doubleArray));
+            }
+            case long[] longArray -> {
+                long al = ((long[]) hostHybridVariables.get(longArray))[0];
+                long bl = longArray[0];
+                ((long[]) originalReduceVariable)[0] = operateFinalReduction(al, bl, hybridMergeTable.get(longArray));
+            }
+            case IntArray panamaIntArray -> {
+                int ani = ((IntArray) hostHybridVariables.get(panamaIntArray)).get(0);
+                int bni = panamaIntArray.get(0);
+                ((IntArray) originalReduceVariable).set(0, operateFinalReduction(ani, bni, hybridMergeTable.get(panamaIntArray)));
+            }
+            case FloatArray panamaFloatArray -> {
+                float anf = ((FloatArray) hostHybridVariables.get(panamaFloatArray)).get(0);
+                float bnf = panamaFloatArray.get(0);
+                ((FloatArray) originalReduceVariable).set(0, operateFinalReduction(anf, bnf, hybridMergeTable.get(panamaFloatArray)));
+            }
+            case DoubleArray panamaDoubleArray -> {
+                double and = ((DoubleArray) hostHybridVariables.get(panamaDoubleArray)).get(0);
+                double bnd = panamaDoubleArray.get(0);
+                ((DoubleArray) originalReduceVariable).set(0, operateFinalReduction(and, bnd, hybridMergeTable.get(panamaDoubleArray)));
+            }
+            case LongArray panamaLongArray -> {
+                long anl = ((LongArray) hostHybridVariables.get(panamaLongArray)).get(0);
+                long bnl = panamaLongArray.get(0);
+                ((LongArray) originalReduceVariable).set(0, operateFinalReduction(anl, bnl, hybridMergeTable.get(panamaLongArray)));
+            }
+            default -> new TornadoRuntimeException("[ERROR] Reduce data type not supported yet: " + newArray.getClass().getTypeName());
         }
     }
 

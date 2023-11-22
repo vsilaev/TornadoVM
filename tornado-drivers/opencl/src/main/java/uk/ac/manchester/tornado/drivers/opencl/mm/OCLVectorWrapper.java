@@ -12,7 +12,7 @@
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
  *
@@ -23,7 +23,6 @@
  */
 package uk.ac.manchester.tornado.drivers.opencl.mm;
 
-import static uk.ac.manchester.tornado.runtime.TornadoCoreRuntime.getVMConfig;
 import static uk.ac.manchester.tornado.runtime.common.RuntimeUtilities.humanReadableByteCount;
 import static uk.ac.manchester.tornado.runtime.common.Tornado.info;
 import static uk.ac.manchester.tornado.runtime.common.Tornado.warn;
@@ -33,32 +32,42 @@ import java.util.Collections;
 import java.util.List;
 
 import jdk.vm.ci.meta.JavaKind;
-import uk.ac.manchester.tornado.api.collections.types.PrimitiveStorage;
+import uk.ac.manchester.tornado.api.types.arrays.natives.NativeInt2;
+import uk.ac.manchester.tornado.api.types.arrays.natives.NativeByte3;
+import uk.ac.manchester.tornado.api.types.arrays.natives.NativeFloat2;
+import uk.ac.manchester.tornado.api.types.arrays.natives.NativeShort2;
 import uk.ac.manchester.tornado.api.exceptions.TornadoInternalError;
 import uk.ac.manchester.tornado.api.exceptions.TornadoMemoryException;
 import uk.ac.manchester.tornado.api.exceptions.TornadoRuntimeException;
+import uk.ac.manchester.tornado.api.internal.annotations.Payload;
 import uk.ac.manchester.tornado.api.memory.ObjectBuffer;
-import uk.ac.manchester.tornado.api.type.annotations.Payload;
+import uk.ac.manchester.tornado.api.types.arrays.ByteArray;
+import uk.ac.manchester.tornado.api.types.arrays.CharArray;
+import uk.ac.manchester.tornado.api.types.arrays.DoubleArray;
+import uk.ac.manchester.tornado.api.types.arrays.FloatArray;
+import uk.ac.manchester.tornado.api.types.arrays.IntArray;
+import uk.ac.manchester.tornado.api.types.arrays.LongArray;
+import uk.ac.manchester.tornado.api.types.arrays.ShortArray;
+import uk.ac.manchester.tornado.api.types.arrays.TornadoNativeArray;
+import uk.ac.manchester.tornado.api.types.common.PrimitiveStorage;
+import uk.ac.manchester.tornado.api.types.matrix.NativeDouble2;
 import uk.ac.manchester.tornado.drivers.opencl.OCLDeviceContext;
 import uk.ac.manchester.tornado.runtime.common.Tornado;
+import uk.ac.manchester.tornado.runtime.common.TornadoOptions;
 import uk.ac.manchester.tornado.runtime.utils.TornadoUtils;
 
 public class OCLVectorWrapper implements ObjectBuffer {
 
     private static final int INIT_VALUE = -1;
 
-    private final int arrayHeaderSize;
-    private final int arrayLengthOffset;
-
-    private long bufferId;
-    private long bufferOffset;
-    private long bufferSize;
-
     protected final OCLDeviceContext deviceContext;
 
     private final long batchSize;
 
     private final JavaKind kind;
+    private long bufferId;
+    private long bufferOffset;
+    private long bufferSize;
     private long setSubRegionSize;
 
     public OCLVectorWrapper(final OCLDeviceContext device, final Object object, long batchSize) {
@@ -70,8 +79,6 @@ public class OCLVectorWrapper implements ObjectBuffer {
         Object payload = TornadoUtils.getAnnotatedObjectFromField(object, Payload.class);
         this.kind = getJavaKind(payload.getClass());
         this.bufferSize = sizeOf(payload);
-        this.arrayLengthOffset = getVMConfig().arrayOopDescLengthOffset();
-        this.arrayHeaderSize = getVMConfig().getArrayBaseOffset(kind);
     }
 
     public long getBatchSize() {
@@ -95,8 +102,8 @@ public class OCLVectorWrapper implements ObjectBuffer {
         this.bufferId = deviceContext.getBufferProvider().getBufferWithSize(bufferSize);
 
         if (Tornado.FULL_DEBUG) {
-            info("allocated: array kind=%s, size=%s, length offset=%d, header size=%d", kind.getJavaName(), humanReadableByteCount(bufferSize, true), arrayLengthOffset, arrayHeaderSize);
-            info("allocated: %s", toString());
+            info("allocated: array kind=%s, size=%s, length offset=%d, header size=%d", kind.getJavaName(), humanReadableByteCount(bufferSize, true), bufferOffset,
+                    TornadoOptions.PANAMA_OBJECT_HEADER_SIZE);
         }
 
     }
@@ -110,8 +117,8 @@ public class OCLVectorWrapper implements ObjectBuffer {
         bufferSize = INIT_VALUE;
 
         if (Tornado.FULL_DEBUG) {
-            info("deallocated: array kind=%s, size=%s, length offset=%d, header size=%d", kind.getJavaName(), humanReadableByteCount(bufferSize, true), arrayLengthOffset, arrayHeaderSize);
-            info("deallocated: %s", toString());
+            info("deallocated: array kind=%s, size=%s, length offset=%d, header size=%d", kind.getJavaName(), humanReadableByteCount(bufferSize, true), bufferOffset,
+                    TornadoOptions.PANAMA_OBJECT_HEADER_SIZE);
         }
     }
 
@@ -140,20 +147,28 @@ public class OCLVectorWrapper implements ObjectBuffer {
      * Copy data from the device to the main host.
      *
      * @param bufferId
-     *            Device Buffer ID
+     *     Device Buffer ID
      * @param offset
-     *            Offset within the device buffer
+     *     Offset within the device buffer
      * @param bytes
-     *            Bytes to be copied back to the host
+     *     Bytes to be copied back to the host
      * @param value
-     *            Host array that resides the final data
+     *     Host array that resides the final data
      * @param waitEvents
-     *            List of events to wait for.
+     *     List of events to wait for.
      * @return Event information
      */
-     private int enqueueReadArrayData(long bufferId, long offset, long bytes, Object value, long hostOffset, int[] waitEvents) {
-         return toProxy().enqueueReadArrayData(bufferId, offset, bytes, value, hostOffset, waitEvents);
-     }
+    private int enqueueReadArrayData(long bufferId, long offset, long bytes, Object value, long hostOffset, int[] waitEvents) {
+        if (kind == JavaKind.Object) {
+            if (value instanceof TornadoNativeArray nativeArray) {
+                return deviceContext.enqueueReadBuffer(bufferId, offset, bytes, nativeArray.getSegment().address(), hostOffset, waitEvents);
+            } else {
+                throw new TornadoRuntimeException("Type not supported: " + value.getClass());
+            }
+        } else {
+            return toProxy().enqueueReadArrayData(bufferId, offset, bytes, value, hostOffset, waitEvents);
+        }
+    }
 
     @Override
     public List<Integer> enqueueWrite(final Object value, long batchSize, long hostOffset, final int[] events, boolean useDeps) {
@@ -167,7 +182,15 @@ public class OCLVectorWrapper implements ObjectBuffer {
     }
 
     private int enqueueWriteArrayData(long bufferId, long offset, long bytes, Object value, long hostOffset, int[] waitEvents) {
-        return toProxy().enqueueWriteArrayData(bufferId, offset, bytes, value, hostOffset, waitEvents);
+        if (kind == JavaKind.Object) {
+            if (value instanceof TornadoNativeArray nativeArray) {
+                return deviceContext.enqueueWriteBuffer(bufferId, offset, bytes, nativeArray.getSegment().address(), hostOffset, waitEvents);
+            } else {
+                throw new TornadoRuntimeException("Type not supported: " + value.getClass());
+            }
+        } else {
+            return toProxy().enqueueWriteArrayData(bufferId, offset, bytes, value, hostOffset, waitEvents);
+        }
     }
 
     @Override
@@ -188,11 +211,25 @@ public class OCLVectorWrapper implements ObjectBuffer {
     }
 
     private int readArrayData(long bufferId, long offset, long bytes, Object value, long hostOffset, int[] waitEvents) {
-        return toProxy().readArrayData(bufferId, offset, bytes, value, hostOffset, waitEvents);
+        if (kind == JavaKind.Object) {
+            if (value instanceof TornadoNativeArray nativeArray) {
+                return deviceContext.readBuffer(bufferId, offset, bytes, nativeArray.getSegment().address(), hostOffset, waitEvents);
+            } else {
+                throw new TornadoRuntimeException("Type not supported: " + value.getClass());
+            }
+        } else { 
+            return toProxy().readArrayData(bufferId, offset, bytes, value, hostOffset, waitEvents);
+        }
     }
 
     private long sizeOf(final Object array) {
-        return ((long) Array.getLength(array) * (long) kind.getByteCount());
+        long size;
+        if (array instanceof TornadoNativeArray nativeArray) {
+            size = nativeArray.getNumBytesOfSegment();
+        } else {
+            size = (long) Array.getLength(array) * kind.getByteCount();
+        }
+        return size;
     }
 
     @Override
@@ -230,7 +267,15 @@ public class OCLVectorWrapper implements ObjectBuffer {
     }
 
     private void writeArrayData(long bufferId, long offset, long bytes, Object value, long hostOffset, int[] waitEvents) {
-        toProxy().writeArrayData(bufferId, offset, bytes, value, hostOffset, waitEvents);
+        if (kind == JavaKind.Object) {
+            if (value instanceof TornadoNativeArray nativeArray) {
+                deviceContext.writeBuffer(bufferId, offset, bytes, nativeArray.getSegment().address(), hostOffset, waitEvents);
+            } else {
+                throw new TornadoRuntimeException("Data type not supported: " + value.getClass());
+            }
+        }  else {
+            toProxy().writeArrayData(bufferId, offset, bytes, value, hostOffset, waitEvents);
+        }
     }
     
     private OCLArrayWrapper<Object> toProxy() {
@@ -278,6 +323,24 @@ public class OCLVectorWrapper implements ObjectBuffer {
             } else {
                 warn("cannot wrap field: array type=%s", type.getName());
             }
+        } else if (type == ByteArray.class  || 
+                   type == ShortArray.class || 
+                   type == CharArray.class  ||
+                   type == IntArray.class   ||
+                   type == FloatArray.class ||
+                   type == LongArray.class  ||
+                   type == DoubleArray.class) {
+            return JavaKind.Object;
+        } else if (type == NativeFloat2.FIELD_CLASS) {
+            return JavaKind.Object;
+        } else if (type == NativeInt2.FIELD_CLASS) {
+            return JavaKind.Object;
+        } else if (type == NativeDouble2.FIELD_CLASS) {
+            return JavaKind.Object;
+        } else if (type == NativeShort2.FIELD_CLASS) {
+            return JavaKind.Object;
+        } else if (type == NativeByte3.FIELD_CLASS) {
+            return JavaKind.Object;
         } else {
             TornadoInternalError.shouldNotReachHere("The type should be an array");
         }
@@ -285,7 +348,7 @@ public class OCLVectorWrapper implements ObjectBuffer {
     }
 
     @Override
-    public long getSizeSubRegion() {
+    public long getSizeSubRegionSize() {
         return setSubRegionSize;
     }
 }
