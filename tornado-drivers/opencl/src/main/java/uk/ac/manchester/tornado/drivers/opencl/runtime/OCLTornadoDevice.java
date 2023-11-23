@@ -590,9 +590,6 @@ public class OCLTornadoDevice implements TornadoAcceleratorDevice {
         if (buffer.getClass() == AtomicsBuffer.class) {
             state.setAtomicRegion();
         }
-
-        final Class<?> type = object.getClass();
-
         return -1;
     }
 

@@ -42,13 +42,15 @@ import static uk.ac.manchester.tornado.api.types.vectors.Int4.add;
 
 import java.nio.IntBuffer;
 
-import uk.ac.manchester.tornado.api.types.vectors.Int4;
 import uk.ac.manchester.tornado.api.types.arrays.IntArray;
 import uk.ac.manchester.tornado.api.types.common.PrimitiveStorage;
+import uk.ac.manchester.tornado.api.types.vectors.Int4;
 
 public class VectorInt4 implements PrimitiveStorage<IntBuffer> {
     
     private static final long serialVersionUID = 1L;
+
+    public static final Class<VectorInt4> TYPE = VectorInt4.class;
 
     private static final int ELEMENT_SIZE = 4;
     /**
@@ -99,7 +101,16 @@ public class VectorInt4 implements PrimitiveStorage<IntBuffer> {
      * @return value
      */
     public Int4 get(int index) {
-        return Int4.loadFromArray(storage, toIndex(index));
+        return loadFromArray(storage, toIndex(index));
+    }
+
+    private Int4 loadFromArray(final IntArray array, int index) {
+        final Int4 result = new Int4();
+        result.setX(array.get(index));
+        result.setY(array.get(index + 1));
+        result.setZ(array.get(index + 2));
+        result.setW(array.get(index + 3));
+        return result;
     }
 
     /**
@@ -109,7 +120,14 @@ public class VectorInt4 implements PrimitiveStorage<IntBuffer> {
      * @param value
      */
     public void set(int index, Int4 value) {
-        value.storeToArray(storage, toIndex(index));
+        storeToArray(value, storage, toIndex(index));
+    }
+
+    private void storeToArray(Int4 value, IntArray array, int index) {
+        array.set(index, value.getX());
+        array.set(index + 1, value.getY());
+        array.set(index + 2, value.getZ());
+        array.set(index + 3, value.getW());
     }
 
     /**

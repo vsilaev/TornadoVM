@@ -13,16 +13,16 @@
  *
  * GNU Classpath is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GNU Classpath; see the file COPYING.  If not, write to the
+ * along with GNU Classpath; see the file COPYING. If not, write to the
  * Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301 USA.
  *
  * Linking this library statically or dynamically with other modules is
- * making a combined work based on this library.  Thus, the terms and
+ * making a combined work based on this library. Thus, the terms and
  * conditions of the GNU General Public License cover the whole
  * combination.
  *
@@ -32,10 +32,10 @@
  * modules, and to copy and distribute the resulting executable under
  * terms of your choice, provided that you also meet, for each linked
  * independent module, the terms and conditions of the license of that
- * module.  An independent module is a module which is not derived from
- * or based on this library.  If you modify this library, you may extend
+ * module. An independent module is a module which is not derived from
+ * or based on this library. If you modify this library, you may extend
  * this exception to your version of the library, but you are not
- * obligated to do so.  If you do not wish to do so, delete this
+ * obligated to do so. If you do not wish to do so, delete this
  * exception statement from your version.
  *
  */
@@ -106,7 +106,7 @@ public class TaskGraph implements TaskGraphInterface {
      * It adds a task by using a {@link TaskPackage}.
      *
      * @param taskPackage
-     *            {@link uk.ac.manchester.tornado.api.common.TaskPackage}
+     *     {@link uk.ac.manchester.tornado.api.common.TaskPackage}
      * @return {@link @TaskGraph}
      */
     @Override
@@ -116,14 +116,12 @@ public class TaskGraph implements TaskGraphInterface {
     }
 
     /**
-     * Adds task with one parameter.
+     * Adds task with no parameter.
      *
      * @param id
-     *            Task-id
+     *     Task-id
      * @param code
-     *            Reference to an existing Java method with one argument
-     * @param arg
-     *            Argument to the method
+     *     Reference to an existing Java method with one argument
      * @return {@link TaskGraph}
      */
     @Override
@@ -135,11 +133,11 @@ public class TaskGraph implements TaskGraphInterface {
      * Adds task with one parameter.
      *
      * @param id
-     *            Task-id
+     *     Task-id
      * @param code
-     *            Reference to an existing Java method with one argument
+     *     Reference to an existing Java method with one argument
      * @param arg
-     *            Argument to the method
+     *     Argument to the method
      * @return {@link TaskGraph}
      */
     @Override
@@ -151,15 +149,15 @@ public class TaskGraph implements TaskGraphInterface {
      * Adds task with two parameters.
      *
      * @param id
-     *            Task-id
+     *     Task-id
      * @param code
-     *            Reference to an existing Java method with two arguments
+     *     Reference to an existing Java method with two arguments
      * @param arg1
-     *            Argument 1 to the method
+     *     Argument 1 to the method
      * @param arg2
-     *            Argument 2 to the method
+     *     Argument 2 to the method
      * @return {@link TaskGraph}
-     */    
+     */  
     @Override
     public <T1, T2> TaskGraph task(String id, Task2<T1, T2> code, T1 arg1, T2 arg2) {
         return addTask(TaskPackage.createPackage(checkTaskName(id), code, arg1, arg2));
@@ -169,15 +167,15 @@ public class TaskGraph implements TaskGraphInterface {
      * Add task with three parameters.
      *
      * @param id
-     *            Task-id
+     *     Task-id
      * @param code
-     *            Reference to an existing Java method with three arguments
+     *     Reference to an existing Java method with three arguments
      * @param arg1
-     *            Argument 1 to the method
+     *     Argument 1 to the method
      * @param arg2
-     *            Argument 2 to the method
+     *     Argument 2 to the method
      * @param arg3
-     *            Argument 3 to the method
+     *     Argument 3 to the method
      * @return {@link TaskGraph}
      */
     @Override
@@ -189,17 +187,17 @@ public class TaskGraph implements TaskGraphInterface {
      * Adds task with four parameters.
      *
      * @param id
-     *            Task-id
+     *     Task-id
      * @param code
-     *            Reference to an existing Java method with four arguments
+     *     Reference to an existing Java method with four arguments
      * @param arg1
-     *            Argument 1 to the method
+     *     Argument 1 to the method
      * @param arg2
-     *            Argument 2 to the method
+     *     Argument 2 to the method
      * @param arg3
-     *            Argument 3 to the method
+     *     Argument 3 to the method
      * @param arg4
-     *            Argument 4 to the method
+     *     Argument 4 to the method
      * @return {@link TaskGraph}
      */
     @Override
@@ -211,19 +209,19 @@ public class TaskGraph implements TaskGraphInterface {
      * Adds task with five parameters.
      *
      * @param id
-     *            Task-id
+     *     Task-id
      * @param code
-     *            Reference to an existing Java method with five arguments
+     *     Reference to an existing Java method with five arguments
      * @param arg1
-     *            Argument 1 to the method
+     *     Argument 1 to the method
      * @param arg2
-     *            Argument 2 to the method
+     *     Argument 2 to the method
      * @param arg3
-     *            Argument 3 to the method
+     *     Argument 3 to the method
      * @param arg4
-     *            Argument 4 to the method
+     *     Argument 4 to the method
      * @param arg5
-     *            Argument 5 to the method
+     *     Argument 5 to the method
      * @return {@link TaskGraph}
      */
     @Override
@@ -235,21 +233,21 @@ public class TaskGraph implements TaskGraphInterface {
      * Adds task with six parameters.
      *
      * @param id
-     *            Task-id
+     *     Task-id
      * @param code
-     *            Reference to an existing Java method with six arguments
+     *     Reference to an existing Java method with six arguments
      * @param arg1
-     *            Argument 1 to the method
+     *     Argument 1 to the method
      * @param arg2
-     *            Argument 2 to the method
+     *     Argument 2 to the method
      * @param arg3
-     *            Argument 3 to the method
+     *     Argument 3 to the method
      * @param arg4
-     *            Argument 4 to the method
+     *     Argument 4 to the method
      * @param arg5
-     *            Argument 5 to the method
+     *     Argument 5 to the method
      * @param arg6
-     *            Argument 6 to the method
+     *     Argument 6 to the method
      * @return {@link TaskGraph}
      */
     @Override
@@ -261,23 +259,23 @@ public class TaskGraph implements TaskGraphInterface {
      * Adds task with seven parameters.
      *
      * @param id
-     *            Task-id
+     *     Task-id
      * @param code
-     *            Reference to an existing Java method with seven arguments
+     *     Reference to an existing Java method with seven arguments
      * @param arg1
-     *            Argument 1 to the method
+     *     Argument 1 to the method
      * @param arg2
-     *            Argument 2 to the method
+     *     Argument 2 to the method
      * @param arg3
-     *            Argument 3 to the method
+     *     Argument 3 to the method
      * @param arg4
-     *            Argument 4 to the method
+     *     Argument 4 to the method
      * @param arg5
-     *            Argument 5 to the method
+     *     Argument 5 to the method
      * @param arg6
-     *            Argument 6 to the method
+     *     Argument 6 to the method
      * @param arg7
-     *            Argument 7 to the method
+     *     Argument 7 to the method
      * @return {@link TaskGraph}
      */
     @Override
@@ -289,25 +287,25 @@ public class TaskGraph implements TaskGraphInterface {
      * Adds task with eight parameters.
      *
      * @param id
-     *            Task-id
+     *     Task-id
      * @param code
-     *            Reference to an existing Java method with eight arguments
+     *     Reference to an existing Java method with eight arguments
      * @param arg1
-     *            Argument 1 to the method
+     *     Argument 1 to the method
      * @param arg2
-     *            Argument 2 to the method
+     *     Argument 2 to the method
      * @param arg3
-     *            Argument 3 to the method
+     *     Argument 3 to the method
      * @param arg4
-     *            Argument 4 to the method
+     *     Argument 4 to the method
      * @param arg5
-     *            Argument 5 to the method
+     *     Argument 5 to the method
      * @param arg6
-     *            Argument 6 to the method
+     *     Argument 6 to the method
      * @param arg7
-     *            Argument 7 to the method
+     *     Argument 7 to the method
      * @param arg8
-     *            Argument 8 to the method
+     *     Argument 8 to the method
      * @return {@link TaskGraph}
      */
     @Override
@@ -319,27 +317,27 @@ public class TaskGraph implements TaskGraphInterface {
      * Adds task with nine parameters.
      *
      * @param id
-     *            Task-id
+     *     Task-id
      * @param code
-     *            Reference to an existing Java method with nine arguments
+     *     Reference to an existing Java method with nine arguments
      * @param arg1
-     *            Argument 1 to the method
+     *     Argument 1 to the method
      * @param arg2
-     *            Argument 2 to the method
+     *     Argument 2 to the method
      * @param arg3
-     *            Argument 3 to the method
+     *     Argument 3 to the method
      * @param arg4
-     *            Argument 4 to the method
+     *     Argument 4 to the method
      * @param arg5
-     *            Argument 5 to the method
+     *     Argument 5 to the method
      * @param arg6
-     *            Argument 6 to the method
+     *     Argument 6 to the method
      * @param arg7
-     *            Argument 7 to the method
+     *     Argument 7 to the method
      * @param arg8
-     *            Argument 8 to the method
+     *     Argument 8 to the method
      * @param arg9
-     *            Argument 9 to the method
+     *     Argument 9 to the method
      * @return {@link TaskGraph}
      */
     @Override
@@ -352,29 +350,29 @@ public class TaskGraph implements TaskGraphInterface {
      * Adds task with 10 parameters.
      *
      * @param id
-     *            Task-id
+     *     Task-id
      * @param code
-     *            Reference to an existing Java method with 10 arguments
+     *     Reference to an existing Java method with 10 arguments
      * @param arg1
-     *            Argument 1 to the method
+     *     Argument 1 to the method
      * @param arg2
-     *            Argument 2 to the method
+     *     Argument 2 to the method
      * @param arg3
-     *            Argument 3 to the method
+     *     Argument 3 to the method
      * @param arg4
-     *            Argument 4 to the method
+     *     Argument 4 to the method
      * @param arg5
-     *            Argument 5 to the method
+     *     Argument 5 to the method
      * @param arg6
-     *            Argument 6 to the method
+     *     Argument 6 to the method
      * @param arg7
-     *            Argument 7 to the method
+     *     Argument 7 to the method
      * @param arg8
-     *            Argument 8 to the method
+     *     Argument 8 to the method
      * @param arg9
-     *            Argument 9 to the method
+     *     Argument 9 to the method
      * @param arg10
-     *            Argument 10 to the method
+     *     Argument 10 to the method
      * @return {@link TaskGraph}
      */
     @Override
@@ -387,31 +385,31 @@ public class TaskGraph implements TaskGraphInterface {
      * It creates a task with 11 parameters.
      *
      * @param id
-     *            Task-id
+     *     Task-id
      * @param code
-     *            Reference to an existing Java method with 10 arguments
+     *     Reference to an existing Java method with 10 arguments
      * @param arg1
-     *            Argument 1 to the method
+     *     Argument 1 to the method
      * @param arg2
-     *            Argument 2 to the method
+     *     Argument 2 to the method
      * @param arg3
-     *            Argument 3 to the method
+     *     Argument 3 to the method
      * @param arg4
-     *            Argument 4 to the method
+     *     Argument 4 to the method
      * @param arg5
-     *            Argument 5 to the method
+     *     Argument 5 to the method
      * @param arg6
-     *            Argument 6 to the method
+     *     Argument 6 to the method
      * @param arg7
-     *            Argument 7 to the method
+     *     Argument 7 to the method
      * @param arg8
-     *            Argument 8 to the method
+     *     Argument 8 to the method
      * @param arg9
-     *            Argument 9 to the method
+     *     Argument 9 to the method
      * @param arg10
-     *            Argument 10 to the method
+     *     Argument 10 to the method
      * @param arg11
-     *            Argument 11 to the method
+     *     Argument 11 to the method
      * @return {@link TaskGraph}
      */
     @Override
@@ -424,33 +422,33 @@ public class TaskGraph implements TaskGraphInterface {
      * It creates a task with 12 parameters.
      *
      * @param id
-     *            Task-id
+     *     Task-id
      * @param code
-     *            Reference to an existing Java method with 10 arguments
+     *     Reference to an existing Java method with 10 arguments
      * @param arg1
-     *            Argument 1 to the method
+     *     Argument 1 to the method
      * @param arg2
-     *            Argument 2 to the method
+     *     Argument 2 to the method
      * @param arg3
-     *            Argument 3 to the method
+     *     Argument 3 to the method
      * @param arg4
-     *            Argument 4 to the method
+     *     Argument 4 to the method
      * @param arg5
-     *            Argument 5 to the method
+     *     Argument 5 to the method
      * @param arg6
-     *            Argument 6 to the method
+     *     Argument 6 to the method
      * @param arg7
-     *            Argument 7 to the method
+     *     Argument 7 to the method
      * @param arg8
-     *            Argument 8 to the method
+     *     Argument 8 to the method
      * @param arg9
-     *            Argument 9 to the method
+     *     Argument 9 to the method
      * @param arg10
-     *            Argument 10 to the method
+     *     Argument 10 to the method
      * @param arg11
-     *            Argument 11 to the method
+     *     Argument 11 to the method
      * @param arg12
-     *            Argument 12 to the method
+     *     Argument 12 to the method
      * @return {@link TaskGraph}
      */
     @Override
@@ -463,35 +461,35 @@ public class TaskGraph implements TaskGraphInterface {
      * It creates a task with 13 parameters.
      *
      * @param id
-     *            Task-id
+     *     Task-id
      * @param code
-     *            Reference to an existing Java method with 10 arguments
+     *     Reference to an existing Java method with 10 arguments
      * @param arg1
-     *            Argument 1 to the method
+     *     Argument 1 to the method
      * @param arg2
-     *            Argument 2 to the method
+     *     Argument 2 to the method
      * @param arg3
-     *            Argument 3 to the method
+     *     Argument 3 to the method
      * @param arg4
-     *            Argument 4 to the method
+     *     Argument 4 to the method
      * @param arg5
-     *            Argument 5 to the method
+     *     Argument 5 to the method
      * @param arg6
-     *            Argument 6 to the method
+     *     Argument 6 to the method
      * @param arg7
-     *            Argument 7 to the method
+     *     Argument 7 to the method
      * @param arg8
-     *            Argument 8 to the method
+     *     Argument 8 to the method
      * @param arg9
-     *            Argument 9 to the method
+     *     Argument 9 to the method
      * @param arg10
-     *            Argument 10 to the method
+     *     Argument 10 to the method
      * @param arg11
-     *            Argument 11 to the method
+     *     Argument 11 to the method
      * @param arg12
-     *            Argument 12 to the method
+     *     Argument 12 to the method
      * @param arg13
-     *            Argument 13 to the method
+     *     Argument 13 to the method
      * @return {@link TaskGraph}
      */
     @Override
@@ -504,37 +502,37 @@ public class TaskGraph implements TaskGraphInterface {
      * It creates a task with 14 parameters.
      *
      * @param id
-     *            Task-id
+     *     Task-id
      * @param code
-     *            Reference to an existing Java method with 10 arguments
+     *     Reference to an existing Java method with 10 arguments
      * @param arg1
-     *            Argument 1 to the method
+     *     Argument 1 to the method
      * @param arg2
-     *            Argument 2 to the method
+     *     Argument 2 to the method
      * @param arg3
-     *            Argument 3 to the method
+     *     Argument 3 to the method
      * @param arg4
-     *            Argument 4 to the method
+     *     Argument 4 to the method
      * @param arg5
-     *            Argument 5 to the method
+     *     Argument 5 to the method
      * @param arg6
-     *            Argument 6 to the method
+     *     Argument 6 to the method
      * @param arg7
-     *            Argument 7 to the method
+     *     Argument 7 to the method
      * @param arg8
-     *            Argument 8 to the method
+     *     Argument 8 to the method
      * @param arg9
-     *            Argument 9 to the method
+     *     Argument 9 to the method
      * @param arg10
-     *            Argument 10 to the method
+     *     Argument 10 to the method
      * @param arg11
-     *            Argument 11 to the method
+     *     Argument 11 to the method
      * @param arg12
-     *            Argument 12 to the method
+     *     Argument 12 to the method
      * @param arg13
-     *            Argument 13 to the method
+     *     Argument 13 to the method
      * @param arg14
-     *            Argument 14 to the method
+     *     Argument 14 to the method
      * @return {@link TaskGraph}
      */
     @Override
@@ -547,39 +545,39 @@ public class TaskGraph implements TaskGraphInterface {
      * It creates a task with 15 parameters.
      *
      * @param id
-     *            Task-id
+     *     Task-id
      * @param code
-     *            Reference to an existing Java method with 15 arguments
+     *     Reference to an existing Java method with 15 arguments
      * @param arg1
-     *            Argument 1 to the method
+     *     Argument 1 to the method
      * @param arg2
-     *            Argument 2 to the method
+     *     Argument 2 to the method
      * @param arg3
-     *            Argument 3 to the method
+     *     Argument 3 to the method
      * @param arg4
-     *            Argument 4 to the method
+     *     Argument 4 to the method
      * @param arg5
-     *            Argument 5 to the method
+     *     Argument 5 to the method
      * @param arg6
-     *            Argument 6 to the method
+     *     Argument 6 to the method
      * @param arg7
-     *            Argument 7 to the method
+     *     Argument 7 to the method
      * @param arg8
-     *            Argument 8 to the method
+     *     Argument 8 to the method
      * @param arg9
-     *            Argument 9 to the method
+     *     Argument 9 to the method
      * @param arg10
-     *            Argument 10 to the method
+     *     Argument 10 to the method
      * @param arg11
-     *            Argument 11 to the method
+     *     Argument 11 to the method
      * @param arg12
-     *            Argument 12 to the method
+     *     Argument 12 to the method
      * @param arg13
-     *            Argument 13 to the method
+     *     Argument 13 to the method
      * @param arg14
-     *            Argument 14 to the method
+     *     Argument 14 to the method
      * @param arg15
-     *            Argument 15 to the method
+     *     Argument 15 to the method
      * @return {@link TaskGraph}
      */
     @Override
@@ -589,23 +587,23 @@ public class TaskGraph implements TaskGraphInterface {
     }
 
     /**
-     * Add a pre-built OpenCL task into a task-schedule
+     * Add a pre-built OpenCL task into a task-schedule.
      *
      * @param id
-     *            Task-Id
+     *     Task-Id
      * @param entryPoint
-     *            Name of the method to be executed on the target device
+     *     Name of the method to be executed on the target device
      * @param filename
-     *            Input file with the source kernel
+     *     Input file with the source kernel
      * @param args
-     *            Arguments to the kernel
+     *     Arguments to the kernel
      * @param accesses
-     *            Accesses ({@link uk.ac.manchester.tornado.api.common.Access} for
-     *            each input parameter to the method
+     *     Accesses ({@link uk.ac.manchester.tornado.api.common.Access} for
+     *     each input parameter to the method
      * @param device
-     *            Device to be executed
+     *     Device to be executed
      * @param dimensions
-     *            Select number of dimensions of the kernel (1D, 2D or 3D)
+     *     Select number of dimensions of the kernel (1D, 2D or 3D)
      * @return {@link TaskGraph}
      */
     @Override
@@ -616,24 +614,24 @@ public class TaskGraph implements TaskGraphInterface {
     }
 
     /**
-     * Add a pre-built OpenCL task into a task-schedule with atomics region
+     * Add a pre-built OpenCL task into a task-schedule with atomics region.
      *
      * @param id
-     *            Task-id
+     *     Task-id
      * @param entryPoint
-     *            Kernel's name of the entry point
+     *     Kernel's name of the entry point
      * @param filename
-     *            Input OpenCL C Kernel
+     *     Input OpenCL C Kernel
      * @param args
-     *            Arguments to the method that the kernel represents.
+     *     Arguments to the method that the kernel represents.
      * @param accesses
-     *            Array of access of each parameter to the kernel
+     *     Array of access of each parameter to the kernel
      * @param device
-     *            Device in which the OpenCL C code will be executed.
+     *     Device in which the OpenCL C code will be executed.
      * @param dimensions
-     *            Select the dimension of the OpenCL kernel (1D, 2D or 3D)
+     *     Select the dimension of the OpenCL kernel (1D, 2D or 3D)
      * @param atomics
-     *            Atomics region.
+     *     Atomics region.
      * @return {@link TaskGraph}
      *
      */
@@ -669,11 +667,11 @@ public class TaskGraph implements TaskGraphInterface {
      * </p>
      *
      * @param mode
-     *            A mode from
-     *            {@link uk.ac.manchester.tornado.api.enums.DataTransferMode}
+     *     A mode from
+     *     {@link uk.ac.manchester.tornado.api.enums.DataTransferMode}
      * @param objects
-     *            List of Java objects (usually arrays) to be transferred to the
-     *            device.
+     *     List of Java objects (usually arrays) to be transferred to the
+     *     device.
      * @return {@link TaskGraph}
      */
     @Override
@@ -699,11 +697,11 @@ public class TaskGraph implements TaskGraphInterface {
      * </p>
      *
      * @param mode
-     *            A mode from
-     *            {@link uk.ac.manchester.tornado.api.enums.DataTransferMode}
+     *     A mode from
+     *     {@link uk.ac.manchester.tornado.api.enums.DataTransferMode}
      * @param objects
-     *            List of Java objects (usually arrays) to be transferred to the
-     *            device.
+     *     List of Java objects (usually arrays) to be transferred to the
+     *     device.
      * @return {@link TaskGraph}
      */
     @Override
