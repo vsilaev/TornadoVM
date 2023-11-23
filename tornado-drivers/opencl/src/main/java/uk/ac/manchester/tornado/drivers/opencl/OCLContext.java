@@ -238,7 +238,7 @@ public class OCLContext implements OCLExecutionEnvironment {
         long ALIGNMENT = 64;
         long mod = size % ALIGNMENT;
         long alignedSize = mod != 0 ? size + ALIGNMENT - mod : size; 
-        ByteBuffer result = allocateNativeMemory(size, 64);
+        ByteBuffer result = allocateNativeMemory(size, ALIGNMENT);
         if (null == result) {
             throw new TornadoInternalError("Unable to allocate native memory of size " + size + "(" + alignedSize + ")");
         }

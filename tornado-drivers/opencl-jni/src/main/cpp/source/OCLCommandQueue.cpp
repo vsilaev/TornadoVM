@@ -59,6 +59,7 @@ void retainAndReleaseOnEvent(JNIEnv *env, jobject target, cl_event event) {
         cl_int status2 = clSetEventCallback(event, CL_COMPLETE, &releaseHostObject, globalRef);  
         LOG_OCL_AND_VALIDATE("clSetEventCallback", status2);
         if (status2 != CL_SUCCESS) {
+            clReleaseEvent(event); 
             env->DeleteGlobalRef(globalRef); 
         }
     } else {
