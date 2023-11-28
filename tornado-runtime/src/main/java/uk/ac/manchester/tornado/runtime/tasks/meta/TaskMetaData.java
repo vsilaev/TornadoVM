@@ -1,5 +1,5 @@
 /*
- * This file is part of Tornado: A heterogeneous programming framework: 
+ * This file is part of Tornado: A heterogeneous programming framework:
  * https://github.com/beehive-lab/tornadovm
  *
  * Copyright (c) 2013-2020, APT Group, Department of Computer Science,
@@ -12,7 +12,7 @@
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
  *
@@ -83,7 +83,7 @@ public class TaskMetaData extends AbstractMetaData {
     public static TaskMetaData create(ScheduleMetaData scheduleMeta, String id, Method method) {
         return new TaskMetaData(scheduleMeta, id, Modifier.isStatic(method.getModifiers()) ? method.getParameterCount() : method.getParameterCount() + 1);
     }
-    
+
     private static String formatWorkDimensionArray(final long[] array, final String defaults) {
         final StringBuilder sb = new StringBuilder();
         if (array == null || array.length == 0) {
@@ -93,10 +93,10 @@ public class TaskMetaData extends AbstractMetaData {
         }
         return sb.toString();
     }
-    
+
     private static String getProperty(String key) {
         return System.getProperty(key);
-    }    
+    }
 
     private void inspectLocalWork() {
         Map<String, Object> properties = PROPERTIES_OVERRIDE.get();
@@ -107,7 +107,7 @@ public class TaskMetaData extends AbstractMetaData {
         localWorkDefined = value != null;
         if (localWorkDefined) {
             final String[] values = value.toString().split(",");
-            localWork = new long[] { 1, 1, 1 };
+            localWork = new long[values.length];
             for (int i = 0; i < values.length; i++) {
                 localWork[i] = Long.parseLong(values[i]);
             }
@@ -129,7 +129,6 @@ public class TaskMetaData extends AbstractMetaData {
             }
         }
     }
-
 
     public boolean isLocalWorkDefined() {
         return localWorkDefined;
@@ -258,7 +257,7 @@ public class TaskMetaData extends AbstractMetaData {
     public long[] getGlobalWork() {
         return globalWork;
     }
-    
+
     @Override
     public void setGlobalWork(long[] values) {
         if (globalWorkDefined) {
@@ -267,7 +266,7 @@ public class TaskMetaData extends AbstractMetaData {
 
         System.arraycopy(values, 0, globalWork, 0, values.length);
         globalWorkDefined = true;
-    }    
+    }
 
     public int getLocalSize() {
         return localSize;
@@ -277,13 +276,13 @@ public class TaskMetaData extends AbstractMetaData {
     public long[] getLocalWork() {
         return localWork;
     }
-    
+
     @Override
     public void setLocalWork(long[] values) {
         localWork = new long[values.length];
         System.arraycopy(values, 0, localWork, 0, values.length);
         localWorkDefined = true;
-    }    
+    }
 
     @Override
     public String getCompilerFlags() {

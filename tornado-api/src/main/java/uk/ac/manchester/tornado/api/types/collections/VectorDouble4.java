@@ -89,6 +89,10 @@ public class VectorDouble4 implements PrimitiveStorage<DoubleBuffer> {
         this(numElements, new DoubleArray(numElements * ELEMENT_SIZE));
     }
 
+    public int vectorWidth() {
+        return ELEMENT_SIZE;
+    }
+
     private int toIndex(int index) {
         return (index * ELEMENT_SIZE);
     }
