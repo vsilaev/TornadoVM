@@ -77,6 +77,7 @@ import uk.ac.manchester.tornado.runtime.analyzer.ReduceCodeAnalysis.REDUCE_OPERA
 import uk.ac.manchester.tornado.runtime.common.TornadoOptions;
 import uk.ac.manchester.tornado.runtime.tasks.meta.AbstractMetaData;
 import uk.ac.manchester.tornado.runtime.tasks.meta.MetaDataUtils;
+import uk.ac.manchester.tornado.runtime.tasks.meta.TaskMetaData;
 
 class ReduceTaskGraph {
 
@@ -100,6 +101,7 @@ class ReduceTaskGraph {
     }
     
     private final TornadoTaskGraph owner;
+    private final Graph sketchGraph;
     private final List<TaskPackage> taskPackages;
     private final List<Object> streamOutObjects;
     private final List<Object> streamInObjects;
@@ -112,7 +114,6 @@ class ReduceTaskGraph {
     private Map<Object, Object> neutralElementsOriginal = new HashMap<>();
     private TaskGraph rewrittenTaskGraph;
     private Map<Object, LinkedList<Integer>> reduceOperandTable;
-    private final Graph sketchGraph;
     private boolean hybridMode;
     private Map<Object, REDUCE_OPERATION> hybridMergeTable;
     private List<CompletableFuture<CompiledTaskPackage>> compilationHostJobs = new ArrayList<>();
@@ -389,11 +390,11 @@ class ReduceTaskGraph {
     }
 
     private static Map<String, Object> overrideGlobalAndLocalDimensionsFPGA(int driverIndex, int deviceToRun, String taskScheduleReduceName, TaskPackage taskPackage, int inputSize) {
-        // Update GLOBAL and LOCAL Dims if device to run is the FPGA
+        // Update GLOBAL and LOCAL workgroup size if device to run is the FPGA
         if (isAheadOfTime() && isDeviceAnAccelerator(driverIndex, deviceToRun)) {
             Map<String, Object> result = new HashMap<>();
-            result.put("global.dims", Integer.valueOf(inputSize));
-            result.put("local.dims", Integer.valueOf(64));
+            result.put(TaskMetaData.GLOBAL_WORKGROUP_SUFFIX, Integer.valueOf(inputSize));
+            result.put(TaskMetaData.LOCAL_WORKGROUP_SUFFIX, Integer.valueOf(64));
             return result;
         } else  {
             return Collections.emptyMap();

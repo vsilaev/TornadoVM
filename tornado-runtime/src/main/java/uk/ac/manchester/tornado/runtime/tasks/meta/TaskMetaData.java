@@ -46,12 +46,15 @@ import uk.ac.manchester.tornado.runtime.domain.DomainTree;
 
 public class TaskMetaData extends AbstractMetaData {
 
+    public static final String LOCAL_WORKGROUP_SUFFIX = "local.workgroup.size";
+    public static final String GLOBAL_WORKGROUP_SUFFIX = "global.workgroup.size";
+
     protected final Map<TornadoAcceleratorDevice, BitSet> profiles;
     private final byte[] constantData;
     private final ScheduleMetaData scheduleMetaData;
+    private final int constantSize;
     protected Access[] argumentsAccess;
     protected DomainTree domain;
-    private int constantSize;
     private long[] globalOffset;
     private long[] globalWork;
     private int localSize;
@@ -100,9 +103,9 @@ public class TaskMetaData extends AbstractMetaData {
 
     private void inspectLocalWork() {
         Map<String, Object> properties = PROPERTIES_OVERRIDE.get();
-        Object value = null == properties ? null : properties.get("local.dims");
+        Object value = null == properties ? null : properties.get(LOCAL_WORKGROUP_SUFFIX);
         if (null == value) {
-            value = getProperty(getId() + ".local.dims");
+            value = getProperty(getId() + "." + LOCAL_WORKGROUP_SUFFIX);
         }
         localWorkDefined = value != null;
         if (localWorkDefined) {
@@ -116,9 +119,9 @@ public class TaskMetaData extends AbstractMetaData {
 
     private void inspectGlobalWork() {
         Map<String, Object> properties = PROPERTIES_OVERRIDE.get();
-        Object value = null == properties ? null : properties.get("global.dims");
+        Object value = null == properties ? null : properties.get(GLOBAL_WORKGROUP_SUFFIX);
         if (null == value) {
-            value = getProperty(getId() + ".global.dims");
+            value = getProperty(getId() + "." + GLOBAL_WORKGROUP_SUFFIX);
         }
         globalWorkDefined = value != null;
         if (globalWorkDefined) {
@@ -433,6 +436,6 @@ public class TaskMetaData extends AbstractMetaData {
 
     @Override
     public String toString() {
-        return String.format("task meta data: domain=%s, global dims=%s%n", domain, (getGlobalWork() == null) ? "null" : formatWorkDimensionArray(getGlobalWork(), "1"));
+        return String.format("task meta data: domain=%s, global workgroup size=%s%n", domain, (getGlobalWork() == null) ? "null" : formatWorkDimensionArray(getGlobalWork(), "1"));
     }
 }
