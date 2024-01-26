@@ -20,8 +20,6 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Authors: James Clarkson
- *
  */
 package uk.ac.manchester.tornado.drivers.opencl;
 
@@ -44,8 +42,8 @@ import uk.ac.manchester.tornado.api.common.SchedulableTask;
 import uk.ac.manchester.tornado.api.common.TornadoExecutionHandler;
 import uk.ac.manchester.tornado.api.enums.TornadoExecutionStatus;
 import uk.ac.manchester.tornado.api.runtime.TornadoRuntime;
-import uk.ac.manchester.tornado.drivers.common.EventDescriptor;
 import uk.ac.manchester.tornado.drivers.common.TornadoBufferProvider;
+import uk.ac.manchester.tornado.drivers.common.utils.EventDescriptor;
 import uk.ac.manchester.tornado.drivers.opencl.enums.OCLDeviceType;
 import uk.ac.manchester.tornado.drivers.opencl.enums.OCLMemFlags;
 import uk.ac.manchester.tornado.drivers.opencl.graal.OCLInstalledCode;

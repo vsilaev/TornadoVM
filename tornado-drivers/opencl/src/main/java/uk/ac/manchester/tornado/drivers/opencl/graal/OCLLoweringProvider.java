@@ -20,15 +20,13 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Authors: James Clarkson
- *
  */
 package uk.ac.manchester.tornado.drivers.opencl.graal;
 
 import static org.graalvm.compiler.nodes.NamedLocationIdentity.ARRAY_LENGTH_LOCATION;
 import static uk.ac.manchester.tornado.api.exceptions.TornadoInternalError.shouldNotReachHere;
 import static uk.ac.manchester.tornado.api.exceptions.TornadoInternalError.unimplemented;
-import static uk.ac.manchester.tornado.drivers.graal.TornadoMemoryOrder.GPU_MEMORY_MODE;
+import static uk.ac.manchester.tornado.drivers.providers.TornadoMemoryOrder.GPU_MEMORY_MODE;
 
 import java.util.Iterator;
 
@@ -56,6 +54,7 @@ import org.graalvm.compiler.nodes.PhiNode;
 import org.graalvm.compiler.nodes.StructuredGraph;
 import org.graalvm.compiler.nodes.UnwindNode;
 import org.graalvm.compiler.nodes.ValueNode;
+import org.graalvm.compiler.nodes.calc.BinaryArithmeticNode;
 import org.graalvm.compiler.nodes.calc.FloatConvertNode;
 import org.graalvm.compiler.nodes.calc.IntegerDivRemNode;
 import org.graalvm.compiler.nodes.calc.MulNode;
@@ -119,7 +118,7 @@ import uk.ac.manchester.tornado.runtime.graal.nodes.ThreadIdFixedWithNextNode;
 import uk.ac.manchester.tornado.runtime.graal.nodes.ThreadLocalIdFixedWithNextNode;
 import uk.ac.manchester.tornado.runtime.graal.nodes.TornadoDirectCallTargetNode;
 import uk.ac.manchester.tornado.runtime.graal.nodes.WriteAtomicNode;
-import uk.ac.manchester.tornado.runtime.graal.phases.MarkLocalArray;
+import uk.ac.manchester.tornado.runtime.graal.nodes.interfaces.MarkLocalArray;
 
 /**
  * Lower IR from one representation to another (e.g., from TornadoVM High-IR to
@@ -270,6 +269,14 @@ public class OCLLoweringProvider extends DefaultJavaLoweringProvider {
             Node n = usages.next();
 
             // GPU SCHEDULER
+            if (n instanceof BinaryArithmeticNode) {
+                if (n.usages().filter(PhiNode.class).isNotEmpty()) {
+                    gpuSnippet = true;
+                    threadID = n.usages().filter(PhiNode.class).first();
+                    break;
+                }
+            }
+
             if (n instanceof PhiNode) {
                 gpuSnippet = true;
                 threadID = (ValueNode) n;

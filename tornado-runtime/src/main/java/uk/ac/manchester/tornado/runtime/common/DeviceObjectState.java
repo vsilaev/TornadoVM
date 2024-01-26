@@ -20,8 +20,6 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Authors: James Clarkson
- *
  */
 package uk.ac.manchester.tornado.runtime.common;
 
@@ -37,12 +35,14 @@ public class DeviceObjectState implements TornadoDeviceObjectState {
 
     private boolean contents;
     private boolean lockBuffer;
+    private long partialSize;
 
     public DeviceObjectState() {
         objectBuffer = null;
         atomicRegionPresent = false;
         contents = false;
         lockBuffer = false;
+        partialSize = 0;
     }
 
     public void setObjectBuffer(ObjectBuffer value) {
@@ -98,5 +98,15 @@ public class DeviceObjectState implements TornadoDeviceObjectState {
     @Override
     public void setAtomicRegion() {
         this.atomicRegionPresent = true;
+    }
+
+    @Override
+    public void setPartialCopySize(long partialCopySize) {
+        this.partialSize = partialCopySize;
+    }
+
+    @Override
+    public long getPartialCopySize() {
+        return this.partialSize;
     }
 }

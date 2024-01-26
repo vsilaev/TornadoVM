@@ -27,7 +27,7 @@ package uk.ac.manchester.tornado.drivers.spirv.graal;
 import static org.graalvm.compiler.nodes.NamedLocationIdentity.ARRAY_LENGTH_LOCATION;
 import static uk.ac.manchester.tornado.api.exceptions.TornadoInternalError.shouldNotReachHere;
 import static uk.ac.manchester.tornado.api.exceptions.TornadoInternalError.unimplemented;
-import static uk.ac.manchester.tornado.drivers.graal.TornadoMemoryOrder.GPU_MEMORY_MODE;
+import static uk.ac.manchester.tornado.drivers.providers.TornadoMemoryOrder.GPU_MEMORY_MODE;
 
 import java.util.Iterator;
 
@@ -55,6 +55,7 @@ import org.graalvm.compiler.nodes.PhiNode;
 import org.graalvm.compiler.nodes.StructuredGraph;
 import org.graalvm.compiler.nodes.UnwindNode;
 import org.graalvm.compiler.nodes.ValueNode;
+import org.graalvm.compiler.nodes.calc.BinaryArithmeticNode;
 import org.graalvm.compiler.nodes.calc.FloatConvertNode;
 import org.graalvm.compiler.nodes.calc.IntegerDivRemNode;
 import org.graalvm.compiler.nodes.calc.RemNode;
@@ -92,8 +93,8 @@ import jdk.vm.ci.meta.PrimitiveConstant;
 import jdk.vm.ci.meta.ResolvedJavaField;
 import jdk.vm.ci.meta.ResolvedJavaType;
 import uk.ac.manchester.tornado.api.exceptions.TornadoRuntimeException;
-import uk.ac.manchester.tornado.drivers.graal.TornadoMemoryOrder;
 import uk.ac.manchester.tornado.drivers.opencl.graal.nodes.vector.LoadIndexedVectorNode;
+import uk.ac.manchester.tornado.drivers.providers.TornadoMemoryOrder;
 import uk.ac.manchester.tornado.drivers.spirv.SPIRVTargetDescription;
 import uk.ac.manchester.tornado.drivers.spirv.graal.lir.SPIRVKind;
 import uk.ac.manchester.tornado.drivers.spirv.graal.nodes.CastNode;
@@ -115,7 +116,7 @@ import uk.ac.manchester.tornado.runtime.graal.nodes.ThreadIdFixedWithNextNode;
 import uk.ac.manchester.tornado.runtime.graal.nodes.ThreadLocalIdFixedWithNextNode;
 import uk.ac.manchester.tornado.runtime.graal.nodes.TornadoDirectCallTargetNode;
 import uk.ac.manchester.tornado.runtime.graal.nodes.WriteAtomicNode;
-import uk.ac.manchester.tornado.runtime.graal.phases.MarkLocalArray;
+import uk.ac.manchester.tornado.runtime.graal.nodes.interfaces.MarkLocalArray;
 
 /**
  * Lower IR from one representation to another (e.g., from TornadoVM High-IR to
@@ -242,6 +243,14 @@ public class SPIRVLoweringProvider extends DefaultJavaLoweringProvider {
             Node n = usages.next();
 
             // GPU SCHEDULER
+            if (n instanceof BinaryArithmeticNode) {
+                if (n.usages().filter(PhiNode.class).isNotEmpty()) {
+                    gpuSnippet = true;
+                    threadID = n.usages().filter(PhiNode.class).first();
+                    break;
+                }
+            }
+
             if (n instanceof PhiNode) {
                 gpuSnippet = true;
                 threadID = (ValueNode) n;

@@ -64,9 +64,9 @@ import uk.ac.manchester.tornado.api.exceptions.TornadoInternalError;
 import uk.ac.manchester.tornado.api.internal.annotations.Vector;
 import uk.ac.manchester.tornado.api.profiler.ProfilerType;
 import uk.ac.manchester.tornado.api.profiler.TornadoProfiler;
-import uk.ac.manchester.tornado.drivers.common.BackendDeopt;
 import uk.ac.manchester.tornado.drivers.common.code.CodeUtil;
 import uk.ac.manchester.tornado.drivers.common.logging.Logger;
+import uk.ac.manchester.tornado.drivers.common.utils.BackendDeopt;
 import uk.ac.manchester.tornado.drivers.ptx.PTXDeviceContext;
 import uk.ac.manchester.tornado.drivers.ptx.PTXTargetDescription;
 import uk.ac.manchester.tornado.drivers.ptx.graal.PTXArchitecture;
@@ -362,7 +362,6 @@ public class PTXBackend extends TornadoBackend<PTXProviders> implements FrameMap
         Map<PTXKind, Set<PTXLIRGenerationResult.VariableData>> kindToVariable = lirGenRes.getVariableTable();
 
         for (PTXKind type : kindToVariable.keySet()) {
-
             Set<PTXLIRGenerationResult.VariableData> vars = kindToVariable.get(type);
             int regVarCount = 0;
             for (PTXLIRGenerationResult.VariableData varData : vars) {

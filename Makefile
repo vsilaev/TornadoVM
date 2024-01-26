@@ -1,6 +1,5 @@
 all: build
 
-
 # Variable passed for the build process:
 # BACKENDS=<ptx|opencl|spirv>. It specifies which backend/s to use { opencl, ptx, spirv }. The default one is `opencl`.
 BACKEND?=opencl
@@ -8,6 +7,9 @@ BACKENDS := --backends $(BACKEND)
 
 build jdk21:
 	bin/compile --jdk jdk21 $(BACKENDS)
+
+rebuild-deps-jdk21:
+	bin/compile --jdk jdk21 --rebuild $(BACKENDS)
 
 graal-jdk-21:
 	bin/compile --jdk graal-jdk-21 $(BACKENDS)
@@ -20,9 +22,6 @@ ptx:
 
 spirv:
 	bin/compile --jdk jdk21 --backends spirv,ptx,opencl
-
-offline:
-	bin/compile --jdk jdk21 $(BACKENDS) --offline
 
 # Variable passed for the preparation of the Xilinx FPGA emulated target device. The default device is `xilinx_u50_gen3x16_xdma_201920_3`.
 # make xilinx_emulation FPGA_PLATFORM=<platform_name> NUM_OF_FPGA_DEVICES=<number_of_devices>

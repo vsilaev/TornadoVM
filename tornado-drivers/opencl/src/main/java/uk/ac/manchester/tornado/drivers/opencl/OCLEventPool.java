@@ -12,7 +12,7 @@
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
  *
@@ -35,7 +35,7 @@ import java.util.BitSet;
 import java.util.List;
 
 import uk.ac.manchester.tornado.api.exceptions.TornadoBailoutRuntimeException;
-import uk.ac.manchester.tornado.drivers.common.EventDescriptor;
+import uk.ac.manchester.tornado.drivers.common.utils.EventDescriptor;
 
 /**
  * Class which holds mapping between OpenCL events and TornadoVM local events
@@ -46,11 +46,10 @@ import uk.ac.manchester.tornado.drivers.common.EventDescriptor;
  */
 class OCLEventPool {
 
-    private final BitSet retain;
     private final OCLEvent[] events;
+    private final BitSet retain;
     private final OCLCommandQueue[] eventQueues;
     private int eventIndex;
-
     private int eventPoolSize;
     
     protected OCLEventPool(int poolSize) {

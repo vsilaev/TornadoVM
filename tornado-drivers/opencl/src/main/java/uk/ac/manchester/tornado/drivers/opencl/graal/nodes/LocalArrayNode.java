@@ -10,7 +10,7 @@
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
  *
@@ -43,7 +43,7 @@ import uk.ac.manchester.tornado.drivers.opencl.graal.asm.OCLAssembler;
 import uk.ac.manchester.tornado.drivers.opencl.graal.lir.OCLBinary;
 import uk.ac.manchester.tornado.drivers.opencl.graal.lir.OCLKind;
 import uk.ac.manchester.tornado.drivers.opencl.graal.lir.OCLLIRStmt;
-import uk.ac.manchester.tornado.runtime.graal.phases.MarkLocalArray;
+import uk.ac.manchester.tornado.runtime.graal.nodes.interfaces.MarkLocalArray;
 
 @NodeInfo
 public class LocalArrayNode extends FixedNode implements LIRLowerable, MarkLocalArray, MemoryKill {
@@ -52,10 +52,9 @@ public class LocalArrayNode extends FixedNode implements LIRLowerable, MarkLocal
 
     @Input
     protected ConstantNode length;
-
-    private OCLKind kind;
     protected OCLArchitecture.OCLMemoryBase memoryRegister;
     protected OCLAssembler.OCLBinaryTemplate arrayTemplate;
+    private OCLKind kind;
 
     public LocalArrayNode(OCLArchitecture.OCLMemoryBase memoryRegister, ResolvedJavaType elementType, ConstantNode length) {
         super(TYPE, StampFactory.objectNonNull(TypeReference.createTrustedWithoutAssumptions(elementType.getArrayClass())));

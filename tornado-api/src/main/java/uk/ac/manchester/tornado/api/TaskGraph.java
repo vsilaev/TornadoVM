@@ -1,42 +1,18 @@
 /*
- * This file is part of Tornado: A heterogeneous programming framework:
- * https://github.com/beehive-lab/tornadovm
- *
  * Copyright (c) 2013-2023, APT Group, Department of Computer Science,
- * The University of Manchester. All rights reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ * The University of Manchester.
  *
- * GNU Classpath is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2, or (at your option)
- * any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * GNU Classpath is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * General Public License for more details.
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * You should have received a copy of the GNU General Public License
- * along with GNU Classpath; see the file COPYING. If not, write to the
- * Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301 USA.
- *
- * Linking this library statically or dynamically with other modules is
- * making a combined work based on this library. Thus, the terms and
- * conditions of the GNU General Public License cover the whole
- * combination.
- *
- * As a special exception, the copyright holders of this library give you
- * permission to link this library with independent modules to produce an
- * executable, regardless of the license terms of these independent
- * modules, and to copy and distribute the resulting executable under
- * terms of your choice, provided that you also meet, for each linked
- * independent module, the terms and conditions of the license of that
- * module. An independent module is a module which is not derived from
- * or based on this library. If you modify this library, you may extend
- * this exception to your version of the library, but you are not
- * obligated to do so. If you do not wish to do so, delete this
- * exception statement from your version.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  *
  */
 package uk.ac.manchester.tornado.api;
@@ -48,6 +24,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
 import uk.ac.manchester.tornado.api.common.Access;
+import uk.ac.manchester.tornado.api.common.PrebuiltTaskPackage;
 import uk.ac.manchester.tornado.api.common.TaskPackage;
 import uk.ac.manchester.tornado.api.common.TornadoDevice;
 import uk.ac.manchester.tornado.api.common.TornadoFunctions.Task;
@@ -82,7 +59,7 @@ import uk.ac.manchester.tornado.api.runtime.TornadoAPIProvider;
 public class TaskGraph implements TaskGraphInterface {
 
     private static final String ERROR_TASK_NAME_DUPLICATION = //
-        "[TornadoVM ERROR]. There are more than 1 tasks with the same task-name. Use different a different task name for each task within " + "a TaskGraph.";
+            "[TornadoVM ERROR]. There are more than 1 tasks with the same task-name. Use different a different task name for each task within " + "a TaskGraph.";
 
     private final String taskGraphName;
     protected TornadoTaskGraphInterface taskGraphImpl;
@@ -157,7 +134,7 @@ public class TaskGraph implements TaskGraphInterface {
      * @param arg2
      *     Argument 2 to the method
      * @return {@link TaskGraph}
-     */  
+     */
     @Override
     public <T1, T2> TaskGraph task(String id, Task2<T1, T2> code, T1 arg1, T2 arg2) {
         return addTask(TaskPackage.createPackage(checkTaskName(id), code, arg1, arg2));
@@ -493,7 +470,7 @@ public class TaskGraph implements TaskGraphInterface {
      * @return {@link TaskGraph}
      */
     @Override
-    public <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> TaskGraphInterface task(String id, Task13<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> code, T1 arg1, T2 arg2, T3 arg3, T4 arg4,
+    public <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> TaskGraph task(String id, Task13<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> code, T1 arg1, T2 arg2, T3 arg3, T4 arg4,
             T5 arg5, T6 arg6, T7 arg7, T8 arg8, T9 arg9, T10 arg10, T11 arg11, T12 arg12, T13 arg13) {
         return addTask(TaskPackage.createPackage(checkTaskName(id), code, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13));
     }
@@ -536,7 +513,7 @@ public class TaskGraph implements TaskGraphInterface {
      * @return {@link TaskGraph}
      */
     @Override
-    public <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> TaskGraphInterface task(String id, Task14<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> code, T1 arg1, T2 arg2, T3 arg3,
+    public <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> TaskGraph task(String id, Task14<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> code, T1 arg1, T2 arg2, T3 arg3,
             T4 arg4, T5 arg5, T6 arg6, T7 arg7, T8 arg8, T9 arg9, T10 arg10, T11 arg11, T12 arg12, T13 arg13, T14 arg14) {
         return addTask(TaskPackage.createPackage(checkTaskName(id), code, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14));
     }
@@ -581,7 +558,7 @@ public class TaskGraph implements TaskGraphInterface {
      * @return {@link TaskGraph}
      */
     @Override
-    public <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> TaskGraph task(String id, Task15<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> code, T1 arg1, T2 arg2, 
+    public <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> TaskGraph task(String id, Task15<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> code, T1 arg1, T2 arg2,
             T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7, T8 arg8, T9 arg9, T10 arg10, T11 arg11, T12 arg12, T13 arg13, T14 arg14, T15 arg15) {
         return addTask(TaskPackage.createPackage(checkTaskName(id), code, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15));
     }
@@ -609,7 +586,8 @@ public class TaskGraph implements TaskGraphInterface {
     @Override
     public TaskGraph prebuiltTask(String id, String entryPoint, String filename, Object[] args, Access[] accesses, TornadoDevice device, int[] dimensions) {
         checkTaskName(id);
-        taskGraphImpl.addPrebuiltTask(id, entryPoint, filename, args, accesses, device, dimensions);
+        TaskPackage prebuiltTask = TaskPackage.createPrebuiltTask(id, entryPoint, filename, args, accesses, device, dimensions);
+        taskGraphImpl.addPrebuiltTask(prebuiltTask);
         return this;
     }
 
@@ -633,12 +611,13 @@ public class TaskGraph implements TaskGraphInterface {
      * @param atomics
      *     Atomics region.
      * @return {@link TaskGraph}
-     *
      */
     @Override
     public TaskGraph prebuiltTask(String id, String entryPoint, String filename, Object[] args, Access[] accesses, TornadoDevice device, int[] dimensions, int[] atomics) {
         checkTaskName(id);
-        taskGraphImpl.addPrebuiltTask(id, entryPoint, filename, args, accesses, device, dimensions, atomics);
+        PrebuiltTaskPackage prebuiltTask = TaskPackage.createPrebuiltTask(id, entryPoint, filename, args, accesses, device, dimensions);
+        prebuiltTask.withAtomics(atomics);
+        taskGraphImpl.addPrebuiltTask(prebuiltTask);
         return this;
     }
 
@@ -690,7 +669,7 @@ public class TaskGraph implements TaskGraphInterface {
      * </p>
      *
      * </p>
-     * {@link uk.ac.manchester.tornado.api.enums.DataTransferMode#USER_DEFINED}: it
+     * {@link uk.ac.manchester.tornado.api.enums.DataTransferMode#UNDER_DEMAND}: it
      * transfers data only under demand. Data are not transferred unless the
      * execution-plan, an {@link TornadoExecutionPlan} object, invokes the
      * `transferToHost` function. This is used for optimization of data transfers.
@@ -726,6 +705,11 @@ public class TaskGraph implements TaskGraphInterface {
 
     public TaskGraph setDevice(TornadoDevice device) {
         taskGraphImpl.setDevice(device);
+        return this;
+    }
+
+    public TaskGraph setDevice(String taskName, TornadoDevice device) {
+        taskGraphImpl.setDevice(taskName, device);
         return this;
     }
 
@@ -795,14 +779,15 @@ public class TaskGraph implements TaskGraphInterface {
         taskGraphImpl.syncRuntimeTransferToHost(objects);
     }
 
+
+    void syncRuntimeTransferToHost(Object object, long offset, long partialCopySize) {
+        taskGraphImpl.syncRuntimeTransferToHost(object, offset, partialCopySize);
+    }
+
     TornadoDevice getDevice() {
         return taskGraphImpl.getDevice();
     }
 
-    public void setDeviceForTask(String id, TornadoDevice mapping) {
-        taskGraphImpl.setDeviceForTask(id, mapping);
-    }
-    
     TaskGraph useDefaultThreadScheduler(boolean use) {
         taskGraphImpl.useDefaultThreadScheduler(use);
         return this;
@@ -873,6 +858,14 @@ public class TaskGraph implements TaskGraphInterface {
 
     void disableProfiler(ProfilerMode profilerMode) {
         taskGraphImpl.disableProfiler(profilerMode);
+    }
+
+    public void withConcurrentDevices() {
+        taskGraphImpl.withConcurrentDevices();
+    }
+
+    public void withoutConcurrentDevices() {
+        taskGraphImpl.withoutConcurrentDevices();
     }
 
     private CompletableFuture<TaskGraphInterface> selfFuture(CompletableFuture<?> any) {

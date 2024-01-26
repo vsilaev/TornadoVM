@@ -14,14 +14,13 @@
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
  *
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
  *
  */
 package uk.ac.manchester.tornado.drivers.opencl;
@@ -354,7 +353,7 @@ public class OCLDevice implements OCLTargetDevice {
         if (deviceEndianLittle < 0) {
             deviceEndianLittle = queryIntegerValue(OCLDeviceInfo.CL_DEVICE_ENDIAN_LITTLE);
         }
-        return deviceEndianLittle == CL_TRUE;
+        return (deviceEndianLittle == CL_TRUE);
     }
 
     @Override
@@ -392,8 +391,8 @@ public class OCLDevice implements OCLTargetDevice {
         StringBuilder sb = new StringBuilder();
         sb.append(String.format("id=0x%x, deviceName=%s, type=%s, available=%s\n", id, getDeviceName(), getDeviceType().toString(), isDeviceAvailable()));
         sb.append(String.format("Freq=%s, max compute units=%d\n", humanReadableFreq(getDeviceMaxClockFrequency()), getDeviceMaxComputeUnits()));
-        sb.append(String.format("Global mem. size=%s, local mem. size=%s\n", RuntimeUtilities.humanReadableByteCount(getDeviceGlobalMemorySize(), false),
-                humanReadableByteCount(getDeviceLocalMemorySize(), false)));
+        sb.append(String.format("Global mem. size=%s, local mem. size=%s\n", RuntimeUtilities.humanReadableByteCount(getDeviceGlobalMemorySize(), false), humanReadableByteCount(
+                getDeviceLocalMemorySize(), false)));
         sb.append(String.format("Extensions:\n"));
         for (String extension : getDeviceExtensions().split(" ")) {
             sb.append("\t" + extension + "\n");

@@ -12,7 +12,7 @@
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
  *
@@ -28,7 +28,7 @@ import org.graalvm.compiler.nodeinfo.NodeInfo;
 import org.graalvm.compiler.nodes.ValueNode;
 
 import uk.ac.manchester.tornado.drivers.ptx.graal.lir.PTXKind;
-import uk.ac.manchester.tornado.runtime.graal.phases.MarkVectorLoad;
+import uk.ac.manchester.tornado.runtime.graal.nodes.interfaces.MarkVectorLoad;
 
 /**
  * The {@code LoadIndexedNode} represents a read from an element of an array.

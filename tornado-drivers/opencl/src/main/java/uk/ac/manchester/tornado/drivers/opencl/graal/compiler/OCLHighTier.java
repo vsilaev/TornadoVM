@@ -19,8 +19,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- *
  */
 package uk.ac.manchester.tornado.drivers.opencl.graal.compiler;
 
@@ -45,21 +43,21 @@ import org.graalvm.compiler.virtual.phases.ea.PartialEscapePhase;
 
 import jdk.vm.ci.meta.MetaAccessProvider;
 import uk.ac.manchester.tornado.api.TornadoDeviceContext;
-import uk.ac.manchester.tornado.drivers.common.graal.compiler.TornadoPrivateArrayPiRemoval;
-import uk.ac.manchester.tornado.drivers.opencl.graal.phases.TornadoNewArrayDevirtualizationReplacement;
+import uk.ac.manchester.tornado.drivers.common.compiler.phases.analysis.TornadoShapeAnalysis;
+import uk.ac.manchester.tornado.drivers.common.compiler.phases.guards.ExceptionSuppression;
+import uk.ac.manchester.tornado.drivers.common.compiler.phases.guards.TornadoValueTypeCleanup;
+import uk.ac.manchester.tornado.drivers.common.compiler.phases.memalloc.TornadoFieldAccessFixup;
+import uk.ac.manchester.tornado.drivers.common.compiler.phases.memalloc.TornadoLocalMemoryAllocation;
+import uk.ac.manchester.tornado.drivers.common.compiler.phases.memalloc.TornadoNewArrayDevirtualizationReplacement;
+import uk.ac.manchester.tornado.drivers.common.compiler.phases.memalloc.TornadoPrivateArrayPiRemoval;
 import uk.ac.manchester.tornado.drivers.opencl.graal.phases.TornadoOpenCLIntrinsicsReplacements;
 import uk.ac.manchester.tornado.drivers.opencl.graal.phases.TornadoParallelScheduler;
 import uk.ac.manchester.tornado.drivers.opencl.graal.phases.TornadoTaskSpecialisation;
 import uk.ac.manchester.tornado.runtime.common.TornadoOptions;
 import uk.ac.manchester.tornado.runtime.graal.compiler.TornadoHighTier;
-import uk.ac.manchester.tornado.runtime.graal.phases.ExceptionSuppression;
-import uk.ac.manchester.tornado.runtime.graal.phases.TornadoFieldAccessFixup;
-import uk.ac.manchester.tornado.runtime.graal.phases.TornadoFullInliningPolicy;
 import uk.ac.manchester.tornado.runtime.graal.phases.TornadoInliningPolicy;
-import uk.ac.manchester.tornado.runtime.graal.phases.TornadoLocalMemoryAllocation;
-import uk.ac.manchester.tornado.runtime.graal.phases.TornadoPartialInliningPolicy;
-import uk.ac.manchester.tornado.runtime.graal.phases.TornadoShapeAnalysis;
-import uk.ac.manchester.tornado.runtime.graal.phases.TornadoValueTypeCleanup;
+import uk.ac.manchester.tornado.runtime.graal.phases.sketcher.TornadoFullInliningPolicy;
+import uk.ac.manchester.tornado.runtime.graal.phases.sketcher.TornadoPartialInliningPolicy;
 
 public class OCLHighTier extends TornadoHighTier {
 

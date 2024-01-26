@@ -22,8 +22,6 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Authors: James Clarkson
- *
  */
 package uk.ac.manchester.tornado.drivers.opencl.mm;
 
@@ -338,11 +336,11 @@ public class OCLObjectWrapper implements ObjectBuffer {
     @Override
     public void read(Object object) {
         // XXX: offset 0
-        read(object, 0, null, false);
+        read(object, 0, 0, null, false);
     }
 
     @Override
-    public int read(Object object, long hostOffset, int[] events, boolean useDeps) {
+    public int read(Object object, long hostOffset, long partialReadSize, int[] events, boolean useDeps) {
         buffer.position(buffer.capacity());
         int event = deviceContext.readBuffer(toBuffer(), bufferOffset, getObjectSize(), sliceOfBuffer(buffer, hostOffset), (useDeps) ? events : null);
         for (int i = 0; i < fields.length; i++) {
