@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2022-2023, APT Group, Department of Computer Science,
+ * Copyright (c) 2018, 2022-2024, APT Group, Department of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -73,6 +73,8 @@ public final class OCLAssembler extends Assembler {
         if (((OCLTargetDescription) target).supportsFP64()) {
             emitLine("#pragma OPENCL EXTENSION cl_khr_fp64 : enable  ");
         }
+
+        emitLine("#pragma OPENCL EXTENSION cl_khr_fp16 : enable  ");
 
         if (((OCLTargetDescription) target).supportsInt64Atomics()) {
             emitLine("#pragma OPENCL EXTENSION cl_khr_int64_base_atomics : enable  ");
@@ -704,6 +706,8 @@ public final class OCLAssembler extends Assembler {
         public static final OCLUnaryIntrinsic WRITE_MEM_FENCE = new OCLUnaryIntrinsic("write_mem_fence");
 
         public static final OCLUnaryIntrinsic ABS = new OCLUnaryIntrinsic("abs");
+
+        public static final OCLUnaryIntrinsic CEIL = new OCLUnaryIntrinsic("ceil");
         public static final OCLUnaryIntrinsic EXP = new OCLUnaryIntrinsic("exp");
         public static final OCLUnaryIntrinsic SQRT = new OCLUnaryIntrinsic("sqrt");
         public static final OCLUnaryIntrinsic LOG = new OCLUnaryIntrinsic("log");
