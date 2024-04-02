@@ -1417,7 +1417,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
             } else if (executionPackage.getDRMode() == DRMode.PARALLEL) {
                 return scheduleDynamicReconfigurationParallel(executionPackage.getDynamicReconfigurationPolicy());
             }
-            throw new TornadoRuntimeException("");
+            throw new TornadoRuntimeException("Unsupported execution mode: " + executionPackage.getDRMode());
         }
     }
 

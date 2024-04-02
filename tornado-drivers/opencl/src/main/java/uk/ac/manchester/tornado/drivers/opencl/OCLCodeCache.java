@@ -589,10 +589,10 @@ public class OCLCodeCache {
         }
 
         final long t0 = System.nanoTime();
-        program.build(meta.getCompilerFlags());
+        int statusCode = program.build(meta.getCompilerFlags());
         final long t1 = System.nanoTime();
 
-        final OCLBuildStatus status = program.getStatus(deviceContext.getDeviceId());
+        final OCLBuildStatus status = statusCode < 0 ? OCLBuildStatus.CL_BUILD_ERROR : program.getStatus(deviceContext.getDeviceId());
         debug("\tOpenCL compilation status = %s", status.toString());
 
         final String log = program.getBuildLog(deviceContext.getDeviceId()).trim();

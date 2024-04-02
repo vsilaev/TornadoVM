@@ -70,14 +70,18 @@ public final class OCLAssembler extends Assembler {
         operandStack = new ArrayList<>(10);
         pushToStack = false;
 
-        if (((OCLTargetDescription) target).supportsFP64()) {
-            emitLine("#pragma OPENCL EXTENSION cl_khr_fp64 : enable  ");
-        }
-
-        emitLine("#pragma OPENCL EXTENSION cl_khr_fp16 : enable  ");
-
-        if (((OCLTargetDescription) target).supportsInt64Atomics()) {
-            emitLine("#pragma OPENCL EXTENSION cl_khr_int64_base_atomics : enable  ");
+        if (target instanceof OCLTargetDescription oclTarget) {
+            if (oclTarget.supportsFP64()) {
+                emitLine("#pragma OPENCL EXTENSION cl_khr_fp64 : enable  ");
+            }
+    
+            if (oclTarget.supportsFP16()) {
+                emitLine("#pragma OPENCL EXTENSION cl_khr_fp16 : enable  ");
+            }
+    
+            if (oclTarget.supportsInt64Atomics()) {
+                emitLine("#pragma OPENCL EXTENSION cl_khr_int64_base_atomics : enable  ");
+            }
         }
 
         if (EMIT_INTRINSICS) {

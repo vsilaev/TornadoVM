@@ -114,7 +114,7 @@ public class OCLProgram {
         }
     }
 
-    public void build(String options) {
+    public int build(String options) {
         if (Thread.currentThread().isInterrupted()) {
             // Prevent ACCESS_VIOLATION in AMD devices
             throw new IllegalStateException("Thread was interrupted before build");
@@ -122,8 +122,9 @@ public class OCLProgram {
         try {
             long status = executeBuild(() -> clBuildProgram(id, devices, options)).get();
             if (status < 0) {
-                throw new TornadoBailoutRuntimeException("clBuild failed " + status);
+                // throw new TornadoBailoutRuntimeException("clBuild failed " + status);
             }
+            return (int)status;
         } catch (ExecutionException | InterruptedException e) {
             TornadoLogger.error(e.getMessage());
             throw new IllegalStateException("Thread was interrupted during build", e);
