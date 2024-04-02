@@ -73,7 +73,7 @@ class OCLEventPool {
          * exit.
          */
         if (oclEventID <= 0) {
-            fatal("invalid event: event=0x%x, description=%s, tag=0x%x\n", oclEventID, descriptorId.getNameDescription());
+            fatal("invalid event: status=0x%x, description=%s\n", oclEventID, descriptorId.getNameDescription());
             fatal("terminating application as system integrity has been compromised.");
             throw new TornadoBailoutRuntimeException("[ERROR] NO EventID received from the OpenCL driver, status : " + oclEventID);
             //System.exit(-1);
