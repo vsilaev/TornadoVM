@@ -53,38 +53,38 @@ public class OCLByteBuffer {
         return buffer;
     }
 
-    public void read() {
-        read(null);
+    public void read(long executionPlanId) {
+        read(executionPlanId, null);
     }
 
-    public void read(final int[] events) {
-        deviceContext.readBuffer(toBuffer(), offset, bytes, buffer, events);
+    public void read(long executionPlanId, final int[] events) {
+        deviceContext.readBuffer(executionPlanId, toBuffer(), offset, bytes, buffer, events);
     }
 
-    public int enqueueRead() {
-        return enqueueRead(null);
+    public int enqueueRead(long executionPlanId) {
+        return enqueueRead(executionPlanId, null);
     }
 
-    public int enqueueRead(final int[] events) {
-        return deviceContext.enqueueReadBuffer(toBuffer(), offset, bytes, buffer, events, false, null);
+    public int enqueueRead(long executionPlanId, final int[] events) {
+        return deviceContext.enqueueReadBuffer(executionPlanId, toBuffer(), offset, bytes, buffer, events, false, null);
     }
 
-    public void write() {
-        write(null);
+    public void write(long executionPlanId) {
+        write(executionPlanId, null);
     }
 
-    public void write(final int[] events) {
+    public void write(long executionPlanId, final int[] events) {
         // XXX: offset 0
-        deviceContext.writeBuffer(toBuffer(), offset, bytes, buffer, events);
+        deviceContext.writeBuffer(executionPlanId, toBuffer(), offset, bytes, buffer, events);
     }
 
-    public int enqueueWrite() {
-        return enqueueWrite(null);
+    public int enqueueWrite(long executionPlanId) {
+        return enqueueWrite(executionPlanId, null);
     }
 
-    public int enqueueWrite(final int[] events) {
+    public int enqueueWrite(long executionPlanId, final int[] events) {
         // XXX: offset 0
-        return deviceContext.enqueueWriteBuffer(toBuffer(), offset, bytes, buffer, events, false);
+        return deviceContext.enqueueWriteBuffer(executionPlanId, toBuffer(), offset, bytes, buffer, events, false);
     }
 
     public void dump() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2023, APT Group, Department of Computer Science,
+ * Copyright (c) 2013-2024, APT Group, Department of Computer Science,
  * The University of Manchester.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,6 +17,7 @@
  */
 package uk.ac.manchester.tornado.api.types.collections;
 
+import java.lang.foreign.MemorySegment;
 import java.nio.FloatBuffer;
 
 import uk.ac.manchester.tornado.api.types.arrays.FloatArray;
@@ -27,10 +28,12 @@ public final class VectorFloat3 implements TornadoCollectionInterface<FloatBuffe
     public static final Class<VectorFloat3> TYPE = VectorFloat3.class;
 
     private static final int ELEMENT_SIZE = 3;
+
     /**
      * backing array.
      */
-    protected final FloatArray storage;
+    private final FloatArray storage;
+
     /**
      * number of elements in the storage.
      */
@@ -44,7 +47,7 @@ public final class VectorFloat3 implements TornadoCollectionInterface<FloatBuffe
      * @param array
      *     array to be copied
      */
-    protected VectorFloat3(int numElements, FloatArray array) {
+    VectorFloat3(int numElements, FloatArray array) {
         this.numElements = numElements;
         this.storage = array;
     }
@@ -215,4 +218,23 @@ public final class VectorFloat3 implements TornadoCollectionInterface<FloatBuffe
         storage.clear();
     }
 
+    @Override
+    public long getNumBytes() {
+        return storage.getNumBytesOfSegment();
+    }
+
+    @Override
+    public long getNumBytesWithHeader() {
+        return storage.getNumBytesOfSegmentWithHeader();
+    }
+
+    @Override
+    public MemorySegment getSegment() {
+        return getArray().getSegment();
+    }
+
+    @Override
+    public MemorySegment getSegmentWithHeader() {
+        return getArray().getSegmentWithHeader();
+    }
 }

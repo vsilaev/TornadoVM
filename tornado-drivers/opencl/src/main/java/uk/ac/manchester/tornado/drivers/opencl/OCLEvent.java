@@ -84,7 +84,7 @@ public class OCLEvent implements Event {
     }
 
     @Override
-    public void waitForEvents() {
+    public void waitForEvents(long executionPlanId) {
         try {
             clWaitForEvents(new long[] { oclEventID });
         } catch (OCLException e) {
@@ -131,7 +131,7 @@ public class OCLEvent implements Event {
                 queue.flush();
             case CL_QUEUED:
             case CL_RUNNING:
-                waitForEvents();
+                waitForEvents(-1);
                 break;
             case CL_ERROR:
             case CL_UNKNOWN:

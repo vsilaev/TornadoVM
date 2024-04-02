@@ -93,7 +93,7 @@ public class MatrixMultiplicationAsync2D {
 
         // 2. Run parallel on the GPU with Tornado
         long start = System.currentTimeMillis();
-        t.executeAsync().thenRunAsync(() -> {
+        executor.executeAsync().thenRunAsync(() -> {
         ///------------------------
             long end = System.currentTimeMillis();
             long msecGPUElapsedTime = (end - start);

@@ -2,7 +2,7 @@
  * This file is part of Tornado: A heterogeneous programming framework:
  * https://github.com/beehive-lab/tornadovm
  *
- * Copyright (c) 2013-2022, APT Group, Department of Computer Science,
+ * Copyright (c) 2013-2022, 2024, APT Group, Department of Computer Science,
  * The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -12,7 +12,7 @@
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
  *
@@ -24,6 +24,9 @@
 
 package uk.ac.manchester.tornado.drivers.ptx;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.graalvm.compiler.options.OptionValues;
 import org.graalvm.compiler.phases.util.Providers;
 
@@ -32,24 +35,25 @@ import uk.ac.manchester.tornado.api.common.TornadoDevice;
 import uk.ac.manchester.tornado.api.enums.TornadoDeviceType;
 import uk.ac.manchester.tornado.api.enums.TornadoVMBackendType;
 import uk.ac.manchester.tornado.api.exceptions.TornadoBailoutRuntimeException;
-import uk.ac.manchester.tornado.api.exceptions.TornadoRuntimeException;
+import uk.ac.manchester.tornado.api.exceptions.TornadoDeviceNotFound;
 import uk.ac.manchester.tornado.drivers.ptx.graal.PTXHotSpotBackendFactory;
 import uk.ac.manchester.tornado.drivers.ptx.graal.backend.PTXBackend;
-import uk.ac.manchester.tornado.runtime.TornadoAcceleratorDriver;
-import uk.ac.manchester.tornado.runtime.TornadoVMConfig;
-import uk.ac.manchester.tornado.runtime.common.TornadoAcceleratorDevice;
+import uk.ac.manchester.tornado.runtime.TornadoAcceleratorBackend;
+import uk.ac.manchester.tornado.runtime.TornadoVMConfigAccess;
 import uk.ac.manchester.tornado.runtime.common.TornadoLogger;
+import uk.ac.manchester.tornado.runtime.common.TornadoXPUDevice;
 import uk.ac.manchester.tornado.runtime.graal.compiler.TornadoSuitesProvider;
 
-public final class PTXDriver extends TornadoLogger implements TornadoAcceleratorDriver {
+public final class PTXBackendImpl implements TornadoAcceleratorBackend {
 
     private final PTXBackend[] backends;
+    private List<TornadoDevice> devices;
 
-    public PTXDriver(final OptionValues options, final HotSpotJVMCIRuntime vmRuntime, TornadoVMConfig vmConfig) {
+    public PTXBackendImpl(final OptionValues options, final HotSpotJVMCIRuntime vmRuntime, TornadoVMConfigAccess vmConfig) {
 
         int deviceCount = PTX.getPlatform().getDeviceCount();
         backends = new PTXBackend[deviceCount];
-        info("CUDA: Has %d devices...", deviceCount);
+        TornadoLogger.info("CUDA: Has %d devices...", deviceCount);
         if (deviceCount == 0) {
             throw new TornadoBailoutRuntimeException("[WARNING] No PTX devices found. Deoptimizing to sequential execution.");
         }
@@ -59,9 +63,9 @@ public final class PTXDriver extends TornadoLogger implements TornadoAccelerator
         }
     }
 
-    private void installDevice(int deviceIndex, OptionValues options, HotSpotJVMCIRuntime vmRuntime, TornadoVMConfig vmConfig) {
+    private void installDevice(int deviceIndex, OptionValues options, HotSpotJVMCIRuntime vmRuntime, TornadoVMConfigAccess vmConfig) {
         PTXDevice device = PTX.getPlatform().getDevice(deviceIndex);
-        info("Creating backend for %s", device.getDeviceName());
+        TornadoLogger.info("Creating backend for %s", device.getDeviceName());
         backends[deviceIndex] = PTXHotSpotBackendFactory.createJITCompiler(options, vmRuntime, vmConfig, device);
     }
 
@@ -115,12 +119,23 @@ public final class PTXDriver extends TornadoLogger implements TornadoAccelerator
     }
 
     @Override
-    public TornadoAcceleratorDevice getDevice(int index) {
+    public TornadoXPUDevice getDevice(int index) {
         if (index < backends.length) {
             return backends[index].getDeviceContext().asMapping();
         } else {
-            throw new TornadoRuntimeException("[ERROR]-[PTX-DRIVER] Device required not found: " + index + " - Max: " + backends.length);
+            throw new TornadoDeviceNotFound(STR."[ERROR]-[PTX-DRIVER] Device required not found: \{index} - Max: \{backends.length}");
         }
+    }
+
+    @Override
+    public List<TornadoDevice> getAllDevices() {
+        if (devices == null) {
+            devices = new ArrayList<>();
+            for (int i = 0; i < getDeviceCount(); i++) {
+                devices.add(backends[i].getDeviceContext().asMapping());
+            }
+        }
+        return devices;
     }
 
     @Override

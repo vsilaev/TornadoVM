@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2023, APT Group, Department of Computer Science,
+ * Copyright (c) 2013-2024, APT Group, Department of Computer Science,
  * The University of Manchester.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +19,7 @@ package uk.ac.manchester.tornado.api.types.collections;
 
 import static uk.ac.manchester.tornado.api.types.vectors.Double4.add;
 
+import java.lang.foreign.MemorySegment;
 import java.nio.DoubleBuffer;
 
 import uk.ac.manchester.tornado.api.types.arrays.DoubleArray;
@@ -29,10 +30,11 @@ public final class VectorDouble4 implements TornadoCollectionInterface<DoubleBuf
     public static final Class<VectorDouble4> TYPE = VectorDouble4.class;
 
     private static final int ELEMENT_SIZE = 4;
+
     /**
      * backing array.
      */
-    protected final DoubleArray storage;
+    private final DoubleArray storage;
     /**
      * number of elements in the storage.
      */
@@ -44,7 +46,7 @@ public final class VectorDouble4 implements TornadoCollectionInterface<DoubleBuf
      * @param numElements
      * @param array
      */
-    protected VectorDouble4(int numElements, DoubleArray array) {
+    VectorDouble4(int numElements, DoubleArray array) {
         this.numElements = numElements;
         this.storage = array;
     }
@@ -213,6 +215,26 @@ public final class VectorDouble4 implements TornadoCollectionInterface<DoubleBuf
 
     public void clear() {
         storage.clear();
+    }
+
+    @Override
+    public long getNumBytes() {
+        return storage.getNumBytesOfSegment();
+    }
+
+    @Override
+    public long getNumBytesWithHeader() {
+        return storage.getNumBytesOfSegmentWithHeader();
+    }
+
+    @Override
+    public MemorySegment getSegment() {
+        return getArray().getSegment();
+    }
+
+    @Override
+    public MemorySegment getSegmentWithHeader() {
+        return getArray().getSegmentWithHeader();
     }
 
 }

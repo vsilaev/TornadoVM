@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2023, APT Group, Department of Computer Science,
+ * Copyright (c) 2013-2024, APT Group, Department of Computer Science,
  * The University of Manchester.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,6 +17,7 @@
  */
 package uk.ac.manchester.tornado.api.types.images;
 
+import java.lang.foreign.MemorySegment;
 import java.nio.FloatBuffer;
 
 import uk.ac.manchester.tornado.api.annotations.Parallel;
@@ -31,15 +32,15 @@ public final class ImageFloat implements TornadoImagesInterface<FloatBuffer> {
     /**
      * backing array.
      */
-    protected final FloatArray storage;
+    private final FloatArray storage;
     /**
      * Number of rows.
      */
-    protected final int Y;
+    private final int Y;
     /**
      * Number of columns.
      */
-    protected final int X;
+    private final int X;
     /**
      * number of elements in the storage.
      */
@@ -254,5 +255,25 @@ public final class ImageFloat implements TornadoImagesInterface<FloatBuffer> {
 
     public void clear() {
         storage.clear();
+    }
+
+    @Override
+    public long getNumBytes() {
+        return storage.getNumBytesOfSegment();
+    }
+
+    @Override
+    public long getNumBytesWithHeader() {
+        return storage.getNumBytesOfSegment();
+    }
+
+    @Override
+    public MemorySegment getSegment() {
+        return getArray().getSegment();
+    }
+
+    @Override
+    public MemorySegment getSegmentWithHeader() {
+        return getArray().getSegmentWithHeader();
     }
 }

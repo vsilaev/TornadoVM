@@ -12,7 +12,7 @@
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
  *
@@ -30,7 +30,7 @@ import uk.ac.manchester.tornado.drivers.opencl.OCLExecutionEnvironment;
 import uk.ac.manchester.tornado.drivers.opencl.OCLTargetDevice;
 import uk.ac.manchester.tornado.runtime.common.TornadoLogger;
 
-public class VirtualOCLContext extends TornadoLogger implements OCLExecutionEnvironment {
+public class VirtualOCLContext implements OCLExecutionEnvironment {
 
     private final List<OCLTargetDevice> devices;
     private final VirtualOCLPlatform platform;
@@ -59,7 +59,7 @@ public class VirtualOCLContext extends TornadoLogger implements OCLExecutionEnvi
 
     @Override
     public VirtualOCLDeviceContext createDeviceContext(int index) {
-        debug("creating device context for device: %s", devices.get(index).toString());
+        TornadoLogger.debug("creating device context for device: %s", devices.get(index).toString());
         return new VirtualOCLDeviceContext(devices.get(index), this);
     }
 

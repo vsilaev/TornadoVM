@@ -21,40 +21,29 @@
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
  */
-package uk.ac.manchester.tornado.runtime.common;
+package uk.ac.manchester.tornado.runtime;
 
-import java.util.HashMap;
-import java.util.List;
+import org.graalvm.compiler.options.OptionValues;
 
-public interface KernelArgs {
+import jdk.vm.ci.hotspot.HotSpotJVMCIRuntime;
+import uk.ac.manchester.tornado.runtime.common.enums.TornadoBackends;
 
-    // Marks an argument of type KernelContext being passed explicitly as a parameter.
-    class KernelContextArgument {
-    }
+/**
+ * Each class which implements {@link TornadoBackendProvider} must set a {@link TornadoBackends} and use the same compareTo function.
+ *
+ * {@code
+ *  public int compareTo(TornadoDriverProvider o) {
+ *             return o.getDevicePriority().value() - priority.value();
+ * }
+ * }
+ *
+ * The drivers are sorted and used based on their priority. The driver with the highest priority becomes driver 0.
+ */
+public interface TornadoBackendProvider extends Comparable<TornadoBackendProvider> {
 
-    class CallArgument {
-        private final Object value;
-        private final boolean isReferenceType;
+    String getName();
 
-        public CallArgument(Object value, boolean isReferenceType) {
-            this.value = value;
-            this.isReferenceType = isReferenceType;
-        }
+    TornadoAcceleratorBackend createBackend(OptionValues options, HotSpotJVMCIRuntime hostRuntime, TornadoVMConfigAccess config);
 
-        public Object getValue() {
-            return value;
-        }
-
-        public boolean isReferenceType() {
-            return isReferenceType;
-        }
-    }
-
-    void reset();
-
-    List<CallArgument> getCallArguments();
-
-    void addCallArgument(Object value, boolean isReferenceType);
-
-    void setKernelContext(HashMap<Integer, Integer> map);
+    TornadoBackends getDevicePriority();
 }

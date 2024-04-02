@@ -39,6 +39,8 @@ import uk.ac.manchester.tornado.runtime.common.RuntimeUtilities;
 
 public class OCLDevice implements OCLTargetDevice {
 
+    private static final int INIT_VALUE = -1;
+
     private final long id;
     private final int index;
 
@@ -55,11 +57,9 @@ public class OCLDevice implements OCLTargetDevice {
     private long maxConstantBufferSize;
     private long doubleFPConfig;
     private long singleFPConfig;
-    private int deviceMemoryBaseAligment;
+    private int deviceMemoryBaseAlignment;
     private String version;
     private OCLDeviceType deviceType;
-
-    private static final int INIT_VALUE = -1;
 
     private String deviceVendorName;
     private String driverVersion;
@@ -90,7 +90,7 @@ public class OCLDevice implements OCLTargetDevice {
         this.maxConstantBufferSize = INIT_VALUE;
         this.doubleFPConfig = INIT_VALUE;
         this.singleFPConfig = INIT_VALUE;
-        this.deviceMemoryBaseAligment = INIT_VALUE;
+        this.deviceMemoryBaseAlignment = INIT_VALUE;
         this.maxWorkItemSizes = null;
         this.name = null;
         this.version = null;
@@ -177,10 +177,10 @@ public class OCLDevice implements OCLTargetDevice {
     }
 
     public int getDeviceMemoryBaseAlignment() {
-        if (deviceMemoryBaseAligment == INIT_VALUE) {
-            deviceMemoryBaseAligment = queryIntegerValue(OCLDeviceInfo.CL_DEVICE_MEM_BASE_ADDR_ALIGN);
+        if (deviceMemoryBaseAlignment == INIT_VALUE) {
+            deviceMemoryBaseAlignment = queryIntegerValue(OCLDeviceInfo.CL_DEVICE_MEM_BASE_ADDR_ALIGN);
         }
-        return deviceMemoryBaseAligment;
+        return deviceMemoryBaseAlignment;
     }
 
     public boolean isDeviceAvailable() {
@@ -364,6 +364,11 @@ public class OCLDevice implements OCLTargetDevice {
     @Override
     public void setDeviceContext(OCLDeviceContextInterface deviceContext) {
         this.deviceContext = deviceContext;
+    }
+
+    @Override
+    public int deviceVersion() {
+        return Integer.parseInt(getVersion().split(" ")[1].replace(".", "")) * 10;
     }
 
     public int getWordSize() {

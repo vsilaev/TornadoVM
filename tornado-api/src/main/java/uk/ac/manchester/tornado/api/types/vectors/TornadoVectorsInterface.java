@@ -28,4 +28,6 @@ public sealed interface TornadoVectorsInterface<T extends Buffer> //
         Float2, Float3, Float4, Float8, Float16, //
         Int2, Int3, Int4, Int8, Int16, //
         Short2, Short3 {
+    long getNumBytes();
+
 }

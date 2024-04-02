@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2023, APT Group, Department of Computer Science,
+ * Copyright (c) 2013-2024, APT Group, Department of Computer Science,
  * The University of Manchester.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,6 +17,7 @@
  */
 package uk.ac.manchester.tornado.api.types.matrix;
 
+import java.lang.foreign.MemorySegment;
 import java.nio.FloatBuffer;
 
 import uk.ac.manchester.tornado.api.types.arrays.FloatArray;
@@ -31,11 +32,11 @@ public final class Matrix4x4Float implements TornadoMatrixInterface<FloatBuffer>
     /**
      * Number of rows.
      */
-    protected static final int ROWS = 4;
+    private static final int ROWS = 4;
     /**
      * Number of columns.
      */
-    protected static final int COLUMNS = 4;
+    private static final int COLUMNS = 4;
     /**
      * number of elements in the storage.
      */
@@ -43,7 +44,7 @@ public final class Matrix4x4Float implements TornadoMatrixInterface<FloatBuffer>
     /**
      * backing array.
      */
-    protected final FloatArray storage;
+    private final FloatArray storage;
 
     public Matrix4x4Float() {
         this(new FloatArray(NUM_ELEMENTS));
@@ -228,5 +229,25 @@ public final class Matrix4x4Float implements TornadoMatrixInterface<FloatBuffer>
 
     public void clear() {
         storage.clear();
+    }
+
+    @Override
+    public long getNumBytes() {
+        return storage.getNumBytesOfSegment();
+    }
+
+    @Override
+    public long getNumBytesWithHeader() {
+        return storage.getNumBytesOfSegment();
+    }
+
+    @Override
+    public MemorySegment getSegment() {
+        return storage.getSegment();
+    }
+
+    @Override
+    public MemorySegment getSegmentWithHeader() {
+        return storage.getSegmentWithHeader();
     }
 }

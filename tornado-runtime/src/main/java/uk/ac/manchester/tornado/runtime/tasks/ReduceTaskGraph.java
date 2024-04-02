@@ -125,6 +125,7 @@ class ReduceTaskGraph {
     ReduceTaskGraph(TornadoTaskGraph owner, List<TaskPackage> taskPackages, List<Object> streamInObjects, List<StreamingObject> streamingObjects, List<Object> streamOutObjects, List<StreamingObject> outputModeObjects, 
                     Graph graph) {
         this.owner = owner;
+        this.sketchGraph = graph;
        
         // We need to make all lists mutable again in order to re-write the expressions
         // and the data IN/OUT the tasks. Task-Graph rewriting is the mechanism of
@@ -134,8 +135,6 @@ class ReduceTaskGraph {
         this.inputModeObjects = new ArrayList<>(streamingObjects);
         this.streamOutObjects = new ArrayList<>(streamOutObjects);
         this.outputModeObjects = new ArrayList<>(outputModeObjects);
-        
-        this.sketchGraph = graph;
     }
 
     /**
@@ -148,8 +147,8 @@ class ReduceTaskGraph {
      * @return Output array size
      */
     private static int obtainSizeArrayResult(int driverIndex, int device, int inputSize) {
-        TornadoDeviceType deviceType = TornadoCoreRuntime.getTornadoRuntime().getDriver(driverIndex).getDevice(device).getDeviceType();
-        TornadoDevice deviceToRun = TornadoCoreRuntime.getTornadoRuntime().getDriver(driverIndex).getDevice(device);
+        TornadoDevice deviceToRun = TornadoCoreRuntime.getTornadoRuntime().getBackend(driverIndex).getDevice(device);
+        TornadoDeviceType deviceType = deviceToRun.getDeviceType();
         return switch (deviceType) {
             case CPU -> deviceToRun.getAvailableProcessors() + 1;
             case GPU, ACCELERATOR -> inputSize > calculateAcceleratorGroupSize(deviceToRun, inputSize) ? (inputSize / calculateAcceleratorGroupSize(deviceToRun, inputSize)) + 1 : 2;
@@ -329,7 +328,7 @@ class ReduceTaskGraph {
      */
     private boolean isTaskEligibleSplitHostAndDevice(int driverIndex, int targetDeviceToRun, long elementsReductionLeftOver) {
         if (elementsReductionLeftOver > 0) {
-            TornadoDeviceType deviceType = TornadoCoreRuntime.getTornadoRuntime().getDriver(driverIndex).getDevice(targetDeviceToRun).getDeviceType();
+            TornadoDeviceType deviceType = TornadoCoreRuntime.getTornadoRuntime().getBackend(driverIndex).getDevice(targetDeviceToRun).getDeviceType();
             return (deviceType == TornadoDeviceType.GPU || deviceType == TornadoDeviceType.FPGA || deviceType == TornadoDeviceType.ACCELERATOR);
         }
         return false;
@@ -381,7 +380,7 @@ class ReduceTaskGraph {
     }
 
     private static boolean isDeviceAnAccelerator(int driverIndex, int deviceToRun) {
-        TornadoDeviceType deviceType = TornadoRuntime.getTornadoRuntime().getDriver(driverIndex).getDevice(deviceToRun).getDeviceType();
+        TornadoDeviceType deviceType = TornadoRuntime.getTornadoRuntime().getBackend(driverIndex).getDevice(deviceToRun).getDeviceType();
         return (deviceType == TornadoDeviceType.ACCELERATOR);
     }
 
@@ -532,10 +531,9 @@ class ReduceTaskGraph {
             }
         }
 
-        rewrittenTaskGraph = new TaskGraph(taskScheduleReduceName);
         // Inherit device of the owning schedule   
-        rewrittenTaskGraph.setDevice(owner.getDevice());
-        
+        rewrittenTaskGraph = new TaskGraph(taskScheduleReduceName).withDevice(owner.getDevice());
+
         updateStreamInOutVariables(metaReduceTable.getTable());
 
         // Compose Task Schedule
@@ -590,7 +588,7 @@ class ReduceTaskGraph {
                 AbstractMetaData.withPropertiesOverride(propertiesOverride, () -> rewrittenTaskGraph.addTask(taskPackage));
             }
             // Inherit device of the original task
-            rewrittenTaskGraph.setDevice(taskScheduleReduceName + "." + taskPackage.getId(), originalDevice);
+            rewrittenTaskGraph = rewrittenTaskGraph.withDevice(taskScheduleReduceName + "." + taskPackage.getId(), originalDevice);
 
             // Add extra task with the final reduction
             if (tableReduce.containsKey(taskNumber)) {
@@ -625,7 +623,7 @@ class ReduceTaskGraph {
                         }
 
                         // Inherit device of the original task
-                        rewrittenTaskGraph.setDevice(taskScheduleReduceName + "." + newTaskSequentialName, originalDevice);
+                        rewrittenTaskGraph = rewrittenTaskGraph.withDevice(taskScheduleReduceName + "." + newTaskSequentialName, originalDevice);
 
                         if (hybridMode) {
                             if (hybridMergeTable == null) {
@@ -674,6 +672,18 @@ class ReduceTaskGraph {
             executionPlan.withProfiler(owner.getProfilerMode());
         } else {
             executionPlan.withoutProfiler();
+        }
+
+        if (owner.meta().isPrintKernelEnabled()) {
+            executionPlan.withPrintKernel();
+        } else {
+            executionPlan.withoutPrintKernel();
+        }
+
+        if (owner.meta().isThreadInfoEnabled()) {
+            executionPlan.withThreadInfo();
+        } else {
+            executionPlan.withoutThreadInfo();
         }
 
         // check parameter list
@@ -726,64 +736,44 @@ class ReduceTaskGraph {
         }
     }
 
-    private static int operateFinalReduction(int a, int b, REDUCE_OPERATION operation) {
-        switch (operation) {
-            case SUM:
-                return a + b;
-            case MUL:
-                return a * b;
-            case MAX:
-                return Math.max(a, b);
-            case MIN:
-                return Math.min(a, b);
-            default:
-                throw new TornadoRuntimeException(OPERATION_NOT_SUPPORTED_MESSAGE);
-        }
+    private int operateFinalReduction(int a, int b, REDUCE_OPERATION operation) {
+        return switch (operation) {
+            case SUM -> a + b;
+            case MUL -> a * b;
+            case MAX -> Math.max(a, b);
+            case MIN -> Math.min(a, b);
+            default -> throw new TornadoRuntimeException(OPERATION_NOT_SUPPORTED_MESSAGE);
+        };
     }
 
-    private static float operateFinalReduction(float a, float b, REDUCE_OPERATION operation) {
-        switch (operation) {
-            case SUM:
-                return a + b;
-            case MUL:
-                return a * b;
-            case MAX:
-                return Math.max(a, b);
-            case MIN:
-                return Math.min(a, b);
-            default:
-                throw new TornadoRuntimeException(OPERATION_NOT_SUPPORTED_MESSAGE);
-        }
+    private float operateFinalReduction(float a, float b, REDUCE_OPERATION operation) {
+        return switch (operation) {
+            case SUM -> a + b;
+            case MUL -> a * b;
+            case MAX -> Math.max(a, b);
+            case MIN -> Math.min(a, b);
+            default -> throw new TornadoRuntimeException(OPERATION_NOT_SUPPORTED_MESSAGE);
+        };
     }
 
-    private static double operateFinalReduction(double a, double b, REDUCE_OPERATION operation) {
-        switch (operation) {
-            case SUM:
-                return a + b;
-            case MUL:
-                return a * b;
-            case MAX:
-                return Math.max(a, b);
-            case MIN:
-                return Math.min(a, b);
-            default:
-                throw new TornadoRuntimeException(OPERATION_NOT_SUPPORTED_MESSAGE);
-        }
+    private double operateFinalReduction(double a, double b, REDUCE_OPERATION operation) {
+        return switch (operation) {
+            case SUM -> a + b;
+            case MUL -> a * b;
+            case MAX -> Math.max(a, b);
+            case MIN -> Math.min(a, b);
+            default -> throw new TornadoRuntimeException(OPERATION_NOT_SUPPORTED_MESSAGE);
+        };
     }
 
-    private static long operateFinalReduction(long a, long b, REDUCE_OPERATION operation) {
-        switch (operation) {
-            case SUM:
-                return a + b;
-            case MUL:
-                return a * b;
-            case MAX:
-                return Math.max(a, b);
-            case MIN:
-                return Math.min(a, b);
-            default:
-                throw new TornadoRuntimeException(OPERATION_NOT_SUPPORTED_MESSAGE);
-        }
+    private long operateFinalReduction(long a, long b, REDUCE_OPERATION operation) {
+        return switch (operation) {
+            case SUM -> a + b;
+            case MUL -> a * b;
+            case MAX -> Math.max(a, b);
+            case MIN -> Math.min(a, b);
+            default -> throw new TornadoRuntimeException(OPERATION_NOT_SUPPORTED_MESSAGE);
+        };
     }
 
     private static void updateVariableFromAccelerator(Object originalReduceVariable, Object newArray) {

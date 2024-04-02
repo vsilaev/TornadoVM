@@ -40,30 +40,30 @@ public class OCLIntArrayWrapper extends OCLArrayWrapper<int[]> {
     }
 
     @Override
-    protected int readArrayData(long bufferId, long offset, long bytes, int[] value, long hostOffset, int[] waitEvents) {
-        return deviceContext.readBuffer(bufferId, offset, bytes, value, hostOffset, waitEvents);
+    protected int readArrayData(long executionPlanId, long bufferId, long offset, long bytes, int[] value, long hostOffset, int[] waitEvents) {
+        return deviceContext.readBuffer(executionPlanId, bufferId, offset, bytes, value, hostOffset, waitEvents);
     }
 
     @Override
-    protected void writeArrayData(long bufferId, long offset, long bytes, int[] value, long hostOffset, int[] waitEvents) {
-        deviceContext.writeBuffer(bufferId, offset, bytes, value, hostOffset, waitEvents);
+    protected void writeArrayData(long executionPlanId, long bufferId, long offset, long bytes, int[] value, long hostOffset, int[] waitEvents) {
+        deviceContext.writeBuffer(executionPlanId, bufferId, offset, bytes, value, hostOffset, waitEvents);
     }
 
     @Override
-    protected int enqueueReadArrayData(long bufferId, long offset, long bytes, int[] value, long hostOffset, int[] waitEvents) {
+    protected int enqueueReadArrayData(long executionPlanId, long bufferId, long offset, long bytes, int[] value, long hostOffset, int[] waitEvents) {
         ByteBuffer offHeapBuffer = deviceContext.newDirectByteBuffer(bytes);
-        return deviceContext.enqueueReadBuffer(bufferId, offset, bytes, offHeapBuffer, waitEvents, true, buffer -> {
+        return deviceContext.enqueueReadBuffer(executionPlanId, bufferId, offset, bytes, offHeapBuffer, waitEvents, true, buffer -> {
             IntBuffer onHeapBuffer = IntBuffer.wrap(value, div(hostOffset, Integer.BYTES), div(bytes, Integer.BYTES));
             onHeapBuffer.put(buffer.asIntBuffer());
         });
     }
 
     @Override
-    protected int enqueueWriteArrayData(long bufferId, long offset, long bytes, int[] value, long hostOffset, int[] waitEvents) {
+    protected int enqueueWriteArrayData(long executionPlanId, long bufferId, long offset, long bytes, int[] value, long hostOffset, int[] waitEvents) {
         IntBuffer onHeapBuffer = IntBuffer.wrap(value, div(hostOffset, Integer.BYTES), div(bytes, Integer.BYTES));
         ByteBuffer offHeapBuffer = deviceContext.newDirectByteBuffer(bytes);
         offHeapBuffer.asIntBuffer().put(onHeapBuffer);        
-        return deviceContext.enqueueWriteBuffer(bufferId, offset, bytes, offHeapBuffer, waitEvents, true);
+        return deviceContext.enqueueWriteBuffer(executionPlanId, bufferId, offset, bytes, offHeapBuffer, waitEvents, true);
     }
 
 }

@@ -2,7 +2,7 @@
  * This file is part of Tornado: A heterogeneous programming framework:
  * https://github.com/beehive-lab/tornadovm
  *
- * Copyright (c) 2013-2020,2023 APT Group, Department of Computer Science,
+ * Copyright (c) 2013-2020, 2023-2024, APT Group, Department of Computer Science,
  * The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -39,11 +39,11 @@ import uk.ac.manchester.tornado.api.common.TornadoDevice;
 import uk.ac.manchester.tornado.api.common.TornadoEvents;
 import uk.ac.manchester.tornado.api.memory.TaskMetaDataInterface;
 import uk.ac.manchester.tornado.api.profiler.TornadoProfiler;
-import uk.ac.manchester.tornado.runtime.TornadoAcceleratorDriver;
+import uk.ac.manchester.tornado.runtime.TornadoAcceleratorBackend;
 import uk.ac.manchester.tornado.runtime.TornadoCoreRuntime;
 import uk.ac.manchester.tornado.runtime.common.Tornado;
-import uk.ac.manchester.tornado.runtime.common.TornadoAcceleratorDevice;
 import uk.ac.manchester.tornado.runtime.common.TornadoOptions;
+import uk.ac.manchester.tornado.runtime.common.TornadoXPUDevice;
 
 public abstract class AbstractMetaData implements TaskMetaDataInterface {
 
@@ -67,7 +67,7 @@ public abstract class AbstractMetaData implements TaskMetaDataInterface {
     /*
      * Forces the executing kernel to output its arguments before execution
      */
-    private final boolean threadInfo;
+    private boolean threadInfo;
     private final boolean debug;
     private final boolean dumpEvents;
     private final boolean dumpProfiles;
@@ -97,7 +97,7 @@ public abstract class AbstractMetaData implements TaskMetaDataInterface {
     private final boolean isCpuConfigDefined;
     private final String cpuConfig;
     private final String id;
-    private TornadoAcceleratorDevice device;
+    private TornadoXPUDevice device;
     private int driverIndex;
     private int deviceIndex;
     private boolean deviceManuallySet;
@@ -117,6 +117,8 @@ public abstract class AbstractMetaData implements TaskMetaDataInterface {
      * Allows the OpenCL driver to select the size of local work groups
      */
     private boolean openclUseDriverScheduling;
+    private boolean printKernel;
+    private boolean resetThreads;
 
     AbstractMetaData(String id, TaskMetaDataInterface parent) {
         this.id = id;
@@ -159,7 +161,8 @@ public abstract class AbstractMetaData implements TaskMetaDataInterface {
 
         enableVectors = parseBoolean(getDefault("vectors.enable", id, TRUE));
         openclEnableBifs = parseBoolean(getDefault("bifs.enable", id, FALSE));
-        threadInfo = parseBoolean(getDefault("threadInfo", id, FALSE));
+        threadInfo = TornadoOptions.THREAD_INFO;
+        printKernel = TornadoOptions.PRINT_KERNEL_SOURCE;
         debug = parseBoolean(getDefault("debug", id, FALSE));
         enableMemChecks = parseBoolean(getDefault("memory.check", id, FALSE));
         dumpEvents = parseBoolean(getDefault("events.dump", id, TRUE));
@@ -188,11 +191,8 @@ public abstract class AbstractMetaData implements TaskMetaDataInterface {
     }
 
     protected static String getDefault(String keySuffix, String id, String defaultValue) {
-        if (getProperty(id + "." + keySuffix) == null) {
-            return Tornado.getProperty("tornado" + "." + keySuffix, defaultValue);
-        } else {
-            return getProperty(id + "." + keySuffix);
-        }
+        String propertyValue = getProperty(id + "." + keySuffix);
+        return (propertyValue != null) ? propertyValue : Tornado.getProperty("tornado" + "." + keySuffix, defaultValue);
     }
 
     protected static final ThreadLocal<Map<String, Object>> PROPERTIES_OVERRIDE = new ThreadLocal<>(); 
@@ -212,12 +212,12 @@ public abstract class AbstractMetaData implements TaskMetaDataInterface {
     }
 
 
-    public TornadoAcceleratorDevice getLogicDevice() {
+    public TornadoXPUDevice getLogicDevice() {
         return device != null ? device : (device = resolveDevice(Tornado.getProperty(id + ".device", driverIndex + ":" + deviceIndex)));
     }
 
     private int getDeviceIndex(int driverIndex, TornadoDevice device) {
-        TornadoAcceleratorDriver driver = TornadoCoreRuntime.getTornadoRuntime().getDriver(driverIndex);
+        TornadoAcceleratorBackend driver = TornadoCoreRuntime.getTornadoRuntime().getBackend(driverIndex);
         int devs = driver.getDeviceCount();
         int index = 0;
         for (int i = 0; i < devs; i++) {
@@ -242,7 +242,7 @@ public abstract class AbstractMetaData implements TaskMetaDataInterface {
     public void setDevice(TornadoDevice device) {
         this.driverIndex = device.getDriverIndex();
         this.deviceIndex = getDeviceIndex(driverIndex, device);
-        if (device instanceof TornadoAcceleratorDevice tornadoAcceleratorDevice) {
+        if (device instanceof TornadoXPUDevice tornadoAcceleratorDevice) {
             this.device = tornadoAcceleratorDevice;
         }
         deviceManuallySet = true;
@@ -254,14 +254,14 @@ public abstract class AbstractMetaData implements TaskMetaDataInterface {
      * @param driverIndex
      *     Driver Index
      * @param device
-     *     {@link TornadoAcceleratorDevice}
+     *     {@link TornadoXPUDevice}
      */
-    public void setDriverDevice(int driverIndex, TornadoAcceleratorDevice device) {
+    public void setDriverDevice(int driverIndex, TornadoXPUDevice device) {
         this.driverIndex = driverIndex;
         this.deviceIndex = getDeviceIndex(driverIndex, device);
         this.device = device;
     }
-    
+
     @Override
     public String getId() {
         return id;
@@ -280,7 +280,7 @@ public abstract class AbstractMetaData implements TaskMetaDataInterface {
     public String getCpuConfig() {
         return cpuConfig;
     }
-    
+
     public boolean isThreadInfoEnabled() {
         return threadInfo;
     }
@@ -431,7 +431,7 @@ public abstract class AbstractMetaData implements TaskMetaDataInterface {
     }
 
     @Override
-    public List<TornadoEvents> getProfiles() {
+    public List<TornadoEvents> getProfiles(long executionPlanId) {
         return null;
     }
 
@@ -456,15 +456,15 @@ public abstract class AbstractMetaData implements TaskMetaDataInterface {
     }
 
     @Override
+    public long getNumThreads() {
+        return numThreads;
+    }
+
+    @Override
     public void setNumThreads(long threads) {
         this.numThreads = threads;
     }
 
-    @Override
-    public long getNumThreads() {
-        return numThreads;
-    }
-    
     public void attachProfiler(TornadoProfiler profiler) {
         this.profiler = profiler;
     }
@@ -529,4 +529,45 @@ public abstract class AbstractMetaData implements TaskMetaDataInterface {
         return this.useGridScheduler;
     }
 
+    public void enableThreadInfo() {
+        this.threadInfo = true;
+    }
+
+    public void disableThreadInfo() {
+        this.threadInfo = false;
+    }
+
+    @Override
+    public boolean isPrintKernelEnabled() {
+        return printKernel;
+    }
+
+    @Override
+    public void setPrintKernelFlag(boolean printKernelEnabled) {
+        this.printKernel = printKernelEnabled;
+    }
+
+    public void enablePrintKernel() {
+        this.printKernel = true;
+    }
+
+    public void disablePrintKernel() {
+        this.printKernel = false;
+    }
+
+    public void setThreadInfo(boolean threadInfoEnabled) {
+        this.threadInfo = threadInfoEnabled;
+    }
+
+    public void resetThreadBlocks() {
+        this.resetThreads = true;
+    }
+
+    public boolean shouldResetThreadsBlock() {
+        return this.resetThreads;
+    }
+
+    public void disableResetThreadBlock() {
+        this.resetThreads = false;
+    }
 }

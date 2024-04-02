@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2023, APT Group, Department of Computer Science,
+ * Copyright (c) 2013-2024, APT Group, Department of Computer Science,
  * The University of Manchester.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,6 +21,7 @@ import static java.lang.String.format;
 import static uk.ac.manchester.tornado.api.types.utils.FloatOps.FMT;
 import static uk.ac.manchester.tornado.api.types.utils.StorageFormats.toRowMajor;
 
+import java.lang.foreign.MemorySegment;
 import java.nio.FloatBuffer;
 
 import uk.ac.manchester.tornado.api.types.arrays.FloatArray;
@@ -31,7 +32,7 @@ public final class Matrix2DFloat extends Matrix2DType implements TornadoMatrixIn
     /**
      * backing array.
      */
-    protected final FloatArray storage;
+    private final FloatArray storage;
 
     /**
      * number of elements in the storage.
@@ -67,11 +68,6 @@ public final class Matrix2DFloat extends Matrix2DType implements TornadoMatrixIn
         this(rows, columns, new FloatArray(rows * columns));
     }
 
-    @Override
-    public void clear() {
-        storage.clear();
-    }
-
     public Matrix2DFloat(float[][] matrix) {
         this(matrix.length, matrix[0].length, toRowMajor(matrix));
     }
@@ -101,6 +97,11 @@ public final class Matrix2DFloat extends Matrix2DType implements TornadoMatrixIn
         }
     }
 
+    @Override
+    public void clear() {
+        storage.clear();
+    }
+
     public float get(int i, int j) {
         return storage.get(toRowMajor(i, j, COLUMNS));
     }
@@ -110,13 +111,12 @@ public final class Matrix2DFloat extends Matrix2DType implements TornadoMatrixIn
     }
 
     public VectorFloat row(int row) {
-        int index = toRowMajor(row, 0, COLUMNS);
-        int from = index;
-        int to = getFinalIndexOfRange(index);
-        int size = to - from;
+        int baseIndex = toRowMajor(row, 0, COLUMNS);
+        int to = getFinalIndexOfRange(baseIndex);
+        int size = to - baseIndex;
         FloatArray f = new FloatArray(size);
         int j = 0;
-        for (int i = from; i < to; i++) {
+        for (int i = baseIndex; i < to; i++) {
             f.set(j, storage.get(i));
             j++;
         }
@@ -201,5 +201,25 @@ public final class Matrix2DFloat extends Matrix2DType implements TornadoMatrixIn
     @Override
     public int size() {
         return numElements;
+    }
+
+    @Override
+    public long getNumBytes() {
+        return storage.getNumBytesOfSegment();
+    }
+
+    @Override
+    public long getNumBytesWithHeader() {
+        return storage.getNumBytesOfSegment();
+    }
+
+    @Override
+    public MemorySegment getSegment() {
+        return storage.getSegment();
+    }
+
+    @Override
+    public MemorySegment getSegmentWithHeader() {
+        return storage.getSegmentWithHeader();
     }
 }

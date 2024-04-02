@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2023, APT Group, Department of Computer Science,
+ * Copyright (c) 2013-2024, APT Group, Department of Computer Science,
  * The University of Manchester.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +19,7 @@ package uk.ac.manchester.tornado.api.types.matrix;
 
 import static uk.ac.manchester.tornado.api.types.utils.StorageFormats.toRowMajor;
 
+import java.lang.foreign.MemorySegment;
 import java.nio.IntBuffer;
 
 import uk.ac.manchester.tornado.api.types.arrays.IntArray;
@@ -27,10 +28,11 @@ import uk.ac.manchester.tornado.api.types.utils.IntOps;
 import uk.ac.manchester.tornado.api.types.utils.StorageFormats;
 
 public final class Matrix2DInt extends Matrix2DType implements TornadoMatrixInterface<IntBuffer> {
+
     /**
      * backing array.
      */
-    protected final IntArray storage;
+    private final IntArray storage;
 
     /**
      * number of elements in the storage.
@@ -65,11 +67,6 @@ public final class Matrix2DInt extends Matrix2DType implements TornadoMatrixInte
         this(rows, columns, new IntArray(rows * columns));
     }
 
-    @Override
-    public void clear() {
-        storage.clear();
-    }
-
     public Matrix2DInt(int[][] matrix) {
         this(matrix.length, matrix[0].length, StorageFormats.toRowMajor(matrix));
     }
@@ -100,6 +97,11 @@ public final class Matrix2DInt extends Matrix2DType implements TornadoMatrixInte
         }
     }
 
+    @Override
+    public void clear() {
+        storage.clear();
+    }
+
     public int get(int i, int j) {
         return storage.get(StorageFormats.toRowMajor(i, j, COLUMNS));
     }
@@ -109,13 +111,12 @@ public final class Matrix2DInt extends Matrix2DType implements TornadoMatrixInte
     }
 
     public VectorInt row(int row) {
-        int index = toRowMajor(row, 0, COLUMNS);
-        int from = index;
-        int to = getFinalIndexOfRange(index);
-        int size = to - from;
+        int baseIndex = toRowMajor(row, 0, COLUMNS);
+        int to = getFinalIndexOfRange(baseIndex);
+        int size = to - baseIndex;
         IntArray f = new IntArray(size);
         int j = 0;
-        for (int i = from; i < to; i++) {
+        for (int i = baseIndex; i < to; i++) {
             f.set(j, storage.get(i));
             j++;
         }
@@ -151,20 +152,6 @@ public final class Matrix2DInt extends Matrix2DType implements TornadoMatrixInte
                 int sum = 0;
                 for (int k = 0; k < b.getNumRows(); k++) {
                     sum += a.get(row, k) * b.get(k, col);
-                }
-                set(row, col, sum);
-            }
-        }
-    }
-
-    public void tmultiply(Matrix2DInt a, Matrix2DInt b) {
-        System.out.printf("tmult: M=%d (expect %d)\n", getNumRows(), a.getNumRows());
-        System.out.printf("tmult: N=%d (expect %d)\n", getNumColumns(), b.getNumRows());
-        for (int row = 0; row < getNumRows(); row++) {
-            for (int col = 0; col < b.getNumRows(); col++) {
-                int sum = 0;
-                for (int k = 0; k < b.getNumColumns(); k++) {
-                    sum += a.get(row, k) * b.get(col, k);
                 }
                 set(row, col, sum);
             }
@@ -217,6 +204,26 @@ public final class Matrix2DInt extends Matrix2DType implements TornadoMatrixInte
     @Override
     public int size() {
         return numElements;
+    }
+
+    @Override
+    public long getNumBytes() {
+        return storage.getNumBytesOfSegment();
+    }
+
+    @Override
+    public long getNumBytesWithHeader() {
+        return storage.getNumBytesOfSegment();
+    }
+
+    @Override
+    public MemorySegment getSegment() {
+        return storage.getSegment();
+    }
+
+    @Override
+    public MemorySegment getSegmentWithHeader() {
+        return storage.getSegmentWithHeader();
     }
 
 }

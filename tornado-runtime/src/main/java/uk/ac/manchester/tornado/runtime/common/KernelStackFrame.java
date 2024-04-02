@@ -21,29 +21,40 @@
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
  */
-package uk.ac.manchester.tornado.runtime;
+package uk.ac.manchester.tornado.runtime.common;
 
-import org.graalvm.compiler.options.OptionValues;
+import java.util.HashMap;
+import java.util.List;
 
-import jdk.vm.ci.hotspot.HotSpotJVMCIRuntime;
-import uk.ac.manchester.tornado.runtime.common.enums.TornadoDrivers;
+public interface KernelStackFrame {
 
-/**
- * Each class which implements {@link TornadoDriverProvider} must set a {@link TornadoDrivers} and use the same compareTo function.
- *
- * {@code
- *  public int compareTo(TornadoDriverProvider o) {
- *             return o.getDevicePriority().value() - priority.value();
- * }
- * }
- *
- * The drivers are sorted and used based on their priority. The driver with the highest priority becomes driver 0.
- */
-public interface TornadoDriverProvider extends Comparable<TornadoDriverProvider> {
+    // Marks an argument of type KernelContext being passed explicitly as a parameter.
+    class KernelContextArgument {
+    }
 
-    String getName();
+    class CallArgument {
+        private final Object value;
+        private final boolean isReferenceType;
 
-    TornadoAcceleratorDriver createDriver(OptionValues options, HotSpotJVMCIRuntime hostRuntime, TornadoVMConfig config);
+        public CallArgument(Object value, boolean isReferenceType) {
+            this.value = value;
+            this.isReferenceType = isReferenceType;
+        }
 
-    TornadoDrivers getDevicePriority();
+        public Object getValue() {
+            return value;
+        }
+
+        public boolean isReferenceType() {
+            return isReferenceType;
+        }
+    }
+
+    void reset();
+
+    List<CallArgument> getCallArguments();
+
+    void addCallArgument(Object value, boolean isReferenceType);
+
+    void setKernelContext(HashMap<Integer, Integer> map);
 }

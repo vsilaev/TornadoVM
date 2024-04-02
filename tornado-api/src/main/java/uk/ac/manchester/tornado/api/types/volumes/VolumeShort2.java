@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2023, APT Group, Department of Computer Science,
+ * Copyright (c) 2013-2024, APT Group, Department of Computer Science,
  * The University of Manchester.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,6 +17,7 @@
  */
 package uk.ac.manchester.tornado.api.types.volumes;
 
+import java.lang.foreign.MemorySegment;
 import java.nio.ShortBuffer;
 
 import uk.ac.manchester.tornado.api.types.arrays.ShortArray;
@@ -30,19 +31,19 @@ public final class VolumeShort2 implements TornadoVolumesInterface<ShortBuffer> 
     /**
      * backing array.
      */
-    protected final ShortArray storage;
+    private final ShortArray storage;
     /**
      * Size in Y dimension.
      */
-    protected final int Y;
+    private final int Y;
     /**
      * Size in X dimension.
      */
-    protected final int X;
+    private final int X;
     /**
      * Size in Y dimension.
      */
-    protected final int Z;
+    private final int Z;
     /**
      * number of elements in the storage.
      */
@@ -164,4 +165,23 @@ public final class VolumeShort2 implements TornadoVolumesInterface<ShortBuffer> 
         storage.clear();
     }
 
+    @Override
+    public long getNumBytes() {
+        return storage.getNumBytesOfSegment();
+    }
+
+    @Override
+    public long getNumBytesWithHeader() {
+        return storage.getNumBytesOfSegmentWithHeader();
+    }
+
+    @Override
+    public MemorySegment getSegment() {
+        return getArray().getSegment();
+    }
+
+    @Override
+    public MemorySegment getSegmentWithHeader() {
+        return getArray().getSegmentWithHeader();
+    }
 }

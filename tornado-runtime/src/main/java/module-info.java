@@ -1,3 +1,5 @@
+import uk.ac.manchester.tornado.runtime.TornadoBackendProvider;
+
 open module tornado.runtime {
     requires java.logging;
     requires jdk.unsupported;
@@ -30,5 +32,5 @@ open module tornado.runtime {
     exports uk.ac.manchester.tornado.runtime.graal.phases.sketcher;
     exports uk.ac.manchester.tornado.runtime.graal.nodes.interfaces;
 
-    uses uk.ac.manchester.tornado.runtime.TornadoDriverProvider;
+    uses TornadoBackendProvider;
 }

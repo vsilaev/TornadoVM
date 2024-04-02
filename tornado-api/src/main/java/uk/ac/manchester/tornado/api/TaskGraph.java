@@ -45,6 +45,7 @@ import uk.ac.manchester.tornado.api.common.TornadoFunctions.Task8;
 import uk.ac.manchester.tornado.api.common.TornadoFunctions.Task9;
 import uk.ac.manchester.tornado.api.enums.ProfilerMode;
 import uk.ac.manchester.tornado.api.exceptions.TornadoTaskRuntimeException;
+import uk.ac.manchester.tornado.api.runtime.ExecutorFrame;
 import uk.ac.manchester.tornado.api.runtime.TornadoAPIProvider;
 
 /**
@@ -703,45 +704,43 @@ public class TaskGraph implements TaskGraphInterface {
         return new ImmutableTaskGraph(cloneTaskGraph);
     }
 
-    public TaskGraph setDevice(TornadoDevice device) {
+    public TaskGraph withDevice(TornadoDevice device) {
         taskGraphImpl.setDevice(device);
         return this;
     }
 
-    public TaskGraph setDevice(String taskName, TornadoDevice device) {
+    public TaskGraph withDevice(String taskName, TornadoDevice device) {
         taskGraphImpl.setDevice(taskName, device);
         return this;
     }
 
     TaskGraph batch(String batchSize) {
-        taskGraphImpl.batch(batchSize);
+        taskGraphImpl.withBatch(batchSize);
         return this;
     }
 
-    void execute() {
-        taskGraphImpl.schedule().waitOn();
+    public TaskGraph withMemoryLimit(String memoryLimit) {
+        taskGraphImpl.withMemoryLimit(memoryLimit);
+        return this;
     }
 
-    public CompletableFuture<TaskGraphInterface> executeAsync() {
-        return selfFuture(taskGraphImpl.schedule().waitAsyncOn());
+    public void withoutMemoryLimit() {
+        taskGraphImpl.withoutMemoryLimit();
     }
 
-    public CompletableFuture<TaskGraphInterface> executeAsync(Executor executor) {
-        return selfFuture(taskGraphImpl.schedule().waitAsyncOn(executor));
+    void execute(ExecutorFrame executionPackage) {
+        taskGraphImpl.execute(executionPackage).waitOn();
     }
 
-    void execute(GridScheduler gridScheduler) {
-        taskGraphImpl.schedule(gridScheduler).waitOn();
+    public CompletableFuture<TaskGraphInterface> executeAsync(ExecutorFrame executionPackage) {
+        return selfFuture(taskGraphImpl.execute(executionPackage).waitAsyncOn());
     }
 
-    public CompletableFuture<TaskGraphInterface> executeAsync(GridScheduler gridScheduler) {
-        return selfFuture(taskGraphImpl.schedule(gridScheduler).waitAsyncOn());
+    public CompletableFuture<TaskGraphInterface> executeAsync(ExecutorFrame executionPackage, Executor executor) {
+        return selfFuture(taskGraphImpl.execute(executionPackage).waitAsyncOn(executor));
     }
 
-    public CompletableFuture<TaskGraphInterface> executeAsync(GridScheduler gridScheduler, Executor executor) {
-        return selfFuture(taskGraphImpl.schedule(gridScheduler).waitAsyncOn(executor));
-    }
-
+    /*
     void executeWithProfiler(Policy policy) {
         taskGraphImpl.scheduleWithProfile(policy).waitOn();
     }
@@ -749,6 +748,7 @@ public class TaskGraph implements TaskGraphInterface {
     void executeWithProfilerSequential(Policy policy) {
         taskGraphImpl.scheduleWithProfileSequential(policy).waitOn();
     }
+    */
 
     void warmup() {
         taskGraphImpl.warmup();
@@ -868,7 +868,41 @@ public class TaskGraph implements TaskGraphInterface {
         taskGraphImpl.withoutConcurrentDevices();
     }
 
+    public void withThreadInfo() {
+        taskGraphImpl.withThreadInfo();
+    }
+
+    public void withoutThreadInfo() {
+        taskGraphImpl.withoutThreadInfo();
+    }
+
+    public void withPrintKernel() {
+        taskGraphImpl.withPrintKernel();
+    }
+
+    public void withoutPrintKernel() {
+        taskGraphImpl.withoutPrintKernel();
+    }
+
+    public void withGridScheduler(GridScheduler gridScheduler) {
+        taskGraphImpl.withGridScheduler(gridScheduler);
+    }
+
     private CompletableFuture<TaskGraphInterface> selfFuture(CompletableFuture<?> any) {
         return any.thenApply(__ -> this);     
     }
+
+    /*
+    void execute(GridScheduler gridScheduler) {
+        taskGraphImpl.schedule(gridScheduler).waitOn();
+    }
+
+    public CompletableFuture<TaskGraphInterface> executeAsync(GridScheduler gridScheduler) {
+        return selfFuture(taskGraphImpl.schedule(gridScheduler).waitAsyncOn());
+    }
+
+    public CompletableFuture<TaskGraphInterface> executeAsync(GridScheduler gridScheduler, Executor executor) {
+        return selfFuture(taskGraphImpl.schedule(gridScheduler).waitAsyncOn(executor));
+    }
+    */
 }

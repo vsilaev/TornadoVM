@@ -18,10 +18,12 @@
 package uk.ac.manchester.tornado.api;
 
 import java.util.Collection;
-import java.util.Objects;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Executor;
 
 import uk.ac.manchester.tornado.api.common.TornadoDevice;
 import uk.ac.manchester.tornado.api.enums.ProfilerMode;
+import uk.ac.manchester.tornado.api.runtime.ExecutorFrame;
 
 /**
  * A {@link TaskGraph} is encapsulated in this class and all actions over a task
@@ -45,32 +47,25 @@ public class ImmutableTaskGraph {
         this.taskGraph = taskGraph;
     }
 
-    void execute() {
-        this.taskGraph.execute();
+    void execute(ExecutorFrame executionPackage) {
+        this.taskGraph.execute(executionPackage);
     }
-
-    void execute(GridScheduler gridScheduler) {
-        taskGraph.execute(gridScheduler);
-    }
-
-    void executeWithDynamicReconfiguration(Policy policy, DRMode mode) {
-        if (Objects.requireNonNull(mode) == DRMode.SERIAL) {
-            taskGraph.executeWithProfilerSequential(policy);
-        } else if (mode == DRMode.PARALLEL) {
-            taskGraph.executeWithProfiler(policy);
-        }
+    
+    CompletionStage<ImmutableTaskGraph> executeAsync(ExecutorFrame executionPackage, Executor executor) {
+        return this.taskGraph.executeAsync(executionPackage, executor)
+                             .thenApply(v -> this);
     }
 
     void warmup() {
         taskGraph.warmup();
     }
 
-    void setDevice(TornadoDevice device) {
-        taskGraph.setDevice(device);
+    void withDevice(TornadoDevice device) {
+        taskGraph.withDevice(device);
     }
 
-    void setDevice(String taskName, TornadoDevice device) {
-        taskGraph.setDevice(taskName, device);
+    void withDevice(String taskName, TornadoDevice device) {
+        taskGraph.withDevice(taskName, device);
     }
 
     void freeDeviceMemory() {
@@ -145,12 +140,20 @@ public class ImmutableTaskGraph {
         taskGraph.clearProfiles();
     }
 
-    void useDefaultScheduler(boolean useDefaultScheduler) {
+    void withDefaultScheduler(boolean useDefaultScheduler) {
         taskGraph.useDefaultThreadScheduler(useDefaultScheduler);
     }
 
     void withBatch(String batchSize) {
         taskGraph.batch(batchSize);
+    }
+
+    void withMemoryLimit(String memoryLimit) {
+        taskGraph.withMemoryLimit(memoryLimit);
+    }
+
+    public void withoutMemoryLimit() {
+        taskGraph.withoutMemoryLimit();
     }
 
     TornadoDevice getDevice() {
@@ -169,11 +172,31 @@ public class ImmutableTaskGraph {
         taskGraph.disableProfiler(profilerMode);
     }
 
-    public void withConcurrentDevices() {
+    void withConcurrentDevices() {
         taskGraph.withConcurrentDevices();
     }
 
-    public void withoutConcurrentDevices() {
+    void withoutConcurrentDevices() {
         taskGraph.withoutConcurrentDevices();
+    }
+
+    void withThreadInfo() {
+        taskGraph.withThreadInfo();
+    }
+
+    void withoutThreadInfo() {
+        taskGraph.withoutThreadInfo();
+    }
+
+    void withPrintKernel() {
+        taskGraph.withPrintKernel();
+    }
+
+    void withoutPrintKernel() {
+        taskGraph.withoutPrintKernel();
+    }
+
+    void withGridScheduler(GridScheduler gridScheduler) {
+        taskGraph.withGridScheduler(gridScheduler);
     }
 }

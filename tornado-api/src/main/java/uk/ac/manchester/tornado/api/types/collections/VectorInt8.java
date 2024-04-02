@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2023, APT Group, Department of Computer Science,
+ * Copyright (c) 2013-2024, APT Group, Department of Computer Science,
  * The University of Manchester.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +19,7 @@ package uk.ac.manchester.tornado.api.types.collections;
 
 import static uk.ac.manchester.tornado.api.types.vectors.Int8.add;
 
+import java.lang.foreign.MemorySegment;
 import java.nio.IntBuffer;
 
 import uk.ac.manchester.tornado.api.types.arrays.IntArray;
@@ -29,10 +30,12 @@ public final class VectorInt8 implements TornadoCollectionInterface<IntBuffer> {
     public static final Class<VectorInt8> TYPE = VectorInt8.class;
 
     private static final int ELEMENT_SIZE = 8;
+
     /**
      * backing array.
      */
-    protected final IntArray storage;
+    private final IntArray storage;
+
     /**
      * number of elements in the storage.
      */
@@ -44,7 +47,7 @@ public final class VectorInt8 implements TornadoCollectionInterface<IntBuffer> {
      * @param numElements
      * @param array
      */
-    protected VectorInt8(int numElements, IntArray array) {
+    VectorInt8(int numElements, IntArray array) {
         this.numElements = numElements;
         this.storage = array;
     }
@@ -208,6 +211,26 @@ public final class VectorInt8 implements TornadoCollectionInterface<IntBuffer> {
 
     public void clear() {
         storage.clear();
+    }
+
+    @Override
+    public long getNumBytes() {
+        return storage.getNumBytesOfSegment();
+    }
+
+    @Override
+    public long getNumBytesWithHeader() {
+        return storage.getNumBytesOfSegmentWithHeader();
+    }
+
+    @Override
+    public MemorySegment getSegment() {
+        return getArray().getSegment();
+    }
+
+    @Override
+    public MemorySegment getSegmentWithHeader() {
+        return getArray().getSegmentWithHeader();
     }
 
 }

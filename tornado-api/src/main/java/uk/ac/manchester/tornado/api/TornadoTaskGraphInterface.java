@@ -30,6 +30,7 @@ import uk.ac.manchester.tornado.api.common.TornadoDevice;
 import uk.ac.manchester.tornado.api.enums.ProfilerMode;
 import uk.ac.manchester.tornado.api.memory.TaskMetaDataInterface;
 import uk.ac.manchester.tornado.api.profiler.ProfileInterface;
+import uk.ac.manchester.tornado.api.runtime.ExecutorFrame;
 
 public interface TornadoTaskGraphInterface extends ProfileInterface {
 
@@ -49,7 +50,11 @@ public interface TornadoTaskGraphInterface extends ProfileInterface {
 
     void scheduleInner();
 
-    void batch(String batchSize);
+    void withBatch(String batchSize);
+
+    void withMemoryLimit(String memoryLimit);
+
+    void withoutMemoryLimit();
 
     void apply(Consumer<SchedulableTask> consumer);
 
@@ -89,13 +94,7 @@ public interface TornadoTaskGraphInterface extends ProfileInterface {
 
     TaskMetaDataInterface meta();
 
-    TornadoTaskGraphInterface schedule();
-
-    TornadoTaskGraphInterface schedule(GridScheduler gridScheduler);
-
-    TornadoTaskGraphInterface scheduleWithProfile(Policy policy);
-
-    TornadoTaskGraphInterface scheduleWithProfileSequential(Policy policy);
+    TornadoTaskGraphInterface execute(ExecutorFrame executionPackage);
 
     void addTask(TaskPackage taskPackage);
 
@@ -120,4 +119,14 @@ public interface TornadoTaskGraphInterface extends ProfileInterface {
     void withConcurrentDevices();
 
     void withoutConcurrentDevices();
+
+    void withThreadInfo();
+
+    void withoutThreadInfo();
+
+    void withPrintKernel();
+
+    void withoutPrintKernel();
+
+    void withGridScheduler(GridScheduler gridScheduler);
 }
