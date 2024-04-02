@@ -75,6 +75,7 @@ __TEST_THE_WORLD__ = [
     TestEntry("uk.ac.manchester.tornado.unittests.instances.TestInstances"),
     TestEntry("uk.ac.manchester.tornado.unittests.matrices.TestMatrixTypes"),
     TestEntry("uk.ac.manchester.tornado.unittests.api.TestAPI"),
+    TestEntry("uk.ac.manchester.tornado.unittests.api.TestInitDataTypes"),
     TestEntry("uk.ac.manchester.tornado.unittests.memoryplan.TestMemoryLimit"),
     TestEntry("uk.ac.manchester.tornado.unittests.api.TestIO"),
     TestEntry("uk.ac.manchester.tornado.unittests.executor.TestExecutor"),
@@ -228,7 +229,7 @@ __TORNADOVM_ENABLE_PROFILER_CONSOLE__ = " -Dtornado.profiler=True "
 TORNADO_CMD = "tornado "
 ENABLE_ASSERTIONS = "-ea "
 
-__VERSION__ = "0.16_20122022"
+__VERSION__ = "0.16_10032024"
 
 JDK_8_VERSION = "1.8"
 try:
