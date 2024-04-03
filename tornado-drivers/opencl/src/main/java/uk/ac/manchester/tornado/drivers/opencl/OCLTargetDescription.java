@@ -65,7 +65,8 @@ public class OCLTargetDescription extends TargetDescription {
         this.supportsFP64 = supportsFP64;
         this.extensions = extensions;
         supportsInt64Atomics = extensions.contains("cl_khr_int64_base_atomics");
-        supportsF16 = extensions.contains("cl_khr_fp16");
+        boolean isNVidia = extensions.contains("cl_nv_device_attribute_query");
+        supportsF16 = extensions.contains("cl_khr_fp16") || isNVidia;
     }
     //@formatter:on
 

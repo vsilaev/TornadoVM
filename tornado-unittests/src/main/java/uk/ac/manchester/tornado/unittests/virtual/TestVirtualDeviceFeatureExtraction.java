@@ -47,10 +47,6 @@ import uk.ac.manchester.tornado.unittests.common.TornadoTestBase;
  */
 public class TestVirtualDeviceFeatureExtraction extends TornadoTestBase {
 
-    private static final byte TAB = 0x9;
-    private static final byte NEWLINE = 0xA;
-    private static final byte WHITESPACE = 0x20;
-
     private static final String FEATURE_DUMP_DIR = System.getProperty("tornado.features.dump.dir");
     private static final int SIZE = 8192;
 
@@ -63,7 +59,7 @@ public class TestVirtualDeviceFeatureExtraction extends TornadoTestBase {
     public static long getByteSum(byte[] bytes) {
         long sum = 0;
         for (byte entry : bytes) {
-            if (entry == TAB || entry == NEWLINE || entry == WHITESPACE) {
+            if (Character.isWhitespace(entry)) {
                 continue;
             }
             sum += entry;

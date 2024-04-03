@@ -55,7 +55,7 @@ public class VirtualJSONParser {
     public static VirtualDeviceDescriptor getDeviceDescriptor() {
         String json = readVirtualDeviceJson();
         HashMap<JsonKey, String> jsonEntries = new HashMap<>();
-        for (String line : json.split("\n")) {
+        for (String line : json.split("\r?\n")) {
             Matcher matcher = pattern.matcher(line);
             String[] keyValue = matcher.replaceAll("").split(":");
             String key = keyValue[0];
