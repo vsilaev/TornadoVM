@@ -1069,6 +1069,8 @@ public final class OCLAssembler extends Assembler {
         public static final OCLOp2 VMOV_FLOAT2 = new OCLOp2("(float2)");
         public static final OCLOp2 VMOV_BYTE2 = new OCLOp2("(char2)");
         public static final OCLOp2 VMOV_DOUBLE2 = new OCLOp2("(double2)");
+
+        public static final OCLOp2 VMOV_HALF2 = new OCLOp2("(half2)");
         // @formatter:on
 
         protected OCLOp2(String opcode) {
@@ -1096,6 +1098,8 @@ public final class OCLAssembler extends Assembler {
         public static final OCLOp3 VMOV_BYTE3 = new OCLOp3("(char3)");
         public static final OCLOp3 VMOV_DOUBLE3 = new OCLOp3("(double3)");
 
+        public static final OCLOp3 VMOV_HALF3 = new OCLOp3("(half3)");
+
         // @formatter:on
         public OCLOp3(String opcode) {
             super(opcode);
@@ -1122,6 +1126,8 @@ public final class OCLAssembler extends Assembler {
         public static final OCLOp4 VMOV_FLOAT4 = new OCLOp4("(float4)");
         public static final OCLOp4 VMOV_BYTE4 = new OCLOp4("(char4)");
         public static final OCLOp4 VMOV_DOUBLE4 = new OCLOp4("(double4)");
+
+        public static final OCLOp4 VMOV_HALF4 = new OCLOp4("(half4)");
         // @formatter:on
 
         protected OCLOp4(String opcode) {
@@ -1151,6 +1157,8 @@ public final class OCLAssembler extends Assembler {
         public static final OCLOp8 VMOV_FLOAT8 = new OCLOp8("(float8)");
         public static final OCLOp8 VMOV_BYTE8 = new OCLOp8("(char8)");
         public static final OCLOp8 VMOV_DOUBLE8 = new OCLOp8("(double8)");
+
+        public static final OCLOp8 VMOV_HALF8 = new OCLOp8("(half8)");
 
         // @formatter:on
 
@@ -1188,6 +1196,7 @@ public final class OCLAssembler extends Assembler {
         public static final OCLOp16 VMOV_FLOAT16 = new OCLOp16("(float16)");
         public static final OCLOp16 VMOV_BYTE16 = new OCLOp16("(char16)");
         public static final OCLOp16 VMOV_DOUBLE16 = new OCLOp16("(double16)");
+        public static final OCLOp16 VMOV_HALF16 = new OCLOp16("(half16)");
         // @formatter:on
         protected OCLOp16(String opcode) {
             super(opcode);

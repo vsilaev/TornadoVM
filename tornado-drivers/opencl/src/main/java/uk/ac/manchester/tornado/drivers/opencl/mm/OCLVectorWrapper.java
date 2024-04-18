@@ -37,10 +37,12 @@ import uk.ac.manchester.tornado.api.exceptions.TornadoMemoryException;
 import uk.ac.manchester.tornado.api.exceptions.TornadoRuntimeException;
 import uk.ac.manchester.tornado.api.internal.annotations.Payload;
 import uk.ac.manchester.tornado.api.memory.XPUBuffer;
+import uk.ac.manchester.tornado.api.types.HalfFloat;
 import uk.ac.manchester.tornado.api.types.arrays.ByteArray;
 import uk.ac.manchester.tornado.api.types.arrays.CharArray;
 import uk.ac.manchester.tornado.api.types.arrays.DoubleArray;
 import uk.ac.manchester.tornado.api.types.arrays.FloatArray;
+import uk.ac.manchester.tornado.api.types.arrays.HalfFloatArray;
 import uk.ac.manchester.tornado.api.types.arrays.IntArray;
 import uk.ac.manchester.tornado.api.types.arrays.LongArray;
 import uk.ac.manchester.tornado.api.types.arrays.ShortArray;
@@ -107,7 +109,7 @@ public class OCLVectorWrapper implements XPUBuffer {
     public void deallocate() {
         TornadoInternalError.guarantee(bufferId != INIT_VALUE, "Fatal error: trying to deallocate an invalid buffer");
 
-        deviceContext.getBufferProvider().markBufferReleased(bufferId, bufferSize);
+        deviceContext.getBufferProvider().markBufferReleased(bufferId);
         bufferId = INIT_VALUE;
         bufferSize = INIT_VALUE;
 
@@ -221,6 +223,8 @@ public class OCLVectorWrapper implements XPUBuffer {
         long size;
         if (array instanceof TornadoNativeArray nativeArray) {
             size = nativeArray.getNumBytesOfSegmentWithHeader();
+        } else if (array.getClass() == HalfFloat[].class) {
+            size = (long) Array.getLength(array) * 2;
         } else {
             size = (long) Array.getLength(array) * kind.getByteCount();
         }
@@ -315,19 +319,22 @@ public class OCLVectorWrapper implements XPUBuffer {
                 return JavaKind.Long;
             } else if (type == double[].class) {
                 return JavaKind.Double;
+            } else if (type == HalfFloat[].class) {
+                return JavaKind.Object;
             } else {
                 warn("cannot wrap field: array type=%s", type.getName());
             }
-        } else if (type == ByteArray.class  || 
-                   type == ShortArray.class || 
-                   type == CharArray.class  ||
-                   type == IntArray.class   ||
-                   type == FloatArray.class ||
-                   type == LongArray.class  ||
-                   type == DoubleArray.class) {
+        } else if (type == ByteArray.class   || 
+                   type == ShortArray.class  || 
+                   type == CharArray.class   ||
+                   type == IntArray.class    ||
+                   type == FloatArray.class  ||
+                   type == LongArray.class   ||
+                   type == DoubleArray.class ||
+                   type == HalfFloatArray.class) {
             return JavaKind.Object;
         } else {
-             TornadoInternalError.shouldNotReachHere(STR."The type should be an array, but found: \{type}");
+            TornadoInternalError.shouldNotReachHere(STR."The type should be an array, but found: \{type}");
         }
         return null;
     }
