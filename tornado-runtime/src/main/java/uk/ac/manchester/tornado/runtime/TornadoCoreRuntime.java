@@ -79,7 +79,6 @@ public final class TornadoCoreRuntime implements TornadoRuntimeInterface {
     private static final ExecutorService EXECUTOR = Executors.newFixedThreadPool(TornadoOptions.TORNADO_SKETCHER_THREADS, executorThreadFactory);
     private static final TornadoCoreRuntime runtime = new TornadoCoreRuntime();
     private static final JVMMapping JVM = new JVMMapping();
-    private static final int DEFAULT_DRIVER = 0;
 
     private static Lock lock = new ReentrantLock();
     private static final int DEFAULT_BACKEND = 0;
@@ -90,6 +89,8 @@ public final class TornadoCoreRuntime implements TornadoRuntimeInterface {
     private final HotSpotJVMCIRuntime vmRuntime;
     private final TornadoVMConfigAccess vmConfig;
     private final TornadoAcceleratorBackend[] tornadoVMBackends;
+    
+    private int defaultBackendIndex = DEFAULT_BACKEND; 
     private int backendCount;
 
     private TornadoCoreRuntime() {
@@ -173,6 +174,7 @@ public final class TornadoCoreRuntime implements TornadoRuntimeInterface {
             }
         }
         backendCount = index;
+        defaultBackendIndex = Math.min(backendCount - 1, DEFAULT_BACKEND);
         return tornadoAcceleratorBackends;
     }
 
@@ -209,9 +211,10 @@ public final class TornadoCoreRuntime implements TornadoRuntimeInterface {
 
     @Override
     public void setDefaultBackend(int index) {
-        TornadoAcceleratorBackend tmp = tornadoVMBackends[0];
-        tornadoVMBackends[0] = tornadoVMBackends[index];
-        tornadoVMBackends[index] = tmp;
+        if (index != defaultBackendIndex && (index >= backendCount || index < 0)) {
+            throw new IllegalArgumentException("Invalid backend index: " + index + " (backendCount  =  " + backendCount + ")");
+        }
+        defaultBackendIndex = index;
     }
 
     @SuppressWarnings("unchecked")
@@ -237,7 +240,10 @@ public final class TornadoCoreRuntime implements TornadoRuntimeInterface {
 
     @Override
     public TornadoXPUDevice getDefaultDevice() {
-        return (tornadoVMBackends == null || tornadoVMBackends[DEFAULT_BACKEND] == null) ? JVM : (TornadoXPUDevice) tornadoVMBackends[DEFAULT_BACKEND].getDefaultDevice();
+        return (tornadoVMBackends == null ||
+                defaultBackendIndex < 0 ||
+                defaultBackendIndex >= tornadoVMBackends.length || 
+                tornadoVMBackends[defaultBackendIndex] == null) ? JVM : (TornadoXPUDevice) tornadoVMBackends[defaultBackendIndex].getDefaultDevice();
     }
 
 }

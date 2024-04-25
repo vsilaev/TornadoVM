@@ -134,8 +134,9 @@ public abstract class AbstractMetaData implements TaskMetaDataInterface {
             deviceIndex = parent.getDeviceIndex();
             isDeviceDefined = false;
         } else {
-            driverIndex = TornadoOptions.DEFAULT_DRIVER_INDEX;
-            deviceIndex = TornadoOptions.DEFAULT_DEVICE_INDEX;
+            boolean isVirtualDevice = Boolean.parseBoolean(Tornado.getProperty("tornado.virtual.device", "False"));
+            driverIndex = isVirtualDevice ? 0 : TornadoOptions.DEFAULT_DRIVER_INDEX;
+            deviceIndex = isVirtualDevice ? 0 : TornadoOptions.DEFAULT_DEVICE_INDEX;
             isDeviceDefined = false;
         }
 
