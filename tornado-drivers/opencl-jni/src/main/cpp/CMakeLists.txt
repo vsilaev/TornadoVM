@@ -1,7 +1,7 @@
 cmake_minimum_required (VERSION 3.6)
 project (Tornado)
 
-if(MSVC)
+if(CMAKE_HOST_WIN32 OR MSVC)
 	set(CMAKE_PREFIX_PATH "$ENV{CommonProgramFiles\(x86\)}/Intel/Shared Libraries")
 	find_package(OpenCL REQUIRED)
 	find_package(CUDA)
@@ -81,7 +81,7 @@ add_library(tornado-opencl SHARED
 	source/opencl_time_utils.cpp
 	)
 
-if(MSVC)
+if(CMAKE_HOST_WIN32 OR MSVC)
     if(CUDA_FOUND)
         find_path(NVML_INCLUDE_DIR NAMES nvml.h HINTS ${CUDA_INCLUDE_DIRS})
         find_library(NVML_LIBRARY NAMES nvml PATHS ${CUDA_TOOLKIT_ROOT_DIR}/lib/x64)

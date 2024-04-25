@@ -36,18 +36,16 @@ public class OCLNvidiaPowerMetric implements PowerMetric {
         initializePowerLibrary();
     }
 
-    void f()  throws OCLException {}
-    // static native long clNvmlInit() throws OCLException;
+     static native long clNvmlInit() throws OCLException;
 
-    // static native long clNvmlDeviceGetHandleByIndex(long index, long[] device) throws OCLException;
+     static native long clNvmlDeviceGetHandleByIndex(long index, long[] device) throws OCLException;
 
-    // static native long clNvmlDeviceGetPowerUsage(long[] device, long[] powerUsage) throws OCLException;
+     static native long clNvmlDeviceGetPowerUsage(long[] device, long[] powerUsage) throws OCLException;
 
     @Override
     public void initializePowerLibrary() {
         try {
-            //clNvmlInit(); 
-            f();
+            clNvmlInit(); 
         } catch (OCLException e) {
             // error(e.getMessage());
         }
@@ -56,8 +54,7 @@ public class OCLNvidiaPowerMetric implements PowerMetric {
     @Override
     public void getHandleByIndex(long[] device) {
         try {
-            // clNvmlDeviceGetHandleByIndex(this.deviceContext.getDevice().getIndex(), device);
-            f();
+            clNvmlDeviceGetHandleByIndex(this.deviceContext.getDevice().getIndex(), device);
         } catch (OCLException e) {
             error(e.getMessage());
         }
@@ -66,8 +63,7 @@ public class OCLNvidiaPowerMetric implements PowerMetric {
     @Override
     public void getPowerUsage(long[] device, long[] powerUsage) {
         try {
-            // clNvmlDeviceGetPowerUsage(device, powerUsage);
-            f();
+            clNvmlDeviceGetPowerUsage(device, powerUsage);
         } catch (OCLException e) {
             error(e.getMessage());
         }
