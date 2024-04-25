@@ -52,7 +52,7 @@ tornado-drivers/target/
 tornado-examples/target/
 tornado-runtime/target/
 tornado-drivers/opencl-jni/src/main/cpp/headers/
-
+OpenCL-Headers/
 /tempOpenCLHeaderDirectory
 /.metadata/
 /.recommenders/

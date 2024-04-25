@@ -52,6 +52,7 @@ public class TimeProfiler implements TornadoProfiler {
     
     private final Map<ProfilerType, Long> profilerTime = new ConcurrentHashMap<>();
     private final Map<String, Map<ProfilerType, Long>> taskTimers = new ConcurrentHashMap<>();
+    private final Map<String, Map<ProfilerType, String>> taskPowerMetrics = new ConcurrentHashMap<>();
     private final Map<String, Map<ProfilerType, Long>> taskThroughputMetrics = new ConcurrentHashMap<>();
     private final Map<String, Map<ProfilerType, String>> taskDeviceIdentifiers = new ConcurrentHashMap<>();;
     private final Map<String, Map<ProfilerType, String>> taskMethodNames = new ConcurrentHashMap<>();
@@ -66,8 +67,8 @@ public class TimeProfiler implements TornadoProfiler {
 
     @Override
     public void addValueToMetric(ProfilerType type, String taskName, long value) {
-        Map<ProfilerType, Long> profilerType = taskThroughputMetrics.computeIfAbsent(taskName, NEW_SAFE_MAP_LONG);
-        profilerType.merge(type, value, ACCUMULATE);
+        Map<ProfilerType, Long> profiledType = taskThroughputMetrics.computeIfAbsent(taskName, NEW_SAFE_MAP_LONG);
+        profiledType.merge(type, value, ACCUMULATE);
     }
 
     @Override
@@ -79,32 +80,32 @@ public class TimeProfiler implements TornadoProfiler {
     @Override
     public void start(ProfilerType type, String taskName) {
         long start = System.nanoTime();
-        Map<ProfilerType, Long> profilerType = taskTimers.computeIfAbsent(taskName, NEW_SAFE_MAP_LONG);
-        profilerType.put(type, start);
+        Map<ProfilerType, Long> profiledType = taskTimers.computeIfAbsent(taskName, NEW_SAFE_MAP_LONG);
+        profiledType.put(type, start);
     }
 
     @Override
     public void registerMethodHandle(ProfilerType type, String taskName, String methodName) {
-        Map<ProfilerType, String> profilerType = taskMethodNames.computeIfAbsent(taskName, NEW_SAFE_MAP_STRING);
-        profilerType.put(type, methodName);
+        Map<ProfilerType, String> profiledType = taskMethodNames.computeIfAbsent(taskName, NEW_SAFE_MAP_STRING);
+        profiledType.put(type, methodName);
     }
 
     @Override
     public void registerDeviceName(String taskName, String deviceInfo) {
-        Map<ProfilerType, String> profilerType = taskDeviceIdentifiers.computeIfAbsent(taskName, NEW_SAFE_MAP_STRING);
-        profilerType.put(ProfilerType.DEVICE, deviceInfo);
+        Map<ProfilerType, String> profiledType = taskDeviceIdentifiers.computeIfAbsent(taskName, NEW_SAFE_MAP_STRING);
+        profiledType.put(ProfilerType.DEVICE, deviceInfo);
     }
     
     @Override
     public void registerBackend(String taskName, String backend) {
-        Map<ProfilerType, String> profilerType = taskBackends.computeIfAbsent(taskName, NEW_SAFE_MAP_STRING);
-        profilerType.put(ProfilerType.BACKEND, backend);
+        Map<ProfilerType, String> profiledType = taskBackends.computeIfAbsent(taskName, NEW_SAFE_MAP_STRING);
+        profiledType.put(ProfilerType.BACKEND, backend);
     }
 
     @Override
     public void registerDeviceID(String taskName, String deviceID) {
-        Map<ProfilerType, String> profilerType = taskDeviceIdentifiers.computeIfAbsent(taskName, NEW_SAFE_MAP_STRING);
-        profilerType.put(ProfilerType.DEVICE_ID, deviceID);
+        Map<ProfilerType, String> profiledType = taskDeviceIdentifiers.computeIfAbsent(taskName, NEW_SAFE_MAP_STRING);
+        profiledType.put(ProfilerType.DEVICE_ID, deviceID);
     }
 
     @Override
@@ -140,6 +141,12 @@ public class TimeProfiler implements TornadoProfiler {
         Map<ProfilerType, Long> profiledType = taskTimers.computeIfAbsent(taskName, NEW_SAFE_MAP_LONG);
         profiledType.put(type, time);
     }    
+
+    @Override
+    public synchronized void setTaskPowerUsage(ProfilerType type, String taskName, long power) {
+        Map<ProfilerType, String> profiledType = taskPowerMetrics.computeIfAbsent(taskName, NEW_SAFE_MAP_STRING);
+        profiledType.put(type, power > 0 ? Long.toString(power) : "n/a");
+    }
 
     @Override
     public void dump() {
@@ -201,6 +208,11 @@ public class TimeProfiler implements TornadoProfiler {
             if (taskThroughputMetrics.containsKey(p)) {
                 for (ProfilerType p1 : taskThroughputMetrics.get(p).keySet()) {
                     json.append(indent.toString() + "\"" + p1 + "\"" + ": " + "\"" + taskThroughputMetrics.get(p).get(p1) + "\",\n");
+                }
+            }
+            if (taskPowerMetrics.containsKey(p)) {
+                for (ProfilerType p1 : taskPowerMetrics.get(p).keySet()) {
+                    json.append(indent.toString() + "\"" + p1 + "\"" + ": " + "\"" + taskPowerMetrics.get(p).get(p1) + "\",\n");
                 }
             }
             for (ProfilerType p2 : taskTimers.get(p).keySet()) {

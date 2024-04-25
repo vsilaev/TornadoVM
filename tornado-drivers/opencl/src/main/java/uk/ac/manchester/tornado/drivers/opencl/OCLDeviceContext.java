@@ -47,11 +47,14 @@ import uk.ac.manchester.tornado.api.common.TornadoExecutionHandler;
 import uk.ac.manchester.tornado.api.enums.TornadoExecutionStatus;
 import uk.ac.manchester.tornado.api.runtime.TornadoRuntime;
 import uk.ac.manchester.tornado.drivers.common.TornadoBufferProvider;
+import uk.ac.manchester.tornado.drivers.common.power.PowerMetric;
 import uk.ac.manchester.tornado.drivers.common.utils.EventDescriptor;
 import uk.ac.manchester.tornado.drivers.opencl.enums.OCLDeviceType;
 import uk.ac.manchester.tornado.drivers.opencl.graal.OCLInstalledCode;
 import uk.ac.manchester.tornado.drivers.opencl.graal.compiler.OCLCompilationResult;
 import uk.ac.manchester.tornado.drivers.opencl.mm.OCLMemoryManager;
+import uk.ac.manchester.tornado.drivers.opencl.power.OCLEmptyPowerMetric;
+import uk.ac.manchester.tornado.drivers.opencl.power.OCLNvidiaPowerMetric;
 import uk.ac.manchester.tornado.drivers.opencl.runtime.OCLBufferProvider;
 import uk.ac.manchester.tornado.drivers.opencl.runtime.OCLTornadoDevice;
 import uk.ac.manchester.tornado.runtime.common.TornadoLogger;
@@ -67,6 +70,7 @@ public class OCLDeviceContext implements OCLDeviceContextInterface {
      */
     private Map<Long, OCLCommandQueueTable> commandQueueTable;
     private final OCLContext context;
+    private final PowerMetric powerMetric;
     private final OCLMemoryManager memoryManager;
     private final OCLCodeCache codeCache;
     private final OCLEventPool oclEventPool;
@@ -79,11 +83,21 @@ public class OCLDeviceContext implements OCLDeviceContextInterface {
         this.memoryManager = new OCLMemoryManager(this);
         this.codeCache = new OCLCodeCache(this);
 
+        if (isDeviceContextOfNvidia()) {
+            this.powerMetric = new OCLNvidiaPowerMetric(this);
+        } else {
+            this.powerMetric = new OCLEmptyPowerMetric();
+        }
+
         this.oclEventPool = new OCLEventPool(EVENT_WINDOW);
 
         bufferProvider = new OCLBufferProvider(this);
         commandQueueTable = new ConcurrentHashMap<>();
         this.device.setDeviceContext(this);
+    }
+
+    private boolean isDeviceContextOfNvidia() {
+        return this.getPlatformContext().getPlatform().getName().toLowerCase().contains("nvidia");
     }
 
     public ByteBuffer newDirectByteBuffer(long bytesCount) {
@@ -196,6 +210,14 @@ public class OCLDeviceContext implements OCLDeviceContextInterface {
         return oclEventPool.registerEvent(
             commandQueue.enqueueNDRangeKernel(kernel, dim, globalWorkOffset, globalWorkSize, localWorkSize, oclEventPool.serializeEvents(waitEvents, commandQueue)),
             EventDescriptor.DESC_PARALLEL_KERNEL, commandQueue);
+    }
+
+    public long getPowerUsage() {
+        long[] device = new long[1];
+        long[] powerUsage = new long[1];
+        powerMetric.getHandleByIndex(device);
+        powerMetric.getPowerUsage(device, powerUsage);
+        return powerUsage[0];
     }
 
     public ByteOrder getByteOrder() {
@@ -775,7 +797,7 @@ public class OCLDeviceContext implements OCLDeviceContextInterface {
     public OCLCodeCache getCodeCache() {
         return this.codeCache;
     }
-    
+
     private static int div(long a, int b) {
         long result = a / b;
         return (int)result;

@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
 import uk.ac.manchester.tornado.api.common.TornadoDevice;
 import uk.ac.manchester.tornado.api.enums.ProfilerMode;
 import uk.ac.manchester.tornado.api.exceptions.TornadoBackendNotFound;
+import uk.ac.manchester.tornado.api.exceptions.TornadoExecutionPlanException;
 import uk.ac.manchester.tornado.api.exceptions.TornadoRuntimeException;
 import uk.ac.manchester.tornado.api.runtime.ExecutorFrame;
 import uk.ac.manchester.tornado.api.runtime.TornadoRuntime;
@@ -41,7 +42,7 @@ import uk.ac.manchester.tornado.api.runtime.TornadoRuntime;
  *
  * @since TornadoVM-0.15
  */
-public class TornadoExecutionPlan {
+public class TornadoExecutionPlan implements AutoCloseable {
 
     /**
      * Method to obtain the default device in TornadoVM. The default one corresponds
@@ -398,6 +399,11 @@ public class TornadoExecutionPlan {
     public TornadoExecutionPlan withoutPrintKernel() {
         tornadoExecutor.withoutPrintKernel();
         return this;
+    }
+
+    @Override
+    public void close() throws TornadoExecutionPlanException {
+        tornadoExecutor.freeDeviceMemory();
     }
 
     static class TornadoExecutor {

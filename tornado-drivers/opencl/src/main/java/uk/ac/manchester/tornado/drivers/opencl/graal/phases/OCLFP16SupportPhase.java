@@ -59,7 +59,7 @@ public class OCLFP16SupportPhase extends Phase {
             VirtualOCLDevice oclDevice = (VirtualOCLDevice) deviceContext.getDevice();
             extensions = oclDevice.getDeviceExtensions();
         }
-        if (extensions != null && extensions.contains("cl_khr_fp16")) {
+        if (extensions != null && (extensions.contains("cl_khr_fp16")/* || extensions.contains("cl_nv_device_attribute_query")*/)) {
             fp16Support = true;
         }
 
