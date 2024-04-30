@@ -26,7 +26,6 @@ package uk.ac.manchester.tornado.drivers.opencl;
 import uk.ac.manchester.tornado.api.exceptions.TornadoRuntimeException;
 import uk.ac.manchester.tornado.drivers.opencl.exceptions.OCLException;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -39,12 +38,8 @@ public class OCLCommandQueueTable {
     }
 
     public OCLCommandQueue get(OCLTargetDevice device, OCLContext context) {
-        if (!deviceCommandMap.containsKey(device)) {
-            ThreadCommandQueueTable table = new ThreadCommandQueueTable();
-            table.get(Thread.currentThread().threadId(), device, context);
-            deviceCommandMap.put(device, table);
-        }
-        return deviceCommandMap.get(device).get(Thread.currentThread().threadId(), device, context);
+        return deviceCommandMap.computeIfAbsent(device, d -> new ThreadCommandQueueTable())
+                               .get(Thread.currentThread().threadId(), device, context);
     }
 
     private static class ThreadCommandQueueTable {
@@ -55,19 +50,17 @@ public class OCLCommandQueueTable {
         }
 
         public OCLCommandQueue get(long threadId, OCLTargetDevice device, OCLContext context) {
-            if (!commandQueueMap.containsKey(threadId)) {
+            return commandQueueMap.computeIfAbsent(threadId, thread -> {
                 final int deviceVersion = device.deviceVersion();
                 long commandProperties = context.getProperties(device.getIndex());
                 long commandQueuePtr;
                 try {
-                    commandQueuePtr = context.clCreateCommandQueue(context.getContextId(), device.getId(), commandProperties);
+                    commandQueuePtr = OCLContext.clCreateCommandQueue(context.getContextId(), device.getId(), commandProperties);
                 } catch (OCLException e) {
                     throw new TornadoRuntimeException(e);
                 }
-                OCLCommandQueue commandQueue = new OCLCommandQueue(commandQueuePtr, commandProperties, deviceVersion);
-                commandQueueMap.put(threadId, commandQueue);
-            }
-            return commandQueueMap.get(threadId);
+                return new OCLCommandQueue(commandQueuePtr, commandProperties, deviceVersion);
+            });
         }
     }
 

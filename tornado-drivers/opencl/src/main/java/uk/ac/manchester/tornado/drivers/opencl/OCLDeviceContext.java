@@ -288,21 +288,12 @@ public class OCLDeviceContext implements OCLDeviceContextInterface {
 
     private OCLCommandQueue getCommandQueue(long executionPlanId) {
         executionIDs.add(executionPlanId);
-        if (!commandQueueTable.containsKey(executionPlanId)) {
-            OCLTargetDevice device = context.devices().get(getDeviceIndex());
-            OCLCommandQueueTable oclCommandQueueTable = new OCLCommandQueueTable();
-            oclCommandQueueTable.get(device, context);
-            commandQueueTable.put(executionPlanId, oclCommandQueueTable);
-        }
-        return commandQueueTable.get(executionPlanId).get(device, context);
+        return commandQueueTable.computeIfAbsent(executionPlanId, k -> new OCLCommandQueueTable())
+                                .get(device, context);
     }
 
     private OCLEventPool getOCLEventPool(long executionPlanId) {
-        if (!oclEventPool.containsKey(executionPlanId)) {
-            OCLEventPool eventPool = new OCLEventPool(EVENT_WINDOW);
-            oclEventPool.put(executionPlanId, eventPool);
-        }
-        return oclEventPool.get(executionPlanId);
+        return oclEventPool.computeIfAbsent(executionPlanId, k -> new OCLEventPool(EVENT_WINDOW));
     }
 
     /*
