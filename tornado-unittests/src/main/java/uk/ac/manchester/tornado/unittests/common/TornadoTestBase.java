@@ -40,10 +40,10 @@ public abstract class TornadoTestBase {
     @Before
     public void before() {
         TornadoRuntimeInterface tornadoRuntime = getTornadoRuntime();
-        for (int i = 0; i < tornadoRuntime.getNumBackends(); i++) {
-            TornadoBackend driver = tornadoRuntime.getBackend(i);
-            for (int j = 0; j < driver.getDeviceCount(); j++) {
-                driver.getDevice(j).reset();
+        for (int backendIndex = 0; backendIndex < tornadoRuntime.getNumBackends(); backendIndex++) {
+            final TornadoBackend driver = tornadoRuntime.getBackend(backendIndex);
+            for (int deviceIndex = 0; deviceIndex < driver.getDeviceCount(); deviceIndex++) {
+                driver.getDevice(deviceIndex).clean();
             }
         }
 
@@ -118,9 +118,9 @@ public abstract class TornadoTestBase {
     }
 
     /**
-     * It returns a TornadoDevice that supports SPIRV.
+     * It returns a TornadoDevice that supports SPIR-V.
      *
-     * @return {@link TornadoDevice} with SPIRV support, or null if not found.
+     * @return {@link TornadoDevice} with SPIR-V support, or null if not found.
      */
     protected TornadoDevice getSPIRVSupportedDevice() {
         Tuple2<Integer, Integer> driverAndDeviceIndex = getDriverAndDeviceIndex();

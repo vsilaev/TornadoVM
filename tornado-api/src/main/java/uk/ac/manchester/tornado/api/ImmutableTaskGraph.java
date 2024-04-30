@@ -133,7 +133,7 @@ public class ImmutableTaskGraph {
     }
 
     void resetDevice() {
-        taskGraph.getDevice().reset();
+        taskGraph.getDevice().clean();
     }
 
     void clearProfiles() {

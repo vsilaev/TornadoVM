@@ -51,7 +51,7 @@ public interface OCLDeviceContextInterface extends TornadoDeviceContext {
 
     boolean isKernelAvailable();
 
-    void reset();
+    void reset(long executionPlanId);
 
     TornadoXPUDevice asMapping();
 
