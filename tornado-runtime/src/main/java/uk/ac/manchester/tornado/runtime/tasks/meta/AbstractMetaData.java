@@ -98,7 +98,7 @@ public abstract class AbstractMetaData implements TaskMetaDataInterface {
     private final String cpuConfig;
     private final String id;
     private TornadoXPUDevice device;
-    private int driverIndex;
+    private int backendIndex;
     private int deviceIndex;
     private boolean deviceManuallySet;
     private long numThreads;
@@ -126,16 +126,16 @@ public abstract class AbstractMetaData implements TaskMetaDataInterface {
         String xdevice;
         if (null != (xdevice = getProperty(id + ".device"))) {
             int[] deviceOverride = MetaDataUtils.resolveDriverDeviceIndexes(xdevice);
-            driverIndex = deviceOverride[0];
+            backendIndex = deviceOverride[0];
             deviceIndex = deviceOverride[1];
             isDeviceDefined = true;
         } else if (null != parent) {
-            driverIndex = parent.getDriverIndex();
+            backendIndex = parent.getBackendIndex();
             deviceIndex = parent.getDeviceIndex();
             isDeviceDefined = false;
         } else {
             boolean isVirtualDevice = Boolean.parseBoolean(Tornado.getProperty("tornado.virtual.device", "False"));
-            driverIndex = isVirtualDevice ? 0 : TornadoOptions.DEFAULT_DRIVER_INDEX;
+            backendIndex = isVirtualDevice ? 0 : TornadoOptions.DEFAULT_BACKEND_INDEX;
             deviceIndex = isVirtualDevice ? 0 : TornadoOptions.DEFAULT_DEVICE_INDEX;
             isDeviceDefined = false;
         }
@@ -214,11 +214,11 @@ public abstract class AbstractMetaData implements TaskMetaDataInterface {
 
 
     public TornadoXPUDevice getLogicDevice() {
-        return device != null ? device : (device = resolveDevice(Tornado.getProperty(id + ".device", driverIndex + ":" + deviceIndex)));
+        return device != null ? device : (device = resolveDevice(Tornado.getProperty(id + ".device", backendIndex + ":" + deviceIndex)));
     }
 
-    private int getDeviceIndex(int driverIndex, TornadoDevice device) {
-        TornadoAcceleratorBackend driver = TornadoCoreRuntime.getTornadoRuntime().getBackend(driverIndex);
+    private int getDeviceIndex(int backendIndex, TornadoDevice device) {
+        TornadoAcceleratorBackend driver = TornadoCoreRuntime.getTornadoRuntime().getBackend(backendIndex);
         int devs = driver.getDeviceCount();
         int index = 0;
         for (int i = 0; i < devs; i++) {
@@ -241,36 +241,17 @@ public abstract class AbstractMetaData implements TaskMetaDataInterface {
      *     {@link TornadoDevice}
      */
     public void setDevice(TornadoDevice device) {
-        this.driverIndex = device.getDriverIndex();
-        this.deviceIndex = getDeviceIndex(driverIndex, device);
+        this.backendIndex = device.getDriverIndex();
+        this.deviceIndex = getDeviceIndex(backendIndex, device);
         if (device instanceof TornadoXPUDevice tornadoAcceleratorDevice) {
             this.device = tornadoAcceleratorDevice;
         }
         deviceManuallySet = true;
     }
 
-    /**
-     * Set a device from a specific Tornado driver.
-     *
-     * @param driverIndex
-     *     Driver Index
-     * @param device
-     *     {@link TornadoXPUDevice}
-     */
-    public void setDriverDevice(int driverIndex, TornadoXPUDevice device) {
-        this.driverIndex = driverIndex;
-        this.deviceIndex = getDeviceIndex(driverIndex, device);
-        this.device = device;
-    }
-
     @Override
-    public String getId() {
-        return id;
-    }
-
-    @Override
-    public int getDriverIndex() {
-        return driverIndex;
+    public int getBackendIndex() {
+        return backendIndex;
     }
 
     @Override
@@ -280,6 +261,11 @@ public abstract class AbstractMetaData implements TaskMetaDataInterface {
 
     public String getCpuConfig() {
         return cpuConfig;
+    }
+
+    @Override
+    public String getId() {
+        return id;
     }
 
     public boolean isThreadInfoEnabled() {

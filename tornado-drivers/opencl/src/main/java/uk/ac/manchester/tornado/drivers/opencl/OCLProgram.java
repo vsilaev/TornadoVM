@@ -27,7 +27,7 @@
  */
 package uk.ac.manchester.tornado.drivers.opencl;
 
-import static uk.ac.manchester.tornado.drivers.opencl.enums.OCLBuildStatus.CL_BUILD_UNKNOWN;
+import static uk.ac.manchester.tornado.drivers.opencl.enums.OCLBuildStatus.CL_BUILD_NONE;
 import static uk.ac.manchester.tornado.drivers.opencl.enums.OCLProgramBuildInfo.CL_PROGRAM_BUILD_LOG;
 import static uk.ac.manchester.tornado.drivers.opencl.enums.OCLProgramBuildInfo.CL_PROGRAM_BUILD_STATUS;
 import static uk.ac.manchester.tornado.drivers.opencl.enums.OCLProgramInfo.CL_PROGRAM_BINARY_SIZES;
@@ -56,16 +56,16 @@ import uk.ac.manchester.tornado.runtime.common.TornadoLogger;
 
 public class OCLProgram {
 
-    private final long id;
+    private final long programPointer;
     private final OCLDeviceContext deviceContext;
     private final long[] devices;
     private final List<OCLKernel> kernels;
 
-    public OCLProgram(long id, OCLDeviceContext deviceContext) {
-        this.id = id;
-        if (id <= 0) {
-            System.out.println("WRONG BUILD " + id);
-            throw new IllegalArgumentException("Program was not built, error: " + id);
+    public OCLProgram(long oclProgramPointer, OCLDeviceContext deviceContext) {
+        this.programPointer = oclProgramPointer;
+        if (programPointer <= 0) {
+            System.out.println("WRONG BUILD " + programPointer);
+            throw new IllegalArgumentException("Program was not built, error: " + programPointer);
         }
         this.deviceContext = deviceContext;
         this.devices = new long[] { deviceContext.getDeviceId() };
@@ -89,9 +89,9 @@ public class OCLProgram {
     static native void getBinaries(long programId, long numDevices, ByteBuffer buffer) throws OCLException;
 
     public OCLBuildStatus getStatus(long deviceId) {
-        ByteBuffer buffer = OpenCL.createIntegerBuffer(CL_BUILD_UNKNOWN.getValue());
+        ByteBuffer buffer = OpenCL.createIntegerBuffer(CL_BUILD_NONE.getBuildStatusCode());
         try {
-            clGetProgramBuildInfo(id, deviceId, CL_PROGRAM_BUILD_STATUS.getValue(), buffer.array());
+            clGetProgramBuildInfo(programPointer, deviceId, CL_PROGRAM_BUILD_STATUS.getValue(), buffer.array());
         } catch (OCLException e) {
             TornadoLogger.error(e.getMessage());
         }
@@ -100,7 +100,7 @@ public class OCLProgram {
 
     public String getBuildLog(long deviceId) {
         try {
-            ByteBuffer buffer = clGetProgramBuildInfo(id, deviceId, CL_PROGRAM_BUILD_LOG.getValue());
+            ByteBuffer buffer = clGetProgramBuildInfo(programPointer, deviceId, CL_PROGRAM_BUILD_LOG.getValue());
             if (null != buffer) {
                 String result = OpenCL.toString(buffer, false);
                 result = result.substring(0, result.indexOf('\0'));
@@ -120,7 +120,7 @@ public class OCLProgram {
             throw new IllegalStateException("Thread was interrupted before build");
         }
         try {
-            long status = executeBuild(() -> clBuildProgram(id, devices, options)).get();
+            long status = executeBuild(() -> clBuildProgram(programPointer, devices, options)).get();
             if (status < 0) {
                 // throw new TornadoBailoutRuntimeException("clBuild failed " + status);
             }
@@ -134,7 +134,7 @@ public class OCLProgram {
     public void cleanup() {
         try {
             kernels.forEach(OCLKernel::cleanup);
-            clReleaseProgram(id);
+            clReleaseProgram(programPointer);
         } catch (OCLException e) {
             throw new TornadoBailoutRuntimeException(e.getMessage());
         }
@@ -143,7 +143,7 @@ public class OCLProgram {
     public int getNumDevices() {
         ByteBuffer buffer = OpenCL.createIntegerBuffer(0);
         try {
-            clGetProgramInfo(id, CL_PROGRAM_NUM_DEVICES.getValue(), buffer.array());
+            clGetProgramInfo(programPointer, CL_PROGRAM_NUM_DEVICES.getValue(), buffer.array());
             return buffer.getInt();
         } catch (OCLException e) {
             TornadoLogger.error(e.getMessage());
@@ -153,7 +153,7 @@ public class OCLProgram {
 
     public long[] getDevices() {
         try {
-            ByteBuffer buffer = clGetProgramInfo(id, CL_PROGRAM_DEVICES.getValue());
+            ByteBuffer buffer = clGetProgramInfo(programPointer, CL_PROGRAM_DEVICES.getValue());
             if (null == buffer) {
                 return new long[0];
             }
@@ -172,7 +172,7 @@ public class OCLProgram {
 
     public long[] getBinarySizes() {
         try {
-            ByteBuffer buffer = clGetProgramInfo(id, CL_PROGRAM_BINARY_SIZES.getValue());
+            ByteBuffer buffer = clGetProgramInfo(programPointer, CL_PROGRAM_BINARY_SIZES.getValue());
             if (null == buffer) {
                 return new long[0];
             }
@@ -208,7 +208,7 @@ public class OCLProgram {
         }
         final ByteBuffer binary = ByteBuffer.allocateDirect(totalSize);
         try {
-            getBinaries(id, devices.length, binary);
+            getBinaries(programPointer, devices.length, binary);
 
             TornadoLogger.info("dumping binary %s", filenamePrefix);
             try (FileOutputStream fis = new FileOutputStream(filenamePrefix); FileChannel vChannel = fis.getChannel();) {
@@ -230,7 +230,7 @@ public class OCLProgram {
     public String toString() {
         StringBuilder sb = new StringBuilder();
 
-        sb.append(String.format("program: id=0x%x, num devices=%d\n", id, devices.length));
+        sb.append(String.format("program: id=0x%x, num devices=%d\n", programPointer, devices.length));
         for (long device : devices) {
             sb.append(String.format("device: id=0x%x, status=%s\n", device, getStatus(device)));
         }
@@ -241,7 +241,7 @@ public class OCLProgram {
     public OCLKernel getKernel(String entryPoint) {
         OCLKernel kernel = null;
         try {
-            kernel = new OCLKernel(clCreateKernel(id, entryPoint), deviceContext);
+            kernel = new OCLKernel(clCreateKernel(programPointer, entryPoint), deviceContext);
         } catch (OCLException e) {
             TornadoLogger.error(e.getMessage());
         }

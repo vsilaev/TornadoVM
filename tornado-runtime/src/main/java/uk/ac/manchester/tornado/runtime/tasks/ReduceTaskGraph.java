@@ -208,7 +208,7 @@ class ReduceTaskGraph {
                 String givenTaskName = binaries[i + 1].split(".device")[0];
                 if (givenTaskName.equals(taskMeta.getId())) {
                     String additionPrefix = STR.",\{binaries[i]},\{taskScheduleName}.";
-                    String additionSuffix = STR.".device=\{taskMeta.getDriverIndex()}:\{taskMeta.getDeviceIndex()}";
+                    String additionSuffix = STR.".device=\{taskMeta.getBackendIndex()}:\{taskMeta.getDeviceIndex()}";
                     if (null == sequentialTaskName) {
                         originalBinaries.append(additionPrefix + taskNameSimple + additionSuffix);
                     } else {
@@ -461,7 +461,7 @@ class ReduceTaskGraph {
             List<Object> streamReduceList = new ArrayList<>();
 
             TaskMetaDataInterface originalMeta = owner.getTask(tsName + "." + taskPackage.getId()).meta();
-            int driverToRun = originalMeta.getDriverIndex();
+            int driverToRun = originalMeta.getBackendIndex();
             int deviceToRun = originalMeta.getDeviceIndex();
 
             // TODO Check device propagation here!
@@ -576,7 +576,7 @@ class ReduceTaskGraph {
 
             Map<String, Object> propertiesOverride = new HashMap<>();
             propertiesOverride.putAll(overrideGlobalAndLocalDimensionsFPGA(
-                originalMeta.getDriverIndex(), originalMeta.getDeviceIndex(), 
+                originalMeta.getBackendIndex(), originalMeta.getDeviceIndex(), 
                 taskScheduleReduceName, taskPackage, 
                 inputSizes.getOrDefault(originalMeta.getId(), Integer.valueOf(0))
             ));

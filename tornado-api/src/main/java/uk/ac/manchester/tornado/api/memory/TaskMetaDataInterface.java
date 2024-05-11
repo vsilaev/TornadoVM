@@ -48,7 +48,7 @@ public interface TaskMetaDataInterface {
 
     Object getCompiledResolvedJavaMethod();
 
-    int getDriverIndex();
+    int getBackendIndex();
 
     int getDeviceIndex();
 
