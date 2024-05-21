@@ -25,8 +25,6 @@ package uk.ac.manchester.tornado.drivers.opencl;
 
 import static uk.ac.manchester.tornado.api.exceptions.TornadoInternalError.guarantee;
 import static uk.ac.manchester.tornado.drivers.opencl.enums.OCLCommandQueueProperties.CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
-import static uk.ac.manchester.tornado.runtime.common.Tornado.debug;
-import static uk.ac.manchester.tornado.runtime.common.Tornado.fatal;
 import static uk.ac.manchester.tornado.runtime.common.TornadoOptions.CIRCULAR_EVENTS;
 
 import java.util.ArrayList;
@@ -36,6 +34,8 @@ import java.util.List;
 
 import uk.ac.manchester.tornado.api.exceptions.TornadoBailoutRuntimeException;
 import uk.ac.manchester.tornado.drivers.common.utils.EventDescriptor;
+import uk.ac.manchester.tornado.runtime.common.TornadoLogger;
+import uk.ac.manchester.tornado.runtime.common.TornadoOptions;
 
 /**
  * Class which holds mapping between OpenCL events and TornadoVM runtime events,
@@ -57,7 +57,8 @@ class OCLEventPool {
     private final OCLCommandQueue[] eventQueues;
     private int eventIndex;
     private int eventPoolSize;
-    
+    private final TornadoLogger logger;
+
     protected OCLEventPool(int poolSize) {
         this.eventPoolSize = poolSize;
         this.retain = new BitSet(poolSize);
@@ -65,6 +66,7 @@ class OCLEventPool {
         this.events = new OCLEvent[poolSize];
         this.eventQueues = new OCLCommandQueue[poolSize];
         this.eventIndex = 0;
+        this.logger = new TornadoLogger(this.getClass());
     }
 
     protected int registerEvent(long oclEventID, EventDescriptor descriptorId, OCLCommandQueue queue) {
@@ -79,8 +81,8 @@ class OCLEventPool {
          * exit.
          */
         if (oclEventID <= 0) {
-            fatal("invalid event: status=0x%x, description=%s\n", oclEventID, descriptorId.getNameDescription());
-            fatal("terminating application as system integrity has been compromised.");
+            logger.fatal("invalid event: status=0x%x, description=%s\n", oclEventID, descriptorId.getNameDescription());
+            logger.fatal("terminating application as system integrity has been compromised.");
             throw new TornadoBailoutRuntimeException("[ERROR] NO EventID received from the OpenCL driver, status : " + oclEventID);
             //System.exit(-1);
         }
@@ -118,7 +120,7 @@ class OCLEventPool {
                 index++;
                 OCLEvent event = events[value];
                 waitEventsBuffer[index] = event.getOclEventID();
-                debug("[%d] 0x%x - %s\n", index, event.getOclEventID(), event.getName());
+                logger.debug("[%d] 0x%x - %s\n", index, event.getOclEventID(), event.getName());
 
             }
         }

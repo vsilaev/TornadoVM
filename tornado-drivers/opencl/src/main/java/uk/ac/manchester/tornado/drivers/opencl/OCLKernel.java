@@ -31,11 +31,12 @@ import uk.ac.manchester.tornado.drivers.opencl.enums.OCLKernelInfo;
 import uk.ac.manchester.tornado.drivers.opencl.exceptions.OCLException;
 import uk.ac.manchester.tornado.runtime.common.TornadoLogger;
 
-public class OCLKernel extends TornadoLogger {
+public class OCLKernel {
 
     private final long oclKernelID;
     private final OCLDeviceContext deviceContext;
     private final String kernelName;
+    private final TornadoLogger logger;
 
     public OCLKernel(long id, OCLDeviceContext deviceContext) {
         this.oclKernelID = id;
@@ -43,14 +44,15 @@ public class OCLKernel extends TornadoLogger {
             throw new IllegalArgumentException("Kernel was not built, error: " + id);
         }
         this.deviceContext = deviceContext;
+        this.logger = new TornadoLogger(this.getClass());
         this.kernelName = queryName(id, deviceContext);
-
     }
 
     native static void clReleaseKernel(long kernelId) throws OCLException;
 
     native static void clSetKernelArgArray(long kernelId, int index, long size, byte[] buffer) throws OCLException;
     native static void clSetKernelArgBuffer(long kernelId, int index, long size, ByteBuffer buffer) throws OCLException;
+    native static void clSetKernelArgRef(long kernelId, int index, long buffer) throws OCLException;
 
     native static void clGetKernelInfo(long kernelId, int info, byte[] buffer) throws OCLException;
     native static ByteBuffer clGetKernelInfo(long kernelId, int info) throws OCLException;
@@ -63,7 +65,16 @@ public class OCLKernel extends TornadoLogger {
                 clSetKernelArgBuffer(oclKernelID, index, buffer.position(), buffer);
             }
         } catch (OCLException e) {
-            error(e.getMessage());
+            logger.error(e.getMessage());
+        }
+    }
+
+    public void setArgRef(int index, long devicePtr) {
+        System.out.println("Calling the new function");
+        try {
+            clSetKernelArgRef(oclKernelID, index, devicePtr);
+        } catch (OCLException e) {
+            logger.error(e.getMessage());
         }
     }
 
@@ -71,7 +82,7 @@ public class OCLKernel extends TornadoLogger {
         try {
             clSetKernelArgArray(oclKernelID, index, 8, null);
         } catch (OCLException e) {
-            error(e.getMessage());
+            logger.error(e.getMessage());
         }
     }
 
@@ -87,7 +98,7 @@ public class OCLKernel extends TornadoLogger {
         try {
             clSetKernelArgArray(oclKernelID, index, size, null);
         } catch (OCLException e) {
-            error(e.getMessage());
+            logger.error(e.getMessage());
         }
     }
 
@@ -99,10 +110,6 @@ public class OCLKernel extends TornadoLogger {
         }
     }
 
-    public long getOclKernelID() {
-        return oclKernelID;
-    }
-    
     public String getName() {
         return kernelName;
     }
@@ -117,5 +124,8 @@ public class OCLKernel extends TornadoLogger {
         return "unknown";
     }
 
+    public long getOclKernelID() {
+        return oclKernelID;
+    }
 
 }

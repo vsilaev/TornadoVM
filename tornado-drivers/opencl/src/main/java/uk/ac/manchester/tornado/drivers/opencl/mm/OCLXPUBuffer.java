@@ -29,10 +29,7 @@ import static uk.ac.manchester.tornado.api.exceptions.TornadoInternalError.shoul
 import static uk.ac.manchester.tornado.api.exceptions.TornadoInternalError.unimplemented;
 import static uk.ac.manchester.tornado.runtime.TornadoCoreRuntime.getVMConfig;
 import static uk.ac.manchester.tornado.runtime.TornadoCoreRuntime.getVMRuntime;
-import static uk.ac.manchester.tornado.runtime.common.Tornado.DEBUG;
-import static uk.ac.manchester.tornado.runtime.common.Tornado.debug;
-import static uk.ac.manchester.tornado.runtime.common.Tornado.trace;
-import static uk.ac.manchester.tornado.runtime.common.Tornado.warn;
+import static uk.ac.manchester.tornado.runtime.common.TornadoOptions.DEBUG;
 
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
@@ -57,6 +54,7 @@ import uk.ac.manchester.tornado.api.types.arrays.ShortArray;
 import uk.ac.manchester.tornado.drivers.common.mm.PrimitiveSerialiser;
 import uk.ac.manchester.tornado.drivers.opencl.OCLDeviceContext;
 import uk.ac.manchester.tornado.runtime.common.RuntimeUtilities;
+import uk.ac.manchester.tornado.runtime.common.TornadoLogger;
 import uk.ac.manchester.tornado.runtime.utils.TornadoUtils;
 
 public class OCLXPUBuffer implements XPUBuffer {
@@ -78,10 +76,12 @@ public class OCLXPUBuffer implements XPUBuffer {
     private ByteBuffer buffer;
 
     private long setSubRegionSize;
+    private final TornadoLogger logger;
 
     public OCLXPUBuffer(final OCLDeviceContext device, Object object) {
         this.objectType = object.getClass();
         this.deviceContext = device;
+        this.logger = new TornadoLogger(this.getClass());
 
         hubOffset = getVMConfig().hubOffset;
         fieldsOffset = getVMConfig().instanceKlassFieldsOffset();
@@ -98,7 +98,7 @@ public class OCLXPUBuffer implements XPUBuffer {
             final Class<?> type = reflectedField.getType();
 
             if (DEBUG) {
-                trace("field: name=%s, kind=%s, offset=%d", field.getName(), type.getName(), field.getOffset());
+                logger.trace("field: name=%s, kind=%s, offset=%d", field.getName(), type.getName(), field.getOffset());
             }
 
             XPUBuffer wrappedField = null;
@@ -119,7 +119,7 @@ public class OCLXPUBuffer implements XPUBuffer {
                 } else if (type == double[].class) {
                     wrappedField = new OCLDoubleArrayWrapper((double[]) objectFromField, device, 0);
                 } else  {
-                    warn("cannot wrap field: array type=%s", type.getName());
+                    logger.warn("cannot wrap field: array type=%s", type.getName());
                 }
             } else if (type == FloatArray.class) {
                 Object objectFromField = TornadoUtils.getObjectFromField(reflectedField, object);
@@ -171,7 +171,7 @@ public class OCLXPUBuffer implements XPUBuffer {
     @Override
     public void allocate(Object reference, long batchSize) throws TornadoOutOfMemoryException, TornadoMemoryException {
         if (DEBUG) {
-            debug("object: object=0x%x, class=%s", reference.hashCode(), reference.getClass().getName());
+            logger.debug("object: object=0x%x, class=%s", reference.hashCode(), reference.getClass().getName());
         }
 
         this.bufferId = deviceContext.getBufferProvider().getOrAllocateBufferWithSize(size());
@@ -179,7 +179,7 @@ public class OCLXPUBuffer implements XPUBuffer {
         setBuffer(new XPUBufferWrapper(bufferId, bufferOffset));
 
         if (DEBUG) {
-            debug("object: object=0x%x @ bufferId 0x%x", reference.hashCode(), bufferId);
+            logger.debug("object: object=0x%x @ bufferId 0x%x", reference.hashCode(), bufferId);
         }
     }
 
@@ -273,7 +273,7 @@ public class OCLXPUBuffer implements XPUBuffer {
                 HotSpotResolvedJavaField field = fields[i];
                 Field f = getField(objectType, field.getName());
                 if (DEBUG) {
-                    trace("writing field: name=%s, offset=%d", field.getName(), field.getOffset());
+                    logger.trace("writing field: name=%s, offset=%d", field.getName(), field.getOffset());
                 }
 
                 buffer.position(field.getOffset());
@@ -293,7 +293,7 @@ public class OCLXPUBuffer implements XPUBuffer {
                 Field f = getField(objectType, field.getName());
                 f.setAccessible(true);
                 if (DEBUG) {
-                    trace("reading field: name=%s, offset=%d", field.getName(), field.getOffset());
+                    logger.trace("reading field: name=%s, offset=%d", field.getName(), field.getOffset());
                 }
                 readFieldFromBuffer(i, f, object);
             }
@@ -388,7 +388,7 @@ public class OCLXPUBuffer implements XPUBuffer {
             System.out.println();
         }
     }
-    
+
     private static ByteBuffer sliceOfBuffer(ByteBuffer buffer, long hostOffset) {
         if (hostOffset == 0) {
             return buffer;

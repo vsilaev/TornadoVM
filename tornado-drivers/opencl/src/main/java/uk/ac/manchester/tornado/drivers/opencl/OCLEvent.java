@@ -30,7 +30,7 @@ import static uk.ac.manchester.tornado.drivers.opencl.enums.OCLProfilingInfo.CL_
 import static uk.ac.manchester.tornado.drivers.opencl.enums.OCLProfilingInfo.CL_PROFILING_COMMAND_QUEUED;
 import static uk.ac.manchester.tornado.drivers.opencl.enums.OCLProfilingInfo.CL_PROFILING_COMMAND_START;
 import static uk.ac.manchester.tornado.drivers.opencl.enums.OCLProfilingInfo.CL_PROFILING_COMMAND_SUBMIT;
-import static uk.ac.manchester.tornado.runtime.common.Tornado.ENABLE_PROFILING;
+import static uk.ac.manchester.tornado.runtime.common.TornadoOptions.ENABLE_OPENCL_PROFILING;
 
 import java.nio.ByteBuffer;
 
@@ -48,6 +48,7 @@ public class OCLEvent implements Event {
     private final long oclEventID;
     private final String name;
     private int status;
+    private TornadoLogger logger;
 
     static abstract class Callback {
         abstract void execute(long oclEventID, int status);
@@ -58,27 +59,28 @@ public class OCLEvent implements Event {
         this.oclEventID = oclEventID;
         this.name = String.format("%s: 0x", eventNameDescription);
         this.status = -1;
+        this.logger = new TornadoLogger(this.getClass());
     }
 
-    private native static void clGetEventInfo(long eventId, int param, byte[] buffer) throws OCLException;
+    native static void clGetEventInfo(long eventId, int param, byte[] buffer) throws OCLException;
 
-    private native static void clGetEventProfilingInfo(long eventId, long param, byte[] buffer) throws OCLException;
+    native static void clGetEventProfilingInfo(long eventId, long param, byte[] buffer) throws OCLException;
 
-    private native static void clWaitForEvents(long[] events) throws OCLException;
+    native static void clWaitForEvents(long[] events) throws OCLException;
 
-    private native static void clReleaseEvent(long eventId) throws OCLException;
+    native static void clReleaseEvent(long eventId) throws OCLException;
 
-    private native static void clAttachCallback(long eventId, Callback callback) throws OCLException;
+    native static void clAttachCallback(long eventId, Callback callback) throws OCLException;
 
     private long readEventTime(OCLProfilingInfo eventType) {
-        if (!ENABLE_PROFILING) {
+        if (!ENABLE_OPENCL_PROFILING) {
             return -1;
         }
         ByteBuffer buffer = OpenCL.createLongBuffer(0L);
         try {
             clGetEventProfilingInfo(oclEventID, eventType.getValue(), buffer.array());
         } catch (OCLException e) {
-            TornadoLogger.error(e.getMessage());
+            logger.error(e.getMessage());
         }
         return buffer.getLong();
     }
@@ -116,7 +118,7 @@ public class OCLEvent implements Event {
         try {
             clGetEventInfo(oclEventID, CL_EVENT_COMMAND_EXECUTION_STATUS.getValue(), buffer.array());
         } catch (OCLException e) {
-            TornadoLogger.error(e.getMessage());
+            logger.error(e.getMessage());
         }
         status = buffer.getInt();
         return createOCLCommandExecutionStatus(status);
@@ -135,7 +137,7 @@ public class OCLEvent implements Event {
                 break;
             case CL_ERROR:
             case CL_UNKNOWN:
-                TornadoLogger.fatal("error on event: %s", name);
+                logger.fatal("error on event: %s", name);
         }
         queue.awaitTransfers();
     }
@@ -250,7 +252,7 @@ public class OCLEvent implements Event {
         try {
             clReleaseEvent(oclEventID);
         } catch (OCLException e) {
-            TornadoLogger.error(e.getMessage());
+            logger.error(e.getMessage());
         }
     }
 }

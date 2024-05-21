@@ -24,8 +24,7 @@
 package uk.ac.manchester.tornado.drivers.opencl;
 
 import static uk.ac.manchester.tornado.drivers.opencl.OCLCommandQueue.EMPTY_EVENT;
-import static uk.ac.manchester.tornado.runtime.common.Tornado.EVENT_WINDOW;
-import static uk.ac.manchester.tornado.runtime.common.Tornado.USE_SYNC_FLUSH;
+import static uk.ac.manchester.tornado.runtime.common.TornadoOptions.EVENT_WINDOW;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -60,7 +59,7 @@ import uk.ac.manchester.tornado.drivers.opencl.power.OCLEmptyPowerMetric;
 import uk.ac.manchester.tornado.drivers.opencl.power.OCLNvidiaPowerMetric;
 import uk.ac.manchester.tornado.drivers.opencl.runtime.OCLBufferProvider;
 import uk.ac.manchester.tornado.drivers.opencl.runtime.OCLTornadoDevice;
-import uk.ac.manchester.tornado.runtime.common.TornadoLogger;
+import uk.ac.manchester.tornado.runtime.common.TornadoOptions;
 import uk.ac.manchester.tornado.runtime.tasks.meta.TaskMetaData;
 
 public class OCLDeviceContext implements OCLDeviceContextInterface {
@@ -157,7 +156,7 @@ public class OCLDeviceContext implements OCLDeviceContextInterface {
     @Override
     public void sync(long executionPlanId) {
         OCLCommandQueue commandQueue = getCommandQueue(executionPlanId);
-        if (USE_SYNC_FLUSH) {
+        if (TornadoOptions.USE_SYNC_FLUSH) {
             commandQueue.flush();
         }
         commandQueue.finish();
@@ -809,8 +808,8 @@ public class OCLDeviceContext implements OCLDeviceContextInterface {
     }
 
     @Override
-    public OCLInstalledCode installCode(String id, String entryPoint, byte[] code, boolean shouldCompile, boolean printKernel) {
-        return codeCache.installFPGASource(id, entryPoint, code, shouldCompile, printKernel);
+    public OCLInstalledCode installCode(String id, String entryPoint, byte[] code, boolean printKernel) {
+        return codeCache.installFPGASource(id, entryPoint, code, printKernel);
     }
 
     @Override

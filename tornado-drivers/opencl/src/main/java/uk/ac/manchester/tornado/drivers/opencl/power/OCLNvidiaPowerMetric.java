@@ -26,28 +26,30 @@ package uk.ac.manchester.tornado.drivers.opencl.power;
 import uk.ac.manchester.tornado.drivers.common.power.PowerMetric;
 import uk.ac.manchester.tornado.drivers.opencl.OCLDeviceContext;
 import uk.ac.manchester.tornado.drivers.opencl.exceptions.OCLException;
-import static uk.ac.manchester.tornado.runtime.common.Tornado.error;
+import uk.ac.manchester.tornado.runtime.common.TornadoLogger;
 
 public class OCLNvidiaPowerMetric implements PowerMetric {
     private final OCLDeviceContext deviceContext;
+    private final TornadoLogger logger;
 
     public OCLNvidiaPowerMetric(OCLDeviceContext deviceContext) {
         this.deviceContext = deviceContext;
+        this.logger = new TornadoLogger(this.getClass());
         initializePowerLibrary();
     }
 
-     static native long clNvmlInit() throws OCLException;
+    static native long clNvmlInit() throws OCLException;
 
-     static native long clNvmlDeviceGetHandleByIndex(long index, long[] device) throws OCLException;
+    static native long clNvmlDeviceGetHandleByIndex(long index, long[] device) throws OCLException;
 
-     static native long clNvmlDeviceGetPowerUsage(long[] device, long[] powerUsage) throws OCLException;
+    static native long clNvmlDeviceGetPowerUsage(long[] device, long[] powerUsage) throws OCLException;
 
     @Override
     public void initializePowerLibrary() {
         try {
             clNvmlInit(); 
         } catch (OCLException e) {
-            // error(e.getMessage());
+            logger.error(e.getMessage());
         }
     }
 
@@ -56,7 +58,7 @@ public class OCLNvidiaPowerMetric implements PowerMetric {
         try {
             clNvmlDeviceGetHandleByIndex(this.deviceContext.getDevice().getIndex(), device);
         } catch (OCLException e) {
-            error(e.getMessage());
+            logger.error(e.getMessage());
         }
     }
 
@@ -65,7 +67,7 @@ public class OCLNvidiaPowerMetric implements PowerMetric {
         try {
             clNvmlDeviceGetPowerUsage(device, powerUsage);
         } catch (OCLException e) {
-            error(e.getMessage());
+            logger.error(e.getMessage());
         }
     }
 }

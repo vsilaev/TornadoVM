@@ -202,6 +202,7 @@ public class OCLDevice implements OCLTargetDevice {
         return deviceVendorName;
     }
 
+    @Override
     public String getDriverVersion() {
         if (driverVersion == null) {
             driverVersion = queryStringValue(OCLDeviceInfo.CL_DRIVER_VERSION);

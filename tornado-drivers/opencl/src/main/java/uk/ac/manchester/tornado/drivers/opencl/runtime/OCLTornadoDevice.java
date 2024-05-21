@@ -290,7 +290,7 @@ public class OCLTornadoDevice implements TornadoXPUDevice {
             OCLInstalledCode installedCode;
             if (OCLBackend.isDeviceAnFPGAAccelerator(deviceContext)) {
                 // A) for FPGA
-                installedCode = deviceContext.installCode(result.getId(), result.getName(), result.getTargetCode(), task.shouldCompile(), task.meta().isPrintKernelEnabled());
+                installedCode = deviceContext.installCode(result.getId(), result.getName(), result.getTargetCode(), task.meta().isPrintKernelEnabled());
             } else {
                 // B) for CPU multi-core or GPU
                 installedCode = deviceContext.installCode(result);
@@ -300,8 +300,9 @@ public class OCLTornadoDevice implements TornadoXPUDevice {
 
             return installedCode;
         } catch (Exception e) {
-            TornadoLogger.fatal("Unable to compile %s for device %s\n", task.getId(), getDeviceName());
-            TornadoLogger.fatal("Exception occurred when compiling %s\n", ((CompilableTask) task).getMethod().getName());
+            TornadoLogger logger = new TornadoLogger();
+            logger.fatal("Unable to compile %s for device %s\n", task.getId(), getDeviceName());
+            logger.fatal("Exception occurred when compiling %s\n", ((CompilableTask) task).getMethod().getName());
             if (TornadoOptions.RECOVER_BAILOUT) {
                 throw new TornadoBailoutRuntimeException("[Error during the Task Compilation]: " + e.getMessage());
             } else {
@@ -325,7 +326,7 @@ public class OCLTornadoDevice implements TornadoXPUDevice {
             OCLInstalledCode installedCode;
             if (OCLBackend.isDeviceAnFPGAAccelerator(deviceContext)) {
                 // A) for FPGA
-                installedCode = deviceContext.installCode(task.getId(), executable.getEntryPoint(), source, task.shouldCompile(), task.meta().isPrintKernelEnabled());
+                installedCode = deviceContext.installCode(task.getId(), executable.getEntryPoint(), source, task.meta().isPrintKernelEnabled());
             } else {
                 // B) for CPU multi-core or GPU
                 installedCode = deviceContext.installCode(executable.meta(), task.getId(), executable.getEntryPoint(), source);
@@ -469,6 +470,18 @@ public class OCLTornadoDevice implements TornadoXPUDevice {
             return compileJavaToAccelerator(task);
         }
         return loadPreCompiledBinaryForTask(task);
+    }
+
+    @Override
+    public boolean loopIndexInWrite(SchedulableTask task) {
+        if (task instanceof CompilableTask) {
+            final CompilableTask executable = (CompilableTask) task;
+            final ResolvedJavaMethod resolvedMethod = TornadoCoreRuntime.getTornadoRuntime().resolveMethod(executable.getMethod());
+            final Sketch sketch = TornadoSketcher.lookup(resolvedMethod, task.meta().getBackendIndex(), task.meta().getDeviceIndex());
+            return sketch.getBatchWriteThreadIndex();
+        } else {
+            return false;
+        }
     }
 
     private XPUBuffer createArrayWrapper(Class<?> type, OCLDeviceContext device, long batchSize) {

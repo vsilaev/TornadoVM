@@ -119,7 +119,7 @@ import uk.ac.manchester.tornado.runtime.analyzer.ReduceCodeAnalysis;
 import uk.ac.manchester.tornado.runtime.analyzer.TaskUtils;
 import uk.ac.manchester.tornado.runtime.common.BatchConfiguration;
 import uk.ac.manchester.tornado.runtime.common.RuntimeUtilities;
-import uk.ac.manchester.tornado.runtime.common.Tornado;
+import uk.ac.manchester.tornado.runtime.common.TornadoLogger;
 import uk.ac.manchester.tornado.runtime.common.TornadoOptions;
 import uk.ac.manchester.tornado.runtime.common.TornadoVMClient;
 import uk.ac.manchester.tornado.runtime.common.TornadoXPUDevice;
@@ -811,7 +811,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
         }
 
         if (compile) {
-            if (Tornado.DEBUG) {
+            if (TornadoOptions.DEBUG) {
                 System.out.println("[DEBUG] JIT compilation for the FPGA");
             }
             compileTaskToOpenCL();
@@ -845,7 +845,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
     }
 
     private void dumpDeoptimisationReason(TornadoBailoutRuntimeException e) {
-        if (!Tornado.DEBUG) {
+        if (!TornadoOptions.DEBUG) {
             System.err.println(STR."\{RED}[Bailout] Running the sequential implementation. Enable --debug to see the reason.\{RESET}");
         } else {
             System.err.println(e.getMessage());
@@ -876,7 +876,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
             if (TornadoOptions.RECOVER_BAILOUT) {
                 deoptimiseToSequentialJava(e);
             } else {
-                if (Tornado.DEBUG) {
+                if (TornadoOptions.DEBUG) {
                     e.printStackTrace();
                 }
                 throw new TornadoBailoutRuntimeException(STR."Bailout is disabled. \nReason: \{e.getMessage()}");
@@ -917,7 +917,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
 
     @Override
     public void waitOn() {
-        if (Tornado.VM_USE_DEPS && event != null) {
+        if (TornadoOptions.VM_USE_DEPS && event != null) {
             event.waitOn();
         } else {
             for (TornadoXPUDevice tornadoXPUDevice : executionContext.getDevices()) {
@@ -931,7 +931,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
     @Override
     public CompletableFuture<TornadoTaskGraphInterface> waitAsyncOn(Executor executor) {
         TornadoExecutionFuture result = new TornadoExecutionFuture();
-        if (Tornado.VM_USE_DEPS && event != null) {
+        if (TornadoOptions.VM_USE_DEPS && event != null) {
             event.waitOn(handleSingleTarget(executor, result));
         } else {
             List<? extends TornadoDevice> devices = executionContext.getDevices();
@@ -1020,7 +1020,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
     public void transferToHost(final int mode, Object... objects) {
         for (Object functionParameter : objects) {
             if (functionParameter == null) {
-                Tornado.warn("null object passed into streamIn() in schedule %s", executionContext.getId());
+                new TornadoLogger().warn("null object passed into streamIn() in schedule %s", executionContext.getId());
                 continue;
             }
 
@@ -1634,7 +1634,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
             final long start = timer.time();
             runAllTasksJavaSequential();
             final long endSequentialCode = timer.time();
-            if (Tornado.DEBUG) {
+            if (TornadoOptions.DEBUG) {
                 System.out.println(STR."Seq finished: \{Thread.currentThread().getName()}");
             }
 
@@ -1655,7 +1655,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
                 /*
                 TornadoRuntime.setProperty(STR."\{newTaskScheduleName}.\{taskID}.device", STR."0:\{taskScheduleNumber}");
                 */
-                if (Tornado.DEBUG) {
+                if (TornadoOptions.DEBUG) {
                     int driverIndex = TornadoRuntime.getTornadoRuntime().getBackendIndex(driver.getClass());
                     System.out.println(STR."SET DEVICE: \{newTaskScheduleName}.\{taskID}.device=\{driverIndex}:\{taskScheduleNumber}");
                 }
@@ -1756,7 +1756,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
 
             int deviceWinnerIndex = synchronizeWithPolicy(policy, totalTimers);
             policyTimeTable.put(policy, deviceWinnerIndex);
-            if (Tornado.DEBUG) {
+            if (TornadoOptions.DEBUG) {
                 System.out.println(getListDevices(driver));
                 System.out.println(STR."BEST Position: #\{deviceWinnerIndex} \{Arrays.toString(totalTimers)}");
             }
@@ -1787,7 +1787,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
     }
 
     private void runTaskGraphParallelSelected(TornadoBackend driver, int deviceWinnerIndex) {
-        if (Tornado.DEBUG) {
+        if (TornadoOptions.DEBUG) {
             System.out.println(STR."Running in parallel device: \{deviceWinnerIndex}");
         }
         TaskGraph task = taskGraphIndex.get(deviceWinnerIndex);
@@ -1903,7 +1903,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
                 /*
                 TornadoRuntime.setProperty(STR."\{newTaskScheduleName}.\{taskID}.device", "0:" + taskNumber);
                 */
-                if (Tornado.DEBUG) {
+                if (TornadoOptions.DEBUG) {
                     int driverIndex = TornadoRuntime.getTornadoRuntime().getBackendIndex(driver.getClass());
                     System.out.println(STR."SET DEVICE: \{newTaskScheduleName}.\{taskID}.device=\{driverIndex}:\{taskNumber}");
                 }
@@ -2017,7 +2017,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
 
             updateHistoryTables(policy, deviceWinnerIndex);
 
-            if (Tornado.DEBUG) {
+            if (TornadoOptions.DEBUG) {
                 System.out.println(getListDevices(driver));
                 System.out.println(STR."BEST Position: #\{deviceWinnerIndex} \{Arrays.toString(totalTimers)}");
             }
@@ -2071,7 +2071,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
     private TornadoTaskGraphInterface scheduleDynamicReconfigurationSequential(Policy policy) {
 
         if (policy == Policy.LATENCY) {
-            if (Tornado.DEBUG) {
+            if (TornadoOptions.DEBUG) {
                 System.out.println("[WARNING]: LATENCY policy using the DRMode.SERIAL is not allowed. Changing to PERFORMANCE mode");
             }
             policy = Policy.PERFORMANCE;
@@ -2248,7 +2248,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
             addInner(index, type, method, meta, id, parameters);
         } catch (TornadoBailoutRuntimeException e) {
             this.bailout = true;
-            if (!Tornado.DEBUG) {
+            if (!TornadoOptions.DEBUG) {
                 System.out.println(WARNING_DEOPT_MESSAGE);
             }
             throw e;
@@ -2276,7 +2276,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
             addInner(type, method, meta, id, parameters);
         } catch (TornadoBailoutRuntimeException e) {
             this.bailout = true;
-            if (!Tornado.DEBUG) {
+            if (!TornadoOptions.DEBUG) {
                 System.out.println(WARNING_DEOPT_MESSAGE);
             }
             throw e; // Rethrow the same exception

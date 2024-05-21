@@ -24,10 +24,8 @@
 package uk.ac.manchester.tornado.runtime.interpreter;
 
 import static uk.ac.manchester.tornado.api.enums.TornadoExecutionStatus.COMPLETE;
-import static uk.ac.manchester.tornado.runtime.common.Tornado.ENABLE_PROFILING;
-import static uk.ac.manchester.tornado.runtime.common.Tornado.USE_VM_FLUSH;
-import static uk.ac.manchester.tornado.runtime.common.Tornado.VM_USE_DEPS;
 import static uk.ac.manchester.tornado.runtime.common.TornadoOptions.VIRTUAL_DEVICE_ENABLED;
+import static uk.ac.manchester.tornado.runtime.common.TornadoOptions.VM_USE_DEPS;
 
 import java.util.Arrays;
 import java.util.BitSet;
@@ -54,7 +52,6 @@ import uk.ac.manchester.tornado.api.profiler.ProfilerType;
 import uk.ac.manchester.tornado.api.profiler.TornadoProfiler;
 import uk.ac.manchester.tornado.runtime.EmptyEvent;
 import uk.ac.manchester.tornado.runtime.common.KernelStackFrame;
-import uk.ac.manchester.tornado.runtime.common.Tornado;
 import uk.ac.manchester.tornado.runtime.common.TornadoInstalledCode;
 import uk.ac.manchester.tornado.runtime.common.TornadoLogger;
 import uk.ac.manchester.tornado.runtime.common.TornadoOptions;
@@ -102,6 +99,8 @@ public class TornadoVMInterpreter {
     private boolean finishedWarmup;
     private GridScheduler gridScheduler;
 
+    private TornadoLogger logger = new TornadoLogger(this.getClass());
+
     /**
      * It constructs a new TornadoVMInterpreter object.
      *
@@ -126,7 +125,7 @@ public class TornadoVMInterpreter {
         totalTime = 0;
         invocations = 0;
 
-        TornadoLogger.debug("init an instance of a TornadoVM interpreter...");
+        logger.debug("init an instance of a TornadoVM interpreter...");
 
         this.bytecodeResult.getLong(); // Skips bytes not needed
 
@@ -143,8 +142,8 @@ public class TornadoVMInterpreter {
             eventsIndexes[i] = 0;
         }
 
-        TornadoLogger.debug("created %d kernelStackFrame", kernelStackFrame.length);
-        TornadoLogger.debug("created %d event lists", events.length);
+        logger.debug("created %d kernelStackFrame", kernelStackFrame.length);
+        logger.debug("created %d event lists", events.length);
 
         objects = executionContext.getObjects();
         dataObjectStates = new DataObjectState[objects.size()];
@@ -155,7 +154,7 @@ public class TornadoVMInterpreter {
         constants = executionContext.getConstants();
         tasks = executionContext.getTasks();
 
-        TornadoLogger.debug("interpreter for device %s is ready to go", device.toString());
+        logger.debug("interpreter for device %s is ready to go", device.toString());
 
         this.bytecodeResult.mark();
     }
@@ -178,11 +177,11 @@ public class TornadoVMInterpreter {
             TornadoInternalError.guarantee(op == TornadoVMBytecodes.CONTEXT.value(), "invalid code: 0x%x", op);
             final int deviceIndex = bytecodeResult.getInt();
             assert deviceIndex == deviceForInterpreter.getDeviceContext().getDeviceIndex();
-            TornadoLogger.debug("loading context %s", deviceForInterpreter.toString());
+            logger.debug("loading context %s", deviceForInterpreter.toString());
             final long t0 = System.nanoTime();
             deviceForInterpreter.ensureLoaded(executionContext.getExecutionPlanId());
             final long t1 = System.nanoTime();
-            TornadoLogger.debug("loaded in %.9f s", (t1 - t0) * 1e-9);
+            logger.debug("loaded in %.9f s", (t1 - t0) * 1e-9);
             op = bytecodeResult.get();
         }
     }
@@ -202,8 +201,8 @@ public class TornadoVMInterpreter {
     }
 
     public void dumpEvents() {
-        if (!ENABLE_PROFILING || !executionContext.meta().shouldDumpEvents()) {
-            TornadoLogger.info("profiling and/or event dumping is not enabled");
+        if (!TornadoOptions.TORNADO_PROFILER || !executionContext.meta().shouldDumpEvents()) {
+            logger.info("profiling and/or event dumping is not enabled");
             return;
         }
 
@@ -212,7 +211,7 @@ public class TornadoVMInterpreter {
 
     public void dumpProfiles() {
         if (!executionContext.meta().shouldDumpProfiles()) {
-            TornadoLogger.info("profiling is not enabled");
+            logger.info("profiling is not enabled");
             return;
         }
 
@@ -352,7 +351,7 @@ public class TornadoVMInterpreter {
                 barrier = deviceForInterpreter.resolveEvent(executionContext.getExecutionPlanId(), event);
             }
 
-            if (USE_VM_FLUSH) {
+            if (TornadoOptions.USE_VM_FLUSH) {
                 deviceForInterpreter.flush(executionContext.getExecutionPlanId());
             }
         }
@@ -365,7 +364,7 @@ public class TornadoVMInterpreter {
         }
 
         if (executionContext.meta().isDebug()) {
-            TornadoLogger.debug("bc: complete elapsed=%.9f s (%d iterations, %.9f s mean)", elapsed, invocations, (totalTime / invocations));
+            logger.debug("bc: complete elapsed=%.9f s (%d iterations, %.9f s mean)", elapsed, invocations, (totalTime / invocations));
         }
 
         bytecodeResult.reset();
@@ -549,20 +548,32 @@ public class TornadoVMInterpreter {
 
         final KernelStackFrame callWrapper = resolveCallWrapper(callWrapperIndex, numArgs, kernelStackFrame, deviceForInterpreter, redeployOnDevice);
         final SchedulableTask task = tasks.get(taskIndex);
+        int currentBatch = task.getBatchNumber();
         TaskMetaDataInterface meta = task.meta();
         meta.setPrintKernelFlag(executionContext.meta().isPrintKernelEnabled());
 
-        // Check if a different batch size was used for the same kernel. If true, then
-        // the kernel needs to be recompiled.
+        boolean indexInWrite = deviceForInterpreter.loopIndexInWrite(task);
+        // Check if a different batch size was used for the same kernel or
+        // if the loop index is written in the output buffer, and we are not in the first batch.
+        // If any is true, then the kernel needs to be recompiled.
         int localTaskIndex = globalToLocalTaskIndex(taskIndex);
         TornadoInstalledCode installedCode = installedCodes[localTaskIndex];
-        if (!shouldCompile(installedCode) && task.getBatchThreads() != 0 && task.getBatchThreads() != batchThreads) {
+        if ((!shouldCompile(installedCode) && task.getBatchThreads() != 0 && task.getBatchThreads() != batchThreads) || (currentBatch > 0 && indexInWrite)) {
             task.forceCompilation();
             installedCode.invalidate();
         }
 
         // Set the batch size in the task information
         task.setBatchThreads(batchThreads);
+
+        // The batch size is only set once. This is because, for the calculations of the
+        // offset to be correct, we need to propagate the initial batch size, not the size
+        // of the remaining chunk, if the batches are uneven.
+        if (task.getBatchSize() == 0 && indexInWrite) {
+            task.setBatchSize(batchThreads);
+        }
+
+        task.setBatchNumber(currentBatch);
         task.enableDefaultThreadScheduler(executionContext.useDefaultThreadScheduler());
 
         if (gridScheduler != null && gridScheduler.get(task.getId()) != null) {
@@ -589,6 +600,11 @@ public class TornadoVMInterpreter {
                 }
                 installedCodes[localTaskIndex] = installedCode = deviceForInterpreter.installCode(task);
                 profilerUpdateForPreCompiledTask(task);
+                // After the compilation has been completed, increment
+                // the batch number of the task and update it.
+                if (indexInWrite) {
+                    task.setBatchNumber(++currentBatch);
+                }
             } catch (TornadoBailoutRuntimeException e) {
                 throw new TornadoBailoutRuntimeException("Unable to compile " + task.getFullName() + "\n" + "The internal error is: " + e.getMessage() + "\n" + "Stacktrace: " + Arrays.toString(e
                         .getStackTrace()), e);
@@ -721,7 +737,7 @@ public class TornadoVMInterpreter {
             */
             return single(lastEvent);
         } catch (Exception e) {
-            if (Tornado.DEBUG) {
+            if (TornadoOptions.DEBUG) {
                 e.printStackTrace();
             }
             throw new TornadoBailoutRuntimeException("Bailout from LAUNCH Bytecode: \nReason: " + e.toString(), e);
@@ -761,7 +777,7 @@ public class TornadoVMInterpreter {
 
     private void throwErrorInterpreter(byte op) {
         if (executionContext.meta().isDebug()) {
-            TornadoLogger.debug("bc: invalid op 0x%x(%d)", op, op);
+            logger.debug("bc: invalid op 0x%x(%d)", op, op);
         }
         throw new TornadoRuntimeException("[ERROR] TornadoVM Bytecode not recognized");
     }
@@ -791,7 +807,7 @@ public class TornadoVMInterpreter {
 
     private KernelStackFrame resolveCallWrapper(int index, int numArgs, KernelStackFrame[] kernelStackFrame, TornadoXPUDevice device, boolean redeployOnDevice) {
         if (executionContext.meta().isDebug() && redeployOnDevice) {
-            TornadoLogger.debug("Recompiling task on device " + device);
+            logger.debug("Recompiling task on device " + device);
         }
         if (kernelStackFrame[index] == null || redeployOnDevice) {
             kernelStackFrame[index] = device.createKernelStackFrame(numArgs);
