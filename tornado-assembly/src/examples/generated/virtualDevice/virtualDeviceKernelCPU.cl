@@ -3,87 +3,82 @@
 #pragma OPENCL EXTENSION cl_khr_int64_base_atomics : enable
 __kernel void maxReduction(__global long *_kernel_context, __constant uchar *_constant_region, __local uchar *_local_region, __global int *_atomics, __global uchar *input, __global uchar *result)
 {
-  long l_35, l_34, l_36, l_15, l_14, l_13;
-  ulong ul_1, ul_0, ul_16, ul_37;
-  bool b_30, b_23;
-  float f_31, f_17, f_27, f_24, f_26;
-  int i_12, i_11, i_10, i_9, i_8, i_7, i_6, i_38, i_5, i_4, i_3, i_33, i_32, i_29, i_28, i_25, i_22, i_21, i_20, i_19, i_18;
+  ulong ul_11, ul_0, ul_32, ul_1; 
+  bool b_18, b_25; 
+  int i_24, i_23, i_28, i_27, i_16, i_15, i_17, i_20, i_7, i_14, i_13, i_33, i_4, i_3, i_6, i_5; 
+  long l_9, l_8, l_10, l_29, l_31, l_30; 
+  float f_26, f_12, f_22, f_19, f_21; 
 
   // BLOCK 0
   ul_0  =  (ulong) input;
   ul_1  =  (ulong) result;
   __local float adf_2[2048];
   i_3  =  get_global_size(0);
-  i_4  =  i_3 + 8191;
-  i_5  =  i_4 / i_3;
-  i_6  =  get_global_id(0);
-  i_7  =  i_5 * i_6;
-  i_8  =  i_7 + i_5;
-  i_9  =  min(i_8, 8192);
+  i_4  =  get_global_id(0);
   // BLOCK 1 MERGES [0 11 ]
-  i_10  =  i_7;
-  for(;i_10 < i_9;)
+  i_5  =  i_4;
+  for(;i_5 < 8192;)
   {
     // BLOCK 2
-    i_11  =  get_local_id(0);
-    i_12  =  get_local_size(0);
-    l_13  =  (long) i_10;
-    l_14  =  l_13 << 2;
-    l_15  =  l_14 + 24L;
-    ul_16  =  ul_0 + l_15;
-    f_17  =  *((__global float *) ul_16);
-    adf_2[i_11]  =  f_17;
-    i_18  =  i_12 >> 31;
-    i_19  =  i_18 + i_12;
-    i_20  =  i_19 >> 1;
+    i_6  =  get_local_id(0);
+    i_7  =  get_local_size(0);
+    l_8  =  (long) i_5;
+    l_9  =  l_8 << 2;
+    l_10  =  l_9 + 24L;
+    ul_11  =  ul_0 + l_10;
+    f_12  =  *((__global float *) ul_11);
+    adf_2[i_6]  =  f_12;
+    i_13  =  i_7 >> 31;
+    i_14  =  i_13 + i_7;
+    i_15  =  i_14 >> 1;
     // BLOCK 3 MERGES [2 7 ]
-    i_21  =  i_20;
-    for(;i_21 >= 1;)
+    i_16  =  i_15;
+    for(;i_16 >= 1;)
     {
       // BLOCK 4
       barrier(CLK_LOCAL_MEM_FENCE);
-      i_22  =  i_21 >> 1;
-      b_23  =  i_11 < i_21;
-      if(b_23)
+      i_17  =  i_16 >> 1;
+      b_18  =  i_6 < i_16;
+      if(b_18)
       {
         // BLOCK 5
-        f_24  =  adf_2[i_11];
-        i_25  =  i_21 + i_11;
-        f_26  =  adf_2[i_25];
-        f_27  =  fmax(f_24, f_26);
-        adf_2[i_11]  =  f_27;
+        f_19  =  adf_2[i_6];
+        i_20  =  i_16 + i_6;
+        f_21  =  adf_2[i_20];
+        f_22  =  fmax(f_19, f_21);
+        adf_2[i_6]  =  f_22;
       }  // B5
       else
       {
         // BLOCK 6
       }  // B6
       // BLOCK 7 MERGES [6 5 ]
-      i_28  =  i_22;
-      i_21  =  i_28;
+      i_23  =  i_17;
+      i_16  =  i_23;
     }  // B7
     // BLOCK 8
     barrier(CLK_GLOBAL_MEM_FENCE);
-    i_29  =  i_10 + 1;
-    b_30  =  i_11 == 0;
-    if(b_30)
+    i_24  =  i_3 + i_5;
+    b_25  =  i_6 == 0;
+    if(b_25)
     {
       // BLOCK 9
-      f_31  =  adf_2[0];
-      i_32  =  get_group_id(0);
-      i_33  =  i_32 + 1;
-      l_34  =  (long) i_33;
-      l_35  =  l_34 << 2;
-      l_36  =  l_35 + 24L;
-      ul_37  =  ul_1 + l_36;
-      *((__global float *) ul_37)  =  f_31;
+      f_26  =  adf_2[0];
+      i_27  =  get_group_id(0);
+      i_28  =  i_27 + 1;
+      l_29  =  (long) i_28;
+      l_30  =  l_29 << 2;
+      l_31  =  l_30 + 24L;
+      ul_32  =  ul_1 + l_31;
+      *((__global float *) ul_32)  =  f_26;
     }  // B9
     else
     {
       // BLOCK 10
     }  // B10
     // BLOCK 11 MERGES [10 9 ]
-    i_38  =  i_29;
-    i_10  =  i_38;
+    i_33  =  i_24;
+    i_5  =  i_33;
   }  // B11
   // BLOCK 12
   return;
@@ -94,8 +89,8 @@ __kernel void maxReduction(__global long *_kernel_context, __constant uchar *_co
 #pragma OPENCL EXTENSION cl_khr_int64_base_atomics : enable
 __kernel void rMax(__global long *_kernel_context, __constant uchar *_constant_region, __local uchar *_local_region, __global int *_atomics, __global uchar *array, __private int size)
 {
-  ulong ul_1, ul_0, ul_21, ul_19, ul_25, ul_23, ul_13, ul_11, ul_17, ul_15, ul_5, ul_3, ul_9, ul_7;
-  float f_4, f_6, f_2, f_12, f_14, f_8, f_10, f_36, f_35, f_38, f_37, f_32, f_31, f_34, f_33, f_20, f_22, f_16, f_18, f_28, f_27, f_30, f_29, f_24, f_26;
+  ulong ul_21, ul_19, ul_25, ul_23, ul_0, ul_1, ul_5, ul_3, ul_9, ul_7, ul_13, ul_11, ul_17, ul_15; 
+  float f_38, f_2, f_4, f_10, f_12, f_6, f_8, f_18, f_20, f_14, f_16, f_26, f_27, f_28, f_29, f_22, f_24, f_34, f_35, f_36, f_37, f_30, f_31, f_32, f_33; 
 
   // BLOCK 0
   ul_0  =  (ulong) array;
