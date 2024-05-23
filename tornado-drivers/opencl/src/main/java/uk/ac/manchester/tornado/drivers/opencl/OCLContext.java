@@ -30,8 +30,10 @@ import java.util.List;
 
 import uk.ac.manchester.tornado.api.exceptions.TornadoNoOpenCLPlatformException;
 import uk.ac.manchester.tornado.api.exceptions.TornadoRuntimeException;
+import uk.ac.manchester.tornado.drivers.common.TornadoBufferProvider;
 import uk.ac.manchester.tornado.drivers.opencl.enums.OCLCommandQueueProperties;
 import uk.ac.manchester.tornado.drivers.opencl.exceptions.OCLException;
+import uk.ac.manchester.tornado.drivers.opencl.runtime.OCLBufferProvider;
 import uk.ac.manchester.tornado.runtime.common.RuntimeUtilities;
 import uk.ac.manchester.tornado.runtime.common.TornadoLogger;
 import uk.ac.manchester.tornado.runtime.common.TornadoOptions;
@@ -43,7 +45,8 @@ public class OCLContext implements OCLExecutionEnvironment {
     private final List<OCLDeviceContext> deviceContexts;
     private final List<OCLProgram> programs;
     private final OCLPlatform platform;
-
+    private final TornadoBufferProvider bufferProvider;
+    
     private final TornadoLogger logger;
 
     public OCLContext(OCLPlatform platform, long id, List<OCLTargetDevice> devices) {
@@ -51,6 +54,7 @@ public class OCLContext implements OCLExecutionEnvironment {
         this.contextID = id;
         this.devices = devices;
         this.deviceContexts = new ArrayList<>(devices.size());
+        this.bufferProvider = new OCLBufferProvider(this);
         this.programs = new ArrayList<>();
         this.logger = new TornadoLogger(this.getClass());
     }
@@ -86,6 +90,10 @@ public class OCLContext implements OCLExecutionEnvironment {
         return contextID;
     }
 
+    TornadoBufferProvider bufferProvider() {
+        return bufferProvider;
+    }
+    
     private void createCommandQueue(int index, long properties) {
         OCLTargetDevice device = devices.get(index);
         @SuppressWarnings("unused")
@@ -176,6 +184,7 @@ public class OCLContext implements OCLExecutionEnvironment {
                 program.cleanup();
             }
             long t1 = System.nanoTime();
+            bufferProvider.close();
             clReleaseContext(contextID);
             long t2 = System.nanoTime();
 

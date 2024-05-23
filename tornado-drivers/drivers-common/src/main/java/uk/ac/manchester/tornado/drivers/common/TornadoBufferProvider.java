@@ -96,8 +96,13 @@ public abstract class TornadoBufferProvider {
         return deviceMemoryPool.availableCapacity() >= numBuffersRequired;
     }
 
+    @Deprecated
     public synchronized void resetBuffers() {
         //freeBuffers(DEVICE_AVAILABLE_MEMORY);
+    }
+    
+    public void close() {
+        deviceMemoryPool.close();
     }
     
     class DeviceMemoryHandler implements MemoryResourceHandler<Long> {

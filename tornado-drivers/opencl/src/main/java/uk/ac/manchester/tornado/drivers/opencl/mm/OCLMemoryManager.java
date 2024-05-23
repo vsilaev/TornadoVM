@@ -28,22 +28,24 @@ import static uk.ac.manchester.tornado.runtime.common.TornadoOptions.DEVICE_AVAI
 
 import uk.ac.manchester.tornado.api.memory.XPUBuffer;
 import uk.ac.manchester.tornado.api.memory.TornadoMemoryProvider;
-import uk.ac.manchester.tornado.drivers.opencl.OCLContext;
 import uk.ac.manchester.tornado.drivers.opencl.OCLDeviceContext;
 import uk.ac.manchester.tornado.drivers.opencl.enums.OCLMemFlags;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class OCLMemoryManager implements TornadoMemoryProvider {
 
     private static final int MAX_NUMBER_OF_ATOMICS_PER_KERNEL = 128;
     private static final int INTEGER_BYTES_SIZE = 4;
     private final OCLDeviceContext deviceContext;
-    private Map<Long, OCLKernelStackFrame> oclKernelStackFrame = new ConcurrentHashMap<>();
+    private final Map<Long, OCLKernelStackFrame> oclKernelStackFrame = new ConcurrentHashMap<>();
+    private final AtomicBoolean atomicsRegionSet = new AtomicBoolean(false);
+    private volatile long atomicsRegion = -1;
+    
     private long constantPointer;
-    private long atomicsRegion = -1;
-
+    
     public OCLMemoryManager(final OCLDeviceContext deviceContext) {
         this.deviceContext = deviceContext;
     }
@@ -54,11 +56,10 @@ public class OCLMemoryManager implements TornadoMemoryProvider {
     }
 
     public OCLKernelStackFrame createKernelStackFrame(long threadId, final int numberOfArguments) {
-        if (!oclKernelStackFrame.containsKey(threadId)) {
-            long kernelStackFramePtr = deviceContext.getPlatformContext().createBuffer(OCLMemFlags.CL_MEM_READ_ONLY, RESERVED_SLOTS * Long.BYTES).getBuffer();
-            oclKernelStackFrame.put(threadId, new OCLKernelStackFrame(kernelStackFramePtr, numberOfArguments, deviceContext));
-        }
-        return oclKernelStackFrame.get(threadId);
+        return oclKernelStackFrame.computeIfAbsent(threadId, t -> {
+            long kernelStackFramePtr = createBuffer(RESERVED_SLOTS * Long.BYTES, OCLMemFlags.CL_MEM_READ_ONLY);
+            return new OCLKernelStackFrame(kernelStackFramePtr, numberOfArguments, deviceContext);
+        });
     }
 
     public XPUBuffer createAtomicsBuffer(final int[] array) {
@@ -69,16 +70,12 @@ public class OCLMemoryManager implements TornadoMemoryProvider {
      * Allocate regions on the device.
      */
     public void allocateDeviceMemoryRegions() {
-        this.constantPointer = createBuffer(OCLMemFlags.CL_MEM_READ_ONLY | OCLMemFlags.CL_MEM_ALLOC_HOST_PTR, 4).getBuffer();
+        this.constantPointer = createBuffer(4, OCLMemFlags.CL_MEM_READ_ONLY | OCLMemFlags.CL_MEM_ALLOC_HOST_PTR);
         allocateAtomicRegion();
     }
 
-    public OCLContext.OCLBufferResult createBuffer(long size, long flags) {
-        return deviceContext.getPlatformContext().createBuffer(flags, size);
-    }
-
-    public void releaseBuffer(long bufferId) {
-        deviceContext.getPlatformContext().releaseBuffer(bufferId);
+    private long createBuffer(long size, long flags) {
+        return deviceContext.getPlatformContext().createBuffer(flags, size).getBuffer();
     }
 
     long toConstantAddress() {
@@ -90,15 +87,17 @@ public class OCLMemoryManager implements TornadoMemoryProvider {
     }
 
     void allocateAtomicRegion() {
-        if (this.atomicsRegion == -1) {
-            this.atomicsRegion = deviceContext.getPlatformContext().createBuffer(OCLMemFlags.CL_MEM_READ_WRITE | OCLMemFlags.CL_MEM_ALLOC_HOST_PTR,
-                    INTEGER_BYTES_SIZE * MAX_NUMBER_OF_ATOMICS_PER_KERNEL).getBuffer();
+        if (atomicsRegionSet.compareAndSet(false, true)) {
+            this.atomicsRegion = createBuffer(INTEGER_BYTES_SIZE * MAX_NUMBER_OF_ATOMICS_PER_KERNEL,
+                    OCLMemFlags.CL_MEM_READ_WRITE | OCLMemFlags.CL_MEM_ALLOC_HOST_PTR);
+            
         }
     }
 
     void deallocateAtomicRegion() {
-        if (this.atomicsRegion != -1) {
-            deviceContext.getPlatformContext().releaseBuffer(this.atomicsRegion);
+        long prevAtomicsRegion = this.atomicsRegion;
+        if (prevAtomicsRegion != -1 && atomicsRegionSet.compareAndSet(true, false)) {
+            deviceContext.getPlatformContext().releaseBuffer(prevAtomicsRegion);
             this.atomicsRegion = -1;
         }
     }

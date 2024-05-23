@@ -56,7 +56,6 @@ import uk.ac.manchester.tornado.drivers.opencl.graal.compiler.OCLCompilationResu
 import uk.ac.manchester.tornado.drivers.opencl.mm.OCLMemoryManager;
 import uk.ac.manchester.tornado.drivers.opencl.power.OCLEmptyPowerMetric;
 import uk.ac.manchester.tornado.drivers.opencl.power.OCLNvidiaPowerMetric;
-import uk.ac.manchester.tornado.drivers.opencl.runtime.OCLBufferProvider;
 import uk.ac.manchester.tornado.drivers.opencl.runtime.OCLTornadoDevice;
 import uk.ac.manchester.tornado.runtime.common.TornadoOptions;
 import uk.ac.manchester.tornado.runtime.tasks.meta.TaskMetaData;
@@ -74,7 +73,6 @@ public class OCLDeviceContext implements OCLDeviceContextInterface {
     private final OCLMemoryManager memoryManager;
     private final OCLCodeCache codeCache;
     private final Map<Long, OCLEventPool> oclEventPool;
-    private final TornadoBufferProvider bufferProvider;
     private boolean wasReset;
     private Set<Long> executionIDs;
 
@@ -84,7 +82,6 @@ public class OCLDeviceContext implements OCLDeviceContextInterface {
         this.memoryManager = new OCLMemoryManager(this);
         this.codeCache = new OCLCodeCache(this);
         this.oclEventPool = new ConcurrentHashMap<>();
-        this.bufferProvider = new OCLBufferProvider(this);
         this.commandQueueTable = new ConcurrentHashMap<>();
         this.device.setDeviceContext(this);
         this.executionIDs = Collections.synchronizedSet(new HashSet<>());
@@ -149,7 +146,7 @@ public class OCLDeviceContext implements OCLDeviceContextInterface {
 
     @Override
     public TornadoBufferProvider getBufferProvider() {
-        return bufferProvider;
+        return context.bufferProvider();
     }
 
     @Override

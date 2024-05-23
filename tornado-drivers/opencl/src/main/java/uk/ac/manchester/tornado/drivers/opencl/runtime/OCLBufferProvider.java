@@ -24,23 +24,26 @@
 package uk.ac.manchester.tornado.drivers.opencl.runtime;
 
 import uk.ac.manchester.tornado.drivers.common.TornadoBufferProvider;
-import uk.ac.manchester.tornado.drivers.opencl.OCLDeviceContext;
+import uk.ac.manchester.tornado.drivers.opencl.OCLContext;
 import uk.ac.manchester.tornado.drivers.opencl.enums.OCLMemFlags;
 
 public class OCLBufferProvider extends TornadoBufferProvider {
 
-    public OCLBufferProvider(OCLDeviceContext deviceContext) {
-        super(deviceContext);
+    private final OCLContext context;
+    
+    public OCLBufferProvider(OCLContext context) {
+        super(null);
+        this.context = context;
     }
 
     @Override
     public long allocateBuffer(long size) {
-        return ((OCLDeviceContext) deviceContext).getMemoryManager().createBuffer(size, OCLMemFlags.CL_MEM_READ_WRITE).getBuffer();
+        return context.createBuffer(OCLMemFlags.CL_MEM_READ_WRITE, size).getBuffer();
     }
 
     @Override
     protected void releaseBuffer(long buffer) {
-        ((OCLDeviceContext) deviceContext).getMemoryManager().releaseBuffer(buffer);
+        context.releaseBuffer(buffer);
     }
 
 }
