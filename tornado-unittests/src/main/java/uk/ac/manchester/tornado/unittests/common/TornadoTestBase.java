@@ -74,7 +74,7 @@ public abstract class TornadoTestBase {
     }
 
     protected Tuple2<Integer, Integer> getDriverAndDeviceIndex() {
-        String defaultDeviceAndDriver = TornadoRuntime.getProperty("tornado.driver", "0") + ":" + TornadoRuntime.getProperty("tornado.device", "0");
+        String defaultDeviceAndDriver = TornadoRuntime.getProperty("tornado.backend", "0") + ":" + TornadoRuntime.getProperty("tornado.device", "0");
         String driverAndDevice = System.getProperty("tornado.unittests.device", defaultDeviceAndDriver);
         String[] propertyValues = driverAndDevice.split(":");
         return new Tuple2<>(Integer.parseInt(propertyValues[0]), Integer.parseInt(propertyValues[1]));
