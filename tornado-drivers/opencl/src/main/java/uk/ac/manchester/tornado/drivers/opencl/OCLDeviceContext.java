@@ -23,7 +23,6 @@
  */
 package uk.ac.manchester.tornado.drivers.opencl;
 
-import static uk.ac.manchester.tornado.drivers.opencl.OCLCommandQueue.EMPTY_EVENT;
 import static uk.ac.manchester.tornado.runtime.common.TornadoOptions.EVENT_WINDOW;
 
 import java.nio.ByteBuffer;
@@ -103,7 +102,7 @@ public class OCLDeviceContext implements OCLDeviceContextInterface {
 
     public ByteBuffer newDirectByteBuffer(long bytesCount) {
         // Device byte order is used here, not default OpenCL byte order
-        return OCLContext.allocateNativeMemory((int)bytesCount).order(device.getByteOrder());
+        return OpenCL.allocateNativeMemory((int)bytesCount).order(device.getByteOrder());
     }
 
     public static String checkKernelName(String entryPoint) {
@@ -259,17 +258,17 @@ public class OCLDeviceContext implements OCLDeviceContextInterface {
         if (eventID > 0 && (actualBuffer != buffer || autoRelease)) {
             onIntermediateEvent(executionPlanId, eventID, (status, error) -> {
                 if (actualBuffer != buffer) {
-                    OCLContext.releaseNativeMemory(actualBuffer);
+                    OpenCL.releaseNativeMemory(actualBuffer);
                 } else if (buffer.isDirect() && autoRelease) {
-                    OCLContext.releaseNativeMemory(buffer);
+                    OpenCL.releaseNativeMemory(buffer);
                 }
             });
         } else {
             // Clean-up on failure
             if (actualBuffer != buffer) {
-                OCLContext.releaseNativeMemory(actualBuffer);
+                OpenCL.releaseNativeMemory(actualBuffer);
             } else if (buffer.isDirect() && autoRelease) {
-                OCLContext.releaseNativeMemory(buffer);
+                OpenCL.releaseNativeMemory(buffer);
             }
         }
         return eventID;
@@ -322,9 +321,9 @@ public class OCLDeviceContext implements OCLDeviceContextInterface {
                     }
                 } finally {
                     if (actualBuffer != buffer) {
-                        OCLContext.releaseNativeMemory(actualBuffer);
+                        OpenCL.releaseNativeMemory(actualBuffer);
                     } else if (buffer.isDirect() && autoRelease) {
-                        OCLContext.releaseNativeMemory(buffer);
+                        OpenCL.releaseNativeMemory(buffer);
                     }
                     commandQueue.releaseAsyncTransferLock();
                 }
@@ -332,9 +331,9 @@ public class OCLDeviceContext implements OCLDeviceContextInterface {
         } else {
             // Clean-up on failure
             if (actualBuffer != buffer) {
-                OCLContext.releaseNativeMemory(actualBuffer);
+                OpenCL.releaseNativeMemory(actualBuffer);
             } else if (buffer.isDirect() && autoRelease) {
-                OCLContext.releaseNativeMemory(buffer);
+                OpenCL.releaseNativeMemory(buffer);
             }
             commandQueue.releaseAsyncTransferLock();            
         }
@@ -373,7 +372,7 @@ public class OCLDeviceContext implements OCLDeviceContextInterface {
             try {
                 eventVal = commandQueue.enqueueWrite(bufferId, OpenCLBlocking.TRUE, offset, bytes, offHeapBuffer, eventPool.serializeEvents(waitEvents, commandQueue));
             } finally {
-                OCLContext.releaseNativeMemory(offHeapBuffer);
+                OpenCL.releaseNativeMemory(offHeapBuffer);
             }
         }
         return eventPool.registerEvent(eventVal, EventDescriptor.DESC_WRITE_BYTE, commandQueue);
@@ -392,7 +391,7 @@ public class OCLDeviceContext implements OCLDeviceContextInterface {
             try {
                 eventVal = commandQueue.enqueueWrite(bufferId, OpenCLBlocking.TRUE, offset, bytes, offHeapBuffer, eventPool.serializeEvents(waitEvents, commandQueue));
             } finally {
-                OCLContext.releaseNativeMemory(offHeapBuffer);
+                OpenCL.releaseNativeMemory(offHeapBuffer);
             }
         }
         return eventPool.registerEvent(eventVal, EventDescriptor.DESC_WRITE_CHAR, commandQueue);
@@ -411,7 +410,7 @@ public class OCLDeviceContext implements OCLDeviceContextInterface {
             try {
                 eventVal = commandQueue.enqueueWrite(bufferId, OpenCLBlocking.TRUE, offset, bytes, offHeapBuffer, eventPool.serializeEvents(waitEvents, commandQueue));
             } finally {
-                OCLContext.releaseNativeMemory(offHeapBuffer);
+                OpenCL.releaseNativeMemory(offHeapBuffer);
             }
         }
         return eventPool.registerEvent(eventVal, EventDescriptor.DESC_WRITE_SHORT, commandQueue);        
@@ -430,7 +429,7 @@ public class OCLDeviceContext implements OCLDeviceContextInterface {
             try {
                 eventVal = commandQueue.enqueueWrite(bufferId, OpenCLBlocking.TRUE, offset, bytes, offHeapBuffer, eventPool.serializeEvents(waitEvents, commandQueue));
             } finally {
-                OCLContext.releaseNativeMemory(offHeapBuffer);
+                OpenCL.releaseNativeMemory(offHeapBuffer);
             }
         }
         return eventPool.registerEvent(eventVal, EventDescriptor.DESC_WRITE_INT, commandQueue);            
@@ -449,7 +448,7 @@ public class OCLDeviceContext implements OCLDeviceContextInterface {
             try {
                 eventVal = commandQueue.enqueueWrite(bufferId, OpenCLBlocking.TRUE, offset, bytes, offHeapBuffer, eventPool.serializeEvents(waitEvents, commandQueue));
             } finally {
-                OCLContext.releaseNativeMemory(offHeapBuffer);
+                OpenCL.releaseNativeMemory(offHeapBuffer);
             }
         }
         return eventPool.registerEvent(eventVal, EventDescriptor.DESC_WRITE_LONG, commandQueue);              
@@ -468,7 +467,7 @@ public class OCLDeviceContext implements OCLDeviceContextInterface {
             try {
                 eventVal = commandQueue.enqueueWrite(bufferId, OpenCLBlocking.TRUE, offset, bytes, offHeapBuffer, eventPool.serializeEvents(waitEvents, commandQueue));
             } finally {
-                OCLContext.releaseNativeMemory(offHeapBuffer);
+                OpenCL.releaseNativeMemory(offHeapBuffer);
             }
         }
         return eventPool.registerEvent(eventVal, EventDescriptor.DESC_WRITE_FLOAT, commandQueue);   
@@ -487,7 +486,7 @@ public class OCLDeviceContext implements OCLDeviceContextInterface {
             try {
                 eventVal = commandQueue.enqueueWrite(bufferId, OpenCLBlocking.TRUE, offset, bytes, offHeapBuffer, eventPool.serializeEvents(waitEvents, commandQueue));
             } finally {
-                OCLContext.releaseNativeMemory(offHeapBuffer);
+                OpenCL.releaseNativeMemory(offHeapBuffer);
             }
         }
         return eventPool.registerEvent(eventVal, EventDescriptor.DESC_WRITE_DOUBLE, commandQueue);   
@@ -527,7 +526,7 @@ public class OCLDeviceContext implements OCLDeviceContextInterface {
                     onHeapBuffer.put(offHeapBuffer);
                 }
             } finally {
-                OCLContext.releaseNativeMemory(offHeapBuffer);
+                OpenCL.releaseNativeMemory(offHeapBuffer);
             }
         }
         return eventPool.registerEvent(eventVal, EventDescriptor.DESC_READ_BYTE, commandQueue);
@@ -548,7 +547,7 @@ public class OCLDeviceContext implements OCLDeviceContextInterface {
                     onHeapBuffer.put(offHeapBuffer.asCharBuffer());
                 }
             } finally {
-                OCLContext.releaseNativeMemory(offHeapBuffer);
+                OpenCL.releaseNativeMemory(offHeapBuffer);
             }
         }
         return eventPool.registerEvent(eventVal, EventDescriptor.DESC_READ_CHAR, commandQueue);        
@@ -569,7 +568,7 @@ public class OCLDeviceContext implements OCLDeviceContextInterface {
                     onHeapBuffer.put(offHeapBuffer.asShortBuffer());
                 }
             } finally {
-                OCLContext.releaseNativeMemory(offHeapBuffer);
+                OpenCL.releaseNativeMemory(offHeapBuffer);
             }
         }
         return eventPool.registerEvent(eventVal, EventDescriptor.DESC_READ_SHORT, commandQueue);            
@@ -590,7 +589,7 @@ public class OCLDeviceContext implements OCLDeviceContextInterface {
                     onHeapBuffer.put(offHeapBuffer.asIntBuffer());
                 }
             } finally {
-                OCLContext.releaseNativeMemory(offHeapBuffer);
+                OpenCL.releaseNativeMemory(offHeapBuffer);
             }
         }
         return eventPool.registerEvent(eventVal, EventDescriptor.DESC_READ_INT, commandQueue);          
@@ -611,7 +610,7 @@ public class OCLDeviceContext implements OCLDeviceContextInterface {
                     onHeapBuffer.put(offHeapBuffer.asLongBuffer());
                 }
             } finally {
-                OCLContext.releaseNativeMemory(offHeapBuffer);
+                OpenCL.releaseNativeMemory(offHeapBuffer);
             }
         }
         return eventPool.registerEvent(eventVal, EventDescriptor.DESC_READ_LONG, commandQueue);         
@@ -632,7 +631,7 @@ public class OCLDeviceContext implements OCLDeviceContextInterface {
                     onHeapBuffer.put(offHeapBuffer.asFloatBuffer());
                 }
             } finally {
-                OCLContext.releaseNativeMemory(offHeapBuffer);
+                OpenCL.releaseNativeMemory(offHeapBuffer);
             }
         }
         return eventPool.registerEvent(eventVal, EventDescriptor.DESC_READ_FLOAT, commandQueue);          
@@ -653,7 +652,7 @@ public class OCLDeviceContext implements OCLDeviceContextInterface {
                     onHeapBuffer.put(offHeapBuffer.asDoubleBuffer());
                 }
             } finally {
-                OCLContext.releaseNativeMemory(offHeapBuffer);
+                OpenCL.releaseNativeMemory(offHeapBuffer);
             }
         }
         return eventPool.registerEvent(eventVal, EventDescriptor.DESC_READ_DOUBLE, commandQueue);         

@@ -38,13 +38,6 @@
 #include "ocl_log.h"
 #include "global_vars.h"
 
-#if _WIN32
-#define posix_memalign(p, a, s) (((*(p)) = _aligned_malloc((s), (a))), *(p) ?0 :errno)
-#define posix_memalign_free _aligned_free
-#else
-#define posix_memalign_free free
-#endif
-
 /*
  * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLContext
  * Method:    clReleaseContext
@@ -84,35 +77,6 @@ JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLContext_
     cl_command_queue queue = clCreateCommandQueue((cl_context) context_id, (cl_device_id) device_id, (cl_command_queue_properties) properties, &status);
     LOG_OCL_AND_VALIDATE("clCreateCommandQueue", status);
     return CL_SUCCESS == status ? (jlong) queue : (jlong) status;
-}
-
-/*
- * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLContext
- * Method:    allocateNativeMemory
- * Signature: (JJ)Ljava/nio/ByteBuffer;
- */
-JNIEXPORT jobject JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLContext_allocateNativeMemory
-(JNIEnv *env, jclass clazz, jlong size, jlong alignment) {
-    void *ptr;
-    int rc = posix_memalign(&ptr, (size_t) alignment, (size_t) size);
-    if (rc != 0) {
-        printf("OpenCL off-heap memory allocation (posix_memalign) failed. Error value: %d.\n", rc);
-        return NULL;
-    } else {
-        memset(ptr, 0, (size_t) size);
-        return env->NewDirectByteBuffer(ptr, size);
-    }
-}
-
-/*
- * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLContext
- * Method:    freeNativeMemory
- * Signature: (Ljava/nio/ByteBuffer;)V
- */
-JNIEXPORT void JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLContext_freeNativeMemory
-(JNIEnv *env, jclass clazz, jobject buffer) {
-	void *address = env->GetDirectBufferAddress(buffer);
-	posix_memalign_free(address);
 }
 
 /*

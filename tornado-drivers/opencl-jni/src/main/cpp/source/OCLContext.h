@@ -58,22 +58,6 @@ JNIEXPORT jlong JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLContext_
 
 /*
  * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLContext
- * Method:    allocateNativeMemory
- * Signature: (JJ)Ljava/nio/ByteBuffer;
- */
-JNIEXPORT jobject JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLContext_allocateNativeMemory
-(JNIEnv *env, jclass clazz, jlong size, jlong alignment);
-
-/*
- * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLContext
- * Method:    freeNativeMemory
- * Signature: (Ljava/nio/ByteBuffer;)V
- */
-JNIEXPORT void JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLContext_freeNativeMemory
-(JNIEnv *env, jclass clazz, jobject buffer);
-
-/*
- * Class:     uk_ac_manchester_tornado_drivers_opencl_OCLContext
  * Method:    createBuffer
  * Signature: (JJJJ)Luk/ac/manchester/tornado/drivers/opencl/OCLContext/OCLBufferResult;
  */

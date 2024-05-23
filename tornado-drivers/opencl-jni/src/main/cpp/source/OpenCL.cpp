@@ -41,6 +41,13 @@
 #include "ocl_log.h"
 #include "global_vars.h"
 
+#if _WIN32
+#define posix_memalign(p, a, s) (((*(p)) = _aligned_malloc((s), (a))), *(p) ?0 :errno)
+#define posix_memalign_free _aligned_free
+#else
+#define posix_memalign_free free
+#endif
+
 jint JNI_OnLoad(JavaVM *vm, void *reserved) {
     jint INVALID_RESULT = -1;
 
@@ -127,4 +134,33 @@ JNIEXPORT jint JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OpenCL_clGet
     LOG_OCL_AND_VALIDATE("clGetPlatformIDs", status);
     env->ReleasePrimitiveArrayCritical(array, platforms, 0);
     return (jint) num_platforms;
+}
+
+/*
+ * Class:     uk_ac_manchester_tornado_drivers_opencl_OpenCL
+ * Method:    allocateNativeMemory
+ * Signature: (JJ)Ljava/nio/ByteBuffer;
+ */
+JNIEXPORT jobject JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OpenCL_allocateNativeMemory
+(JNIEnv *env, jclass clazz, jlong size, jlong alignment) {
+    void *ptr;
+    int rc = posix_memalign(&ptr, (size_t) alignment, (size_t) size);
+    if (rc != 0) {
+        printf("OpenCL off-heap memory allocation (posix_memalign) failed. Error value: %d.\n", rc);
+        return NULL;
+    } else {
+        memset(ptr, 0, (size_t) size);
+        return env->NewDirectByteBuffer(ptr, size);
+    }
+}
+
+/*
+ * Class:     uk_ac_manchester_tornado_drivers_opencl_OpenCL
+ * Method:    freeNativeMemory
+ * Signature: (Ljava/nio/ByteBuffer;)V
+ */
+JNIEXPORT void JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OpenCL_freeNativeMemory
+(JNIEnv *env, jclass clazz, jobject buffer) {
+	void *address = env->GetDirectBufferAddress(buffer);
+	posix_memalign_free(address);
 }

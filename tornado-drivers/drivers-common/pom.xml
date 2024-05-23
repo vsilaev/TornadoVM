@@ -11,5 +11,11 @@
 
     <name>tornado-drivers-common</name>
     <artifactId>tornado-drivers-common</artifactId>
-
+    <dependencies>
+        <dependency>
+            <groupId>net.tascalate</groupId>
+            <artifactId>net.tascalate.memorypool</artifactId>
+            <version>0.9.0</version>
+        </dependency>
+    </dependencies>
 </project>

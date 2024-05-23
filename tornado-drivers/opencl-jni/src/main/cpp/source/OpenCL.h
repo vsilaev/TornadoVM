@@ -60,6 +60,24 @@ JNIEXPORT jint JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OpenCL_clGet
 JNIEXPORT jint JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OpenCL_clGetPlatformIDs
         (JNIEnv *, jclass, jlongArray);
 
+/*
+ * Class:     uk_ac_manchester_tornado_drivers_opencl_OpenCL
+ * Method:    allocateNativeMemory
+ * Signature: (JJ)Ljava/nio/ByteBuffer;
+ */
+JNIEXPORT jobject JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OpenCL_allocateNativeMemory
+(JNIEnv *env, jclass clazz, jlong size, jlong alignment);
+
+/*
+ * Class:     uk_ac_manchester_tornado_drivers_opencl_OpenCL
+ * Method:    freeNativeMemory
+ * Signature: (Ljava/nio/ByteBuffer;)V
+ */
+JNIEXPORT void JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OpenCL_freeNativeMemory
+(JNIEnv *env, jclass clazz, jobject buffer);
+
+
+
 jint JNI_OnLoad(JavaVM *vm, void *reserved);
 
 void JNI_OnUnload(JavaVM *vm, void *reserved);

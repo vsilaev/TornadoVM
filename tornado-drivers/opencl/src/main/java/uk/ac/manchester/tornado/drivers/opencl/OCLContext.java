@@ -25,11 +25,9 @@
  */
 package uk.ac.manchester.tornado.drivers.opencl;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-import uk.ac.manchester.tornado.api.exceptions.TornadoInternalError;
 import uk.ac.manchester.tornado.api.exceptions.TornadoNoOpenCLPlatformException;
 import uk.ac.manchester.tornado.api.exceptions.TornadoRuntimeException;
 import uk.ac.manchester.tornado.drivers.opencl.enums.OCLCommandQueueProperties;
@@ -56,10 +54,6 @@ public class OCLContext implements OCLExecutionEnvironment {
         this.programs = new ArrayList<>();
         this.logger = new TornadoLogger(this.getClass());
     }
-
-    static native ByteBuffer allocateNativeMemory(long size, long alignment);
-
-    static native void freeNativeMemory(ByteBuffer memory);
     
     static native void clReleaseContext(long id) throws OCLException;
 
@@ -208,23 +202,6 @@ public class OCLContext implements OCLExecutionEnvironment {
         final OCLDeviceContext deviceContext = new OCLDeviceContext(devices.get(index), this);
         deviceContexts.add(deviceContext);
         return deviceContext;
-    }
-
-    public static ByteBuffer allocateNativeMemory(int size) {
-        long ALIGNMENT = 64;
-        long mod = size % ALIGNMENT;
-        long alignedSize = mod != 0 ? size + ALIGNMENT - mod : size; 
-        ByteBuffer result = allocateNativeMemory(size, ALIGNMENT);
-        if (null == result) {
-            throw new TornadoInternalError("Unable to allocate native memory of size " + size + "(" + alignedSize + ")");
-        }
-        result.order(OpenCL.BYTE_ORDER)
-              .limit(size);
-        return result;
-    }
-    
-    public static void releaseNativeMemory(ByteBuffer buffer) {
-        freeNativeMemory(buffer);
     }
 
     public OCLBufferResult createBuffer(long flags, long bytes) {
