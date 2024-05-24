@@ -414,9 +414,7 @@ public class OCLXPUBuffer implements XPUBuffer {
 
         internalEvents[index++] = deviceContext.enqueueReadBuffer(executionPlanId, toBuffer(), bufferOffset, getObjectSize(), sliceOfBuffer(buffer, hostOffset), (useDeps) ? events : null, false,
                                                                   __ -> deserialise(reference));
-        if (index < 1) {
-            returnEvent = -1;
-        } else if (index == 1) {
+        if (index == 1) {
             returnEvent = internalEvents[0];
         } else {
             returnEvent = deviceContext.enqueueMarker(executionPlanId, internalEvents);
