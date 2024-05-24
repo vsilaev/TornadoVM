@@ -403,7 +403,7 @@ public class OCLXPUBuffer implements XPUBuffer {
     public int enqueueRead(long executionPlanId, Object reference, long hostOffset, int[] events, boolean useDeps) {
         final int returnEvent;
         int index = 0;
-        int[] internalEvents = new int[fields.length];
+        int[] internalEvents = new int[fields.length + 1];
         Arrays.fill(internalEvents, -1);
 
         for (FieldBuffer fb : wrappedFields) {

@@ -31,7 +31,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
+import net.tascalate.memory.BucketSizer;
+import net.tascalate.memory.MemoryResourceHandler;
+import net.tascalate.memory.MemoryResourcePool;
 import uk.ac.manchester.tornado.api.TornadoTargetDevice;
 import uk.ac.manchester.tornado.api.common.Access;
 import uk.ac.manchester.tornado.api.exceptions.TornadoInternalError;
@@ -60,7 +64,39 @@ public class OpenCL {
     public static final int CL_TRUE = 1;
     public static final int CL_FALSE = 0;
 
+    private static final MemoryResourcePool<ByteBuffer> NATIVE_MEMORY_POOL;
+    
     static {
+        int ALIGNMENT = 64;
+        long memorySize = Runtime.getRuntime().maxMemory();
+        NATIVE_MEMORY_POOL = new MemoryResourcePool<>(
+                new MemoryResourceHandler<ByteBuffer>() {
+                    @Override
+                    public ByteBuffer create(long capacity) {
+                        return allocateNativeMemory(capacity, ALIGNMENT);
+                    }
+                    
+                    @Override
+                    public void setup(ByteBuffer resource, long size, boolean afterCreate) {
+                        resource.order(OpenCL.BYTE_ORDER)
+                                .limit((int)size);
+                    }
+    
+                    @Override
+                    public void destroy(ByteBuffer resource) {
+                        freeNativeMemory(resource);
+                    }
+    
+                    @Override
+                    public long capacityOf(ByteBuffer resource) {
+                        return resource.capacity();
+                    }
+                    
+                }, 
+                memorySize / 4, memorySize / 8,
+                BucketSizer.exponential(2).withMinCapacity(512).withAlignment(ALIGNMENT)
+            );
+        
         if (VIRTUAL_DEVICE_ENABLED) {
             initializeVirtual();
         } else {
@@ -76,10 +112,9 @@ public class OpenCL {
             } catch (final TornadoRuntimeException e) {
                 throw new TornadoRuntimeException("[ERROR] Initialization of the OpenCL platform is not correct");
             }
-
-            // add a shutdown hook to free-up all OpenCL resources on VM exit
-            Runtime.getRuntime().addShutdownHook(new Thread(OpenCL::cleanup, "OpenCL-Cleanup-Thread"));
         }
+        // add a shutdown hook to free-up all OpenCL resources on VM exit
+        Runtime.getRuntime().addShutdownHook(new Thread(OpenCL::cleanup, "OpenCL-Cleanup-Thread"));
     }
 
     static native boolean registerCallback();
@@ -98,6 +133,7 @@ public class OpenCL {
                 platform.cleanup();
             }
         }
+        NATIVE_MEMORY_POOL.close();
     }
 
     public static TornadoPlatformInterface getPlatform(int index) {
@@ -247,20 +283,15 @@ public class OpenCL {
     }
     
     public static ByteBuffer allocateNativeMemory(int size) {
-        long ALIGNMENT = 64;
-        long mod = size % ALIGNMENT;
-        long alignedSize = mod != 0 ? size + ALIGNMENT - mod : size; 
-        ByteBuffer result = allocateNativeMemory(size, ALIGNMENT);
-        if (null == result) {
-            throw new TornadoInternalError("Unable to allocate native memory of size " + size + "(" + alignedSize + ")");
+        try {
+            return NATIVE_MEMORY_POOL.acquire(size, 15, TimeUnit.SECONDS);
+        } catch (InterruptedException ex) {
+            throw new TornadoInternalError("Unable to allocate native memory of size " + size + "(" + size + ")");
         }
-        result.order(OpenCL.BYTE_ORDER)
-              .limit(size);
-        return result;
     }
     
     public static void releaseNativeMemory(ByteBuffer buffer) {
-        freeNativeMemory(buffer);
+        NATIVE_MEMORY_POOL.release(buffer);
     }
     
     static ByteBuffer createIntegerBuffer(int value) {
