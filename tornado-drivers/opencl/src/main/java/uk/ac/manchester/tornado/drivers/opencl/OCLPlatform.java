@@ -25,7 +25,10 @@ package uk.ac.manchester.tornado.drivers.opencl;
 
 import java.nio.LongBuffer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import uk.ac.manchester.tornado.api.exceptions.TornadoBailoutRuntimeException;
 import uk.ac.manchester.tornado.drivers.opencl.enums.OCLDeviceType;
@@ -37,6 +40,7 @@ public class OCLPlatform implements TornadoPlatformInterface {
     private final int index;
     private final long oclPlatformId;
     private final List<OCLTargetDevice> devices;
+    private final Set<OCLContext> contexts;
 
     private enum Vendor {
         CODEPLAY("Codeplay"), //
@@ -60,7 +64,7 @@ public class OCLPlatform implements TornadoPlatformInterface {
     public OCLPlatform(int index, long id) {
         this.index = index;
         this.oclPlatformId = id;
-        this.devices = new ArrayList<>();
+        this.contexts = ConcurrentHashMap.newKeySet();
 
         final int deviceCount;
 
@@ -80,10 +84,11 @@ public class OCLPlatform implements TornadoPlatformInterface {
         } else {
             clGetDeviceIDs(id, OCLDeviceType.CL_DEVICE_TYPE_ALL.getValue(), ids);
         }
+        List<OCLTargetDevice> devices = new ArrayList<>();
         for (int i = 0; i < ids.length; i++) {
             devices.add(new OCLDevice(i, ids[i]));
         }
-
+        this.devices = Collections.unmodifiableList(devices);
     }
 
     private boolean isVendor(Vendor vendor) {
@@ -111,6 +116,7 @@ public class OCLPlatform implements TornadoPlatformInterface {
         try {
             long contextPtr = clCreateContext(oclPlatformId, deviceIds.array());
             contextObject = new OCLContext(this, contextPtr, devices);
+            contexts.add(contextObject);
         } catch (OCLException e) {
             throw new TornadoBailoutRuntimeException(e.getMessage());
 
@@ -119,6 +125,11 @@ public class OCLPlatform implements TornadoPlatformInterface {
     }
 
     public void cleanup() {
+        for (OCLContext context : contexts) {
+            if (context != null) {
+                context.cleanup();
+            }
+        }
     }
 
     public String getProfile() {
