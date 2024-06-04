@@ -70,6 +70,8 @@ public class OCLDevice implements OCLTargetDevice {
     private OCLLocalMemType localMemoryType;
     private int deviceVendorID;
     private OCLDeviceContextInterface deviceContext;
+    private float spirvVersion = -1;
+
 
     public OCLDevice(int index, long id) {
         this.index = index;
@@ -121,7 +123,9 @@ public class OCLDevice implements OCLTargetDevice {
         getDeviceMaxWorkItemSizes();
         getDeviceMaxWorkGroupSize();
         getDeviceName();
+        /*
         getDeviceVersion();
+        */
         getDeviceType();
         getDeviceVendor();
         getDriverVersion();
@@ -302,7 +306,7 @@ public class OCLDevice implements OCLTargetDevice {
         }
         return new long[] { maxWorkGroupSize };
     }
-    
+
     @Override
     public int getMaxThreadsPerBlock() {
         return maxWorkGroupSize;
@@ -370,6 +374,25 @@ public class OCLDevice implements OCLTargetDevice {
     @Override
     public int deviceVersion() {
         return Integer.parseInt(getVersion().split(" ")[1].replace(".", "")) * 10;
+    }
+
+    @Override
+    public boolean isSPIRVSupported() {
+        if (spirvVersion != -1) {
+            return spirvVersion >= 1.2;
+        } else {
+            String versionQuery = queryStringValue(OCLDeviceInfo.CL_DEVICE_IL_VERSION);
+            String[] version = versionQuery.split("_");
+            if (version.length > 1) {
+                try {
+                    spirvVersion = Float.parseFloat(version[1]);
+                    return spirvVersion >= 1.2;
+                } catch (NumberFormatException e) {
+                    return false;
+                }
+            }
+            return false;
+        }
     }
 
     public int getWordSize() {

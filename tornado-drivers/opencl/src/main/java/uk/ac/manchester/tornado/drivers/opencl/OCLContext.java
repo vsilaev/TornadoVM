@@ -38,7 +38,7 @@ import uk.ac.manchester.tornado.runtime.common.RuntimeUtilities;
 import uk.ac.manchester.tornado.runtime.common.TornadoLogger;
 import uk.ac.manchester.tornado.runtime.common.TornadoOptions;
 
-public class OCLContext implements OCLExecutionEnvironment {
+public class OCLContext implements OCLContextInterface {
 
     private final long contextID;
     private final List<OCLTargetDevice> devices;
@@ -49,21 +49,21 @@ public class OCLContext implements OCLExecutionEnvironment {
     
     private final TornadoLogger logger;
 
-    public OCLContext(OCLPlatform platform, long id, List<OCLTargetDevice> devices) {
+    public OCLContext(OCLPlatform platform, long contextPointer, List<OCLTargetDevice> devices) {
         this.platform = platform;
-        this.contextID = id;
+        this.contextID = contextPointer;
         this.devices = devices;
         this.deviceContexts = new ArrayList<>(devices.size());
         this.bufferProvider = new OCLBufferProvider(this);
         this.programs = new ArrayList<>();
         this.logger = new TornadoLogger(this.getClass());
     }
-    
+
     static native void clReleaseContext(long id) throws OCLException;
 
     static native void clGetContextInfo(long id, int info, byte[] buffer) throws OCLException;
 
-    static native long clCreateCommandQueue(long contextId, long deviceId, long properties) throws OCLException;
+    public static native long clCreateCommandQueue(long contextId, long deviceId, long properties) throws OCLException;
 
     // creates an empty buffer on the device
     static native OCLBufferResult createBuffer(long contextId, long flags, long size, long hostPointer) throws OCLException;
@@ -86,6 +86,7 @@ public class OCLContext implements OCLExecutionEnvironment {
         return devices;
     }
 
+    @Override
     public long getContextId() {
         return contextID;
     }
@@ -96,15 +97,13 @@ public class OCLContext implements OCLExecutionEnvironment {
     
     private void createCommandQueue(int index, long properties) {
         OCLTargetDevice device = devices.get(index);
-        @SuppressWarnings("unused")
-        long commandQueuePtr;
         try {
             final int platformVersion = Integer.parseInt(platform.getVersion().split(" ")[1].replace(".", "")) * 10;
             final int deviceVersion = Integer.parseInt(device.getVersion().split(" ")[1].replace(".", "")) * 10;
             logger.info("platform: version=%s (%s) on %s", platformVersion, platform.getVersion(), device.getDeviceName());
             logger.info("device  : version=%s (%s) on %s", deviceVersion, device.getVersion(), device.getDeviceName());
 
-            commandQueuePtr = clCreateCommandQueue(contextID, device.getId(), properties);
+            clCreateCommandQueue(contextID, device.getId(), properties);
         } catch (OCLException e) {
             logger.error(e.getMessage());
             throw new TornadoRuntimeException("[ERROR] OpenCL Command Queue Initialization not valid");

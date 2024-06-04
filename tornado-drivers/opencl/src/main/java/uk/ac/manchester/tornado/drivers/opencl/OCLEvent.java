@@ -54,7 +54,7 @@ public class OCLEvent implements Event {
         abstract void execute(long oclEventID, int status);
     }
 
-    OCLEvent(String eventNameDescription, OCLCommandQueue queue, long oclEventID) {
+    public OCLEvent(String eventNameDescription, OCLCommandQueue queue, long oclEventID) {
         this.queue = queue;
         this.oclEventID = oclEventID;
         this.name = String.format("%s: 0x", eventNameDescription);

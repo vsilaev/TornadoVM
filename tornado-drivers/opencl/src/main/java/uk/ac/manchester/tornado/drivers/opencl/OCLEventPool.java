@@ -50,7 +50,7 @@ import uk.ac.manchester.tornado.runtime.common.TornadoOptions;
  * Relationship: one instance of the {@link OCLEventPool} per {@link OCLDeviceContext}.
  * </p>
  */
-class OCLEventPool {
+public class OCLEventPool {
 
     private final OCLEvent[] events;
     private final BitSet retain;
@@ -59,7 +59,7 @@ class OCLEventPool {
     private int eventPoolSize;
     private final TornadoLogger logger;
 
-    protected OCLEventPool(int poolSize) {
+    public OCLEventPool(int poolSize) {
         this.eventPoolSize = poolSize;
         this.retain = new BitSet(poolSize);
         this.retain.clear();
@@ -69,7 +69,7 @@ class OCLEventPool {
         this.logger = new TornadoLogger(this.getClass());
     }
 
-    protected int registerEvent(long oclEventID, EventDescriptor descriptorId, OCLCommandQueue queue) {
+    public int registerEvent(long oclEventID, EventDescriptor descriptorId, OCLCommandQueue queue) {
         if (retain.get(eventIndex)) {
             findNextEventSlot();
         }
@@ -107,7 +107,7 @@ class OCLEventPool {
         guarantee(eventIndex != -1, "event window is full (retained=%d, capacity=%d)", retain.cardinality(), eventPoolSize);
     }
 
-    protected long[] serializeEvents(int[] dependencies, OCLCommandQueue queue) {
+    public long[] serializeEvents(int[] dependencies, OCLCommandQueue queue) {
         boolean outOfOrderQueue = (queue.getProperties() & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE) == 1;
         if (dependencies == null || dependencies.length == 0 || !outOfOrderQueue) {
             return null;
@@ -158,7 +158,7 @@ class OCLEventPool {
         retain.clear(localEventID);
     }
 
-    protected OCLEvent getOCLEvent(int localEventID) {
+    public OCLEvent getOCLEvent(int localEventID) {
         return events[localEventID];
     }
 }

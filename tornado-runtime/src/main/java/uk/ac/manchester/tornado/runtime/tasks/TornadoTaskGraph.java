@@ -1708,7 +1708,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
 
     private void runScheduleWithParallelProfiler(TornadoBackend driver, Policy policy) {
         Timer timer = (TIME_IN_NANOSECONDS) ? new NanoSecTimer() : new MilliSecTimer();
-        int numDevices = driver.getDeviceCount();
+        int numDevices = driver.getBackendCounter();
 
         // One additional threads is reserved for sequential CPU execution
         int numThreads = numDevices + 1;
@@ -1815,7 +1815,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
         } else {
             // Run with the winner device
             int deviceWinnerIndex = policyTimeTable.get(policy);
-            if (deviceWinnerIndex >= driver.getDeviceCount()) {
+            if (deviceWinnerIndex >= driver.getBackendCounter()) {
                 runSequential();
             } else {
                 runTaskGraphParallelSelected(driver, deviceWinnerIndex);
@@ -1837,7 +1837,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
     @SuppressWarnings("unused")
     private void cloneInputOutputObjects(TornadoBackend driver) {
         final long startSearchProfiler = (TIME_IN_NANOSECONDS) ? System.nanoTime() : System.currentTimeMillis();
-        int numDevices = driver.getDeviceCount();
+        int numDevices = driver.getBackendCounter();
         // Clone objects (only outputs) for each device
         for (int deviceNumber = 0; deviceNumber < numDevices; deviceNumber++) {
             List<Object> newInObjects = new ArrayList<>();
@@ -1983,7 +1983,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
     private String getListDevices(TornadoBackend driver) {
         StringBuilder str = new StringBuilder();
         str.append("                  : [");
-        int num = driver.getDeviceCount();
+        int num = driver.getBackendCounter();
         for (int i = 0; i < num; i++) {
             TornadoDeviceType deviceType = driver.getDevice(i).getDeviceType();
             String type = switch (deviceType) {
@@ -2001,7 +2001,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
 
     private void runWithSequentialProfiler(TornadoBackend driver, Policy policy) {
         final Timer timer = (TIME_IN_NANOSECONDS) ? new NanoSecTimer() : new MilliSecTimer();
-        int numDevices = driver.getDeviceCount();
+        int numDevices = driver.getBackendCounter();
         final int totalTornadoDevices = numDevices + 1;
         long[] totalTimers = new long[totalTornadoDevices];
 
@@ -2078,7 +2078,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
         }
 
         TornadoBackend driver = getDriverToProfile();
-        int numDevices = driver.getDeviceCount();
+        int numDevices = driver.getBackendCounter();
 
         if (policyTimeTable.get(policy) == null) {
             runWithSequentialProfiler(driver, policy);

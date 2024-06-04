@@ -76,7 +76,7 @@ public class OCLDeviceContext implements OCLDeviceContextInterface {
     private boolean wasReset;
     private Set<Long> executionIDs;
 
-    OCLDeviceContext(OCLTargetDevice device, OCLContext context) {
+    public OCLDeviceContext(OCLTargetDevice device, OCLContext context) {
         this.device = device;
         this.context = context;
         this.memoryManager = new OCLMemoryManager(this);
@@ -116,7 +116,7 @@ public class OCLDeviceContext implements OCLDeviceContextInterface {
 
     @Override
     public String toString() {
-        return String.format("[%d] %s", getDevice().getIndex(), getDevice().getDeviceName());
+        return String.format("[%d] %s", this.getDevice().getIndex(), this.getDevice().getDeviceName());
     }
 
     @Override
@@ -284,7 +284,7 @@ public class OCLDeviceContext implements OCLDeviceContextInterface {
     private OCLCommandQueue getCommandQueue(long executionPlanId) {
         executionIDs.add(executionPlanId);
         return commandQueueTable.computeIfAbsent(executionPlanId, k -> new OCLCommandQueueTable())
-                                .get(device, context);
+                                .get(context.devices().get(getDeviceIndex()), context);
     }
 
     private OCLEventPool getOCLEventPool(long executionPlanId) {
@@ -729,7 +729,7 @@ public class OCLDeviceContext implements OCLDeviceContextInterface {
 
     @Override
     public boolean isPlatformFPGA() {
-        return getDevice().getDeviceType() == OCLDeviceType.CL_DEVICE_TYPE_ACCELERATOR && (getPlatformContext().getPlatform().getName().toLowerCase().contains("fpga") || isPlatformXilinxFPGA());
+        return this.getDevice().getDeviceType() == OCLDeviceType.CL_DEVICE_TYPE_ACCELERATOR && (getPlatformContext().getPlatform().getName().toLowerCase().contains("fpga") || isPlatformXilinxFPGA());
     }
 
     @Override

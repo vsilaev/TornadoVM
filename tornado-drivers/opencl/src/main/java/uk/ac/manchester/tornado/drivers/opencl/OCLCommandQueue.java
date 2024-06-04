@@ -32,11 +32,12 @@ import java.util.concurrent.Semaphore;
 
 import uk.ac.manchester.tornado.api.common.Event;
 import uk.ac.manchester.tornado.api.exceptions.TornadoBailoutRuntimeException;
+import uk.ac.manchester.tornado.drivers.common.CommandQueue;
 import uk.ac.manchester.tornado.drivers.opencl.exceptions.OCLException;
 import uk.ac.manchester.tornado.runtime.EmptyEvent;
 import uk.ac.manchester.tornado.runtime.common.TornadoLogger;
 
-public class OCLCommandQueue {
+public class OCLCommandQueue extends CommandQueue {
 
     protected static final Event EMPTY_EVENT = new EmptyEvent();
     private static final int ALL_TRANSFERS = 65535;
@@ -52,6 +53,10 @@ public class OCLCommandQueue {
         this.commandQueuePtr = commandQueuePtr;
         this.properties = properties;
         this.openclVersion = version;
+    }
+
+    public long getCommandQueuePtr() {
+        return commandQueuePtr;
     }
 
     static native void clReleaseCommandQueue(long queueId) throws OCLException;
