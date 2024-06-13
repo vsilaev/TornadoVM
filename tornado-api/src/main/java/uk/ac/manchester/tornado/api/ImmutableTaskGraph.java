@@ -120,6 +120,14 @@ public class ImmutableTaskGraph {
         return taskGraph.getDeviceKernelTime();
     }
 
+    long getTotalBytesCopyIn() {
+        return taskGraph.getTotalBytesCopyIn();
+    }
+
+    long getTotalBytesCopyOut() {
+        return taskGraph.getTotalBytesCopyOut();
+    }
+
     String getProfileLog() {
         return taskGraph.getProfileLog();
     }
@@ -198,5 +206,17 @@ public class ImmutableTaskGraph {
 
     void withGridScheduler(GridScheduler gridScheduler) {
         taskGraph.withGridScheduler(gridScheduler);
+    }
+
+    long getTotalBytesTransferred() {
+        return taskGraph.getTotalBytesTransferred();
+    }
+
+    long getTotalDeviceMemoryUsage() {
+        return taskGraph.getTotalDeviceMemoryUsage();
+    }
+
+    long getCurrentDeviceMemoryUsage() {
+        return taskGraph.getCurrentDeviceMemoryUsage();
     }
 }

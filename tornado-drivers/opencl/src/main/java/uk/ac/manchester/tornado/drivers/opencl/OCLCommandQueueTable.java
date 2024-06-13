@@ -55,7 +55,7 @@ public class OCLCommandQueueTable {
                 long commandProperties = context.getProperties();
                 long commandQueuePtr;
                 try {
-                    commandQueuePtr = OCLContext.clCreateCommandQueue(context.getContextId(), device.getId(), commandProperties);
+                    commandQueuePtr = OCLContext.clCreateCommandQueue(context.getContextId(), device.getDevicePointer(), commandProperties);
                 } catch (OCLException e) {
                     throw new TornadoRuntimeException(e);
                 }

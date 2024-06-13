@@ -25,6 +25,7 @@ package uk.ac.manchester.tornado.runtime.profiler;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -37,28 +38,28 @@ import uk.ac.manchester.tornado.runtime.common.TornadoOptions;
 public class TimeProfiler implements TornadoProfiler {
 
     /**
-     * Use this dummy field because {@link #addValueToMetric} needs a task name. However, sync operations operate on
-     * task schedules, not on tasks.
-     * TODO remove this field when the {@link TimeProfiler} is refactored. Related to issue #94.
+     * Use this dummy field because {@link #addValueToMetric} needs a task name.
+     * However, sync operations operate on task schedules, not on tasks. TODO remove
+     * this field when the {@link TimeProfiler} is refactored. Related to issue #94.
      */
     public static String NO_TASK_NAME = "noTask";
     private static final Long ZERO = Long.valueOf(0);
-    
+
     private static final Function<String, Map<ProfilerType, Long>> NEW_SAFE_MAP_LONG = __ -> new ConcurrentHashMap<>();
     private static final Function<String, Map<ProfilerType, String>> NEW_SAFE_MAP_STRING = __ -> new ConcurrentHashMap<>();
-    
+
     private static final BiFunction<Long, Long, Long> ACCUMULATE  = (oldVal, newVal) -> oldVal == null ? newVal : oldVal + newVal;
     private static final BiFunction<Long, Long, Long> RANGE  = (start, end) -> null == start ? ZERO : end - start;
-    
+
     private final Map<ProfilerType, Long> profilerTime = new ConcurrentHashMap<>();
     private final Map<String, Map<ProfilerType, Long>> taskTimers = new ConcurrentHashMap<>();
     private final Map<String, Map<ProfilerType, String>> taskPowerMetrics = new ConcurrentHashMap<>();
-    private final Map<String, Map<ProfilerType, Long>> taskThroughputMetrics = new ConcurrentHashMap<>();
+    private final Map<String, Map<ProfilerType, Long>> taskSizeMetrics = new ConcurrentHashMap<>();
     private final Map<String, Map<ProfilerType, String>> taskDeviceIdentifiers = new ConcurrentHashMap<>();;
     private final Map<String, Map<ProfilerType, String>> taskMethodNames = new ConcurrentHashMap<>();
 
     private Map<String, Map<ProfilerType, String>> taskBackends = new ConcurrentHashMap<>();
-    
+
     private StringBuilder indent;
 
     public TimeProfiler() {
@@ -67,7 +68,7 @@ public class TimeProfiler implements TornadoProfiler {
 
     @Override
     public void addValueToMetric(ProfilerType type, String taskName, long value) {
-        Map<ProfilerType, Long> profiledType = taskThroughputMetrics.computeIfAbsent(taskName, NEW_SAFE_MAP_LONG);
+        Map<ProfilerType, Long> profiledType = taskSizeMetrics.computeIfAbsent(taskName, NEW_SAFE_MAP_LONG);
         profiledType.merge(type, value, ACCUMULATE);
     }
 
@@ -95,7 +96,7 @@ public class TimeProfiler implements TornadoProfiler {
         Map<ProfilerType, String> profiledType = taskDeviceIdentifiers.computeIfAbsent(taskName, NEW_SAFE_MAP_STRING);
         profiledType.put(ProfilerType.DEVICE, deviceInfo);
     }
-    
+
     @Override
     public void registerBackend(String taskName, String backend) {
         Map<ProfilerType, String> profiledType = taskBackends.computeIfAbsent(taskName, NEW_SAFE_MAP_STRING);
@@ -127,6 +128,20 @@ public class TimeProfiler implements TornadoProfiler {
     }
 
     @Override
+    public long getSize(ProfilerType type) {
+        // for all tasks in the task graph, accumulate the size
+        Set<String> strings = taskSizeMetrics.keySet();
+        long size = 0;
+        for (String s : taskSizeMetrics.keySet()) {
+            Map<ProfilerType, Long> copySizes = taskSizeMetrics.get(s);
+            if (copySizes.containsKey(type)) {
+                size += copySizes.get(type);
+            }
+        }
+        return size;
+    }
+
+    @Override
     public long getTaskTimer(ProfilerType type, String taskName) {
         return taskTimers.getOrDefault(taskName, Collections.emptyMap()).getOrDefault(type, ZERO);
     }
@@ -140,7 +155,7 @@ public class TimeProfiler implements TornadoProfiler {
     public void setTaskTimer(ProfilerType type, String taskName, long time) {
         Map<ProfilerType, Long> profiledType = taskTimers.computeIfAbsent(taskName, NEW_SAFE_MAP_LONG);
         profiledType.put(type, time);
-    }    
+    }
 
     @Override
     public synchronized void setTaskPowerUsage(ProfilerType type, String taskName, long power) {
@@ -185,8 +200,8 @@ public class TimeProfiler implements TornadoProfiler {
         for (ProfilerType p : profilerTime.keySet()) {
             json.append(indent.toString() + "\"" + p + "\"" + ": " + "\"" + profilerTime.get(p) + "\",\n");
         }
-        if (taskThroughputMetrics.containsKey(NO_TASK_NAME)) {
-            Map<ProfilerType, Long> noTaskValues = taskThroughputMetrics.get(NO_TASK_NAME);
+        if (taskSizeMetrics.containsKey(NO_TASK_NAME)) {
+            Map<ProfilerType, Long> noTaskValues = taskSizeMetrics.get(NO_TASK_NAME);
             for (ProfilerType p : noTaskValues.keySet()) {
                 json.append(indent.toString() + "\"" + p + "\"" + ": " + "\"" + noTaskValues.get(p) + "\",\n");
             }
@@ -205,9 +220,9 @@ public class TimeProfiler implements TornadoProfiler {
             json.append(indent.toString() + "\"" + ProfilerType.METHOD + "\"" + ": " + "\"" + taskMethodNames.get(p).get(ProfilerType.METHOD) + "\",\n");
             json.append(indent.toString() + "\"" + ProfilerType.DEVICE_ID + "\"" + ": " + "\"" + taskDeviceIdentifiers.get(p).get(ProfilerType.DEVICE_ID) + "\",\n");
             json.append(indent.toString() + "\"" + ProfilerType.DEVICE + "\"" + ": " + "\"" + taskDeviceIdentifiers.get(p).get(ProfilerType.DEVICE) + "\",\n");
-            if (taskThroughputMetrics.containsKey(p)) {
-                for (ProfilerType p1 : taskThroughputMetrics.get(p).keySet()) {
-                    json.append(indent.toString() + "\"" + p1 + "\"" + ": " + "\"" + taskThroughputMetrics.get(p).get(p1) + "\",\n");
+            if (taskSizeMetrics.containsKey(p)) {
+                for (ProfilerType p1 : taskSizeMetrics.get(p).keySet()) {
+                    json.append(indent.toString() + "\"" + p1 + "\"" + ": " + "\"" + taskSizeMetrics.get(p).get(p1) + "\",\n");
                 }
             }
             if (taskPowerMetrics.containsKey(p)) {
@@ -243,7 +258,7 @@ public class TimeProfiler implements TornadoProfiler {
 
     @Override
     public void clean() {
-        taskThroughputMetrics.clear();
+        taskSizeMetrics.clear();
         profilerTime.clear();
         taskTimers.clear();
         indent = new StringBuilder("");

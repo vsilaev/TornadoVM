@@ -76,7 +76,7 @@ public abstract class TornadoBufferProvider {
      * @throws {@link
      *     TornadoOutOfMemoryException}
      */
-    public synchronized long getOrAllocateBufferWithSize(long sizeInBytes) {
+    public long getOrAllocateBufferWithSize(long sizeInBytes) {
         try {
             return deviceMemoryPool.acquire(sizeInBytes, 15, TimeUnit.SECONDS);
         } catch (InterruptedException ex) {
@@ -88,7 +88,7 @@ public abstract class TornadoBufferProvider {
      * Removes the buffer from the {@link #usedBuffers} list and add it to
      * the @{@link #freeBuffers} list.
      */
-    public synchronized void markBufferReleased(long buffer) {
+    public void markBufferReleased(long buffer) {
         deviceMemoryPool.release(buffer);
     }
 
@@ -97,8 +97,23 @@ public abstract class TornadoBufferProvider {
     }
 
     @Deprecated
-    public synchronized void resetBuffers() {
+    public void resetBuffers() {
         //freeBuffers(DEVICE_AVAILABLE_MEMORY);
+    }
+
+    public long deallocate() {
+/*
+        // Attempts to free buffers of given size.
+        long spaceDeallocated = 0;
+        while (!freeBuffers.isEmpty()) {
+            BufferContainer bufferInfo = freeBuffers.removeFirst();
+            TornadoInternalError.guarantee(!usedBuffers.contains(bufferInfo), "This buffer should not be used");
+            currentMemoryAvailable += bufferInfo.size;
+            spaceDeallocated += bufferInfo.size;
+            releaseBuffer(bufferInfo.buffer);
+        }
+        return spaceDeallocated;
+*/return 0;
     }
     
     public void close() {

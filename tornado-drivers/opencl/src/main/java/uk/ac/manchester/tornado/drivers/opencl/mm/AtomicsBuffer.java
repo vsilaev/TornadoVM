@@ -121,7 +121,7 @@ public class AtomicsBuffer implements XPUBuffer {
     }
 
     @Override
-    public void deallocate() throws TornadoMemoryException {
+    public void markAsFreeBuffer() throws TornadoMemoryException {
         deviceContext.getMemoryManager().deallocateAtomicRegion();
     }
 
@@ -148,6 +148,11 @@ public class AtomicsBuffer implements XPUBuffer {
     @Override
     public void setIntBuffer(int[] arr) {
         this.atomicsList = arr;
+    }
+
+    @Override
+    public long deallocate() {
+        return deviceContext.getBufferProvider().deallocate();
     }
 
     private static int div(long a, int b) {

@@ -398,16 +398,21 @@ public class TornadoVMInterpreter {
             }
         }
 
-        return single(deviceForInterpreter.allocateObjects(objects, sizeBatch, objectStates));
+        long allocationsTotalSize = deviceForInterpreter.allocateObjects(objects, sizeBatch, objectStates);
+        executionContext.setCurrentDeviceMemoryUsage(allocationsTotalSize);
+
+        if (TornadoOptions.isProfilerEnabled()) {
+            // Register allocations in the profiler
+            for (XPUDeviceBufferState objectState : objectStates) {
+                timeProfiler.addValueToMetric(ProfilerType.ALLOCATION_BYTES, TimeProfiler.NO_TASK_NAME, objectState.getXPUBuffer().size());
+            }
+        }
+        
+        return Collections.emptyList();
     }
 
     private List<Integer> executeDeAlloc(StringBuilder tornadoVMBytecodeList, final int objectIndex) {
         Object object = objects.get(objectIndex);
-        /*
-        if (isObjectKernelContext(object)) {
-            return single(0);
-        }
-        */
         if (TornadoOptions.PRINT_BYTECODES && isObjectAtomic(object)) {
             String verbose = String.format(STR."bc: \{InterpreterUtilities.debugHighLightBC("DEALLOC")}[0x%x] %s on %s", object.hashCode(), object, InterpreterUtilities.debugDeviceBC(
                     deviceForInterpreter));
@@ -416,7 +421,10 @@ public class TornadoVMInterpreter {
         }
 
         final XPUDeviceBufferState objectState = resolveObjectState(objectIndex);
-        return single(deviceForInterpreter.deallocate(objectState));
+        long spaceDeallocated =  deviceForInterpreter.deallocate(objectState);
+        // Update current device area use 
+        executionContext.setCurrentDeviceMemoryUsage(executionContext.getCurrentDeviceMemoryUsage() - spaceDeallocated);
+        return Collections.emptyList();
     }
 
     private List<Integer> transferHostToDeviceOnce(StringBuilder tornadoVMBytecodeList, final int objectIndex, final long offset, final int eventList, final long sizeBatch, final int[] waitList) {
@@ -538,6 +546,30 @@ public class TornadoVMInterpreter {
         return single(lastEvent);
     }
 
+    private boolean isRecompilationNeededForLastBatch(TornadoInstalledCode installedCode, SchedulableTask task, long batchThreads) {
+        return (!shouldCompile(installedCode) && task.getBatchThreads() != 0 && task.getBatchThreads() != batchThreads);
+    }
+
+    private boolean currentBatchUsesThreadId(int currentBatch, boolean indexInWrite) {
+        return (currentBatch > 0 && indexInWrite);
+    }
+
+    private void updateBatchThreads(SchedulableTask task, long batchThreads, boolean indexInWrite, int currentBatch) {
+        // Set the batch size in the task information
+        task.setBatchThreads(batchThreads);
+
+        // The batch size is only set once. This is because, for the calculations of the
+        // offset to be correct, we need to propagate the initial batch size, not the size
+        // of the remaining chunk, if the batches are uneven.
+        if (task.getBatchSize() == 0 && indexInWrite) {
+            task.setBatchSize(batchThreads);
+        }
+
+        if (batchThreads != 0) {
+            task.setBatchNumber(currentBatch);
+        }
+    }
+
     private XPUExecutionFrame compileTaskFromBytecodeToBinary(final int callWrapperIndex, final int numArgs, final int eventList, final int taskIndex, final long batchThreads, final int[] waitList) {
 
         if (deviceForInterpreter.getDeviceContext().wasReset() && finishedWarmup) {
@@ -558,22 +590,12 @@ public class TornadoVMInterpreter {
         // If any is true, then the kernel needs to be recompiled.
         int localTaskIndex = globalToLocalTaskIndex(taskIndex);
         TornadoInstalledCode installedCode = installedCodes[localTaskIndex];
-        if ((!shouldCompile(installedCode) && task.getBatchThreads() != 0 && task.getBatchThreads() != batchThreads) || (currentBatch > 0 && indexInWrite)) {
+        if (isRecompilationNeededForLastBatch(installedCode, task, batchThreads) || currentBatchUsesThreadId(currentBatch, indexInWrite)) {
             task.forceCompilation();
             installedCode.invalidate();
         }
 
-        // Set the batch size in the task information
-        task.setBatchThreads(batchThreads);
-
-        // The batch size is only set once. This is because, for the calculations of the
-        // offset to be correct, we need to propagate the initial batch size, not the size
-        // of the remaining chunk, if the batches are uneven.
-        if (task.getBatchSize() == 0 && indexInWrite) {
-            task.setBatchSize(batchThreads);
-        }
-
-        task.setBatchNumber(currentBatch);
+        updateBatchThreads(task, batchThreads, indexInWrite, currentBatch);
         task.enableDefaultThreadScheduler(executionContext.useDefaultThreadScheduler());
 
         if (gridScheduler != null && gridScheduler.get(task.getId()) != null) {
@@ -598,11 +620,12 @@ public class TornadoVMInterpreter {
                     // FPGAs, that has to be a single source.
                     task.forceCompilation();
                 }
+
                 installedCodes[localTaskIndex] = installedCode = deviceForInterpreter.installCode(task);
                 profilerUpdateForPreCompiledTask(task);
                 // After the compilation has been completed, increment
                 // the batch number of the task and update it.
-                if (indexInWrite) {
+                if (indexInWrite && batchThreads != 0) {
                     task.setBatchNumber(++currentBatch);
                 }
             } catch (TornadoBailoutRuntimeException e) {
@@ -810,7 +833,7 @@ public class TornadoVMInterpreter {
             logger.debug("Recompiling task on device " + device);
         }
         if (kernelStackFrame[index] == null || redeployOnDevice) {
-            kernelStackFrame[index] = device.createKernelStackFrame(numArgs);
+            kernelStackFrame[index] = device.createKernelStackFrame(executionContext.getExecutionPlanId(), numArgs);
         }
         return kernelStackFrame[index];
     }

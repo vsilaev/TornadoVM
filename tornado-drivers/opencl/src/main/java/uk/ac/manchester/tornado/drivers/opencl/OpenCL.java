@@ -98,8 +98,9 @@ public class OpenCL {
             );
         
         if (VIRTUAL_DEVICE_ENABLED) {
-            initializeVirtual();
+            initializeVirtualPlatform();
         } else {
+            // Initialize physical platform
             try {
                 // Loading JNI OpenCL library
                 System.loadLibrary(OpenCL.OPENCL_JNI_LIBRARY);
@@ -129,9 +130,7 @@ public class OpenCL {
 
     public static void cleanup() {
         if (initialised) {
-            for (final TornadoPlatformInterface platform : platforms) {
-                platform.cleanup();
-            }
+            platforms.forEach(TornadoPlatformInterface::cleanup);
         }
         NATIVE_MEMORY_POOL.close();
     }
@@ -144,7 +143,7 @@ public class OpenCL {
         return platforms.size();
     }
 
-    private static void initializeVirtual() {
+    private static void initializeVirtualPlatform() {
         if (!initialised) {
             VirtualDeviceDescriptor info = VirtualJSONParser.getDeviceDescriptor();
 
@@ -159,22 +158,18 @@ public class OpenCL {
         if (!initialised) {
             try {
                 int numPlatforms = clGetPlatformCount();
-                long[] ids = new long[numPlatforms];
-                clGetPlatformIDs(ids);
+                long[] platformPointers = new long[numPlatforms];
+                clGetPlatformIDs(platformPointers);
 
-                for (int i = 0; i < ids.length; i++) {
-                    OCLPlatform platform = new OCLPlatform(i, ids[i]);
+                for (int i = 0; i < platformPointers.length; i++) {
+                    OCLPlatform platform = new OCLPlatform(i, platformPointers[i]);
                     platforms.add(platform);
                 }
 
-            } catch (final Exception exc) {
-                exc.printStackTrace();
-                throw new TornadoRuntimeException("Problem with OpenCL bindings");
-            } catch (final Error err) {
-                err.printStackTrace();
-                throw new TornadoRuntimeException("Error with OpenCL bindings");
+                initialised = true;
+            } catch (final Exception e) {
+                throw new TornadoRuntimeException("[ERROR] Problem with OpenCL bindings");
             }
-            initialised = true;
         }
     }
 
@@ -230,7 +225,7 @@ public class OpenCL {
 
         // Create call wrapper
         final int numArgs = parameters.length;
-        KernelStackFrame callWrapper = tornadoDevice.createKernelStackFrame(numArgs);
+        KernelStackFrame callWrapper = tornadoDevice.createKernelStackFrame(executionContextId, numArgs);
         callWrapper.reset();
 
         // Fill header of call callWrapper with empty values

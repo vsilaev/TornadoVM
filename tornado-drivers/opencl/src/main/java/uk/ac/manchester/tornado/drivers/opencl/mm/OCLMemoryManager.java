@@ -45,7 +45,7 @@ public class OCLMemoryManager implements TornadoMemoryProvider {
     private volatile long atomicsRegion = -1;
     
     private long constantPointer;
-    
+
     public OCLMemoryManager(final OCLDeviceContext deviceContext) {
         this.deviceContext = deviceContext;
     }
@@ -55,8 +55,9 @@ public class OCLMemoryManager implements TornadoMemoryProvider {
         return DEVICE_AVAILABLE_MEMORY;
     }
 
-    public OCLKernelStackFrame createKernelStackFrame(long threadId, final int numberOfArguments) {
-        return oclKernelStackFrame.computeIfAbsent(threadId, t -> {
+    public OCLKernelStackFrame createKernelStackFrame(long executionPlanId, final int numberOfArguments) {
+        // Create one stack frame per execution plan ID 
+        return oclKernelStackFrame.computeIfAbsent(executionPlanId, t -> {
             long kernelStackFramePtr = createBuffer(RESERVED_SLOTS * Long.BYTES, OCLMemFlags.CL_MEM_READ_ONLY);
             return new OCLKernelStackFrame(kernelStackFramePtr, numberOfArguments, deviceContext);
         });

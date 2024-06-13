@@ -41,7 +41,7 @@ public class OCLDevice implements OCLTargetDevice {
 
     private static final int INIT_VALUE = -1;
 
-    private final long id;
+    private final long devicePtr;
     private final int index;
 
     private String name;
@@ -78,9 +78,9 @@ public class OCLDevice implements OCLTargetDevice {
 
 
 
-    public OCLDevice(int index, long id) {
+    public OCLDevice(int index, long devicePointer) {
         this.index = index;
-        this.id = id;
+        this.devicePtr = devicePointer;
         initialValues();
         obtainDeviceProperties();
     }
@@ -145,8 +145,8 @@ public class OCLDevice implements OCLTargetDevice {
     static native void clGetDeviceInfo(long id, int info, byte[] buffer);
     static native ByteBuffer clGetDeviceInfo(long id, int info);
 
-    public long getId() {
-        return id;
+    public long getDevicePointer() {
+        return devicePtr;
     }
 
     public int getIndex() {
@@ -155,18 +155,18 @@ public class OCLDevice implements OCLTargetDevice {
 
     private int queryIntegerValue(OCLDeviceInfo info) {
         ByteBuffer buffer = OpenCL.createIntegerBuffer(-1);
-        clGetDeviceInfo(id, info.getValue(), buffer.array());
+        clGetDeviceInfo(devicePtr, info.getValue(), buffer.array());
         return buffer.getInt();
     }
     
     private long queryLongValue(OCLDeviceInfo info) {
         ByteBuffer buffer = OpenCL.createLongBuffer(-1L);
-        clGetDeviceInfo(id, info.getValue(), buffer.array());
+        clGetDeviceInfo(devicePtr, info.getValue(), buffer.array());
         return buffer.getLong();
     }
     
     private String queryStringValue(OCLDeviceInfo info) {
-        ByteBuffer buffer = clGetDeviceInfo(id, info.getValue());
+        ByteBuffer buffer = clGetDeviceInfo(devicePtr, info.getValue());
         return OpenCL.toString(buffer);
     }
 
@@ -295,7 +295,7 @@ public class OCLDevice implements OCLTargetDevice {
         }
 
         int elements = getDeviceMaxWorkItemDimensions();
-        ByteBuffer buffer = clGetDeviceInfo(id, OCLDeviceInfo.CL_DEVICE_MAX_WORK_ITEM_SIZES.getValue())
+        ByteBuffer buffer = clGetDeviceInfo(devicePtr, OCLDeviceInfo.CL_DEVICE_MAX_WORK_ITEM_SIZES.getValue())
                             .order(OpenCL.BYTE_ORDER);
         maxWorkItemSizes = new long[elements];
         for (int i = 0; i < elements; i++) {
@@ -433,13 +433,13 @@ public class OCLDevice implements OCLTargetDevice {
 
     @Override
     public String toString() {
-        return String.format("id=0x%x, deviceName=%s, type=%s, available=%s", id, getDeviceName(), getDeviceType().toString(), isDeviceAvailable());
+        return String.format("id=0x%x, deviceName=%s, type=%s, available=%s", devicePtr, getDeviceName(), getDeviceType().toString(), isDeviceAvailable());
     }
 
     @Override
     public String getDeviceInfo() {
         StringBuilder sb = new StringBuilder();
-        sb.append(String.format("id=0x%x, deviceName=%s, type=%s, available=%s\n", id, getDeviceName(), getDeviceType().toString(), isDeviceAvailable()));
+        sb.append(String.format("id=0x%x, deviceName=%s, type=%s, available=%s\n", devicePtr, getDeviceName(), getDeviceType().toString(), isDeviceAvailable()));
         sb.append(String.format("Freq=%s, max compute units=%d\n", humanReadableFreq(getDeviceMaxClockFrequency()), getDeviceMaxComputeUnits()));
         sb.append(String.format("Global mem. size=%s, local mem. size=%s\n", RuntimeUtilities.humanReadableByteCount(getDeviceGlobalMemorySize(), false), humanReadableByteCount(
                 getDeviceLocalMemorySize(), false)));
