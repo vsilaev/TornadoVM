@@ -111,7 +111,7 @@ public final class SPIRVBackendImpl implements TornadoAcceleratorBackend {
     }
 
     private SPIRVBackend createSPIRVJITCompilerBackend(OptionValues options, HotSpotJVMCIRuntime vmRuntime, TornadoVMConfigAccess vmConfig, SPIRVDevice device, SPIRVContext context,
-            SPIRVRuntime spirvRuntime) {
+            SPIRVRuntimeType spirvRuntime) {
         return SPIRVHotSpotBackendFactory.createJITCompiler(options, vmRuntime, vmConfig, device, context, spirvRuntime);
     }
 
@@ -157,7 +157,7 @@ public final class SPIRVBackendImpl implements TornadoAcceleratorBackend {
     }
 
     @Override
-    public int getBackendCounter() {
+    public int getNumDevices() {
         return backendCounter;
     }
 
@@ -174,7 +174,7 @@ public final class SPIRVBackendImpl implements TornadoAcceleratorBackend {
     public List<TornadoDevice> getAllDevices() {
         if (devices == null) {
             devices = new ArrayList<>();
-            for (int i = 0; i < getBackendCounter(); i++) {
+            for (int i = 0; i < getNumDevices(); i++) {
                 devices.add(flatBackends[i].getDeviceContext().asMapping());
             }
         }
@@ -196,10 +196,10 @@ public final class SPIRVBackendImpl implements TornadoAcceleratorBackend {
         return TornadoVMBackendType.SPIRV;
     }
 
-    public SPIRVBackend getBackend(SPIRVRuntime port) {
+    public SPIRVBackend getBackend(SPIRVRuntimeType port) {
         for (SPIRVBackend[] spirvBackend : spirvBackends) {
             for (SPIRVBackend backend : spirvBackend) {
-                SPIRVRuntime spirvRuntime = backend.getDeviceContext().device.getSPIRVRuntime();
+                SPIRVRuntimeType spirvRuntime = backend.getDeviceContext().device.getSPIRVRuntime();
                 if (spirvRuntime.equals(port)) {
                     return backend;
                 }

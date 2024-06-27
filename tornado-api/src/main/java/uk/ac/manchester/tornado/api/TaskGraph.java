@@ -52,10 +52,10 @@ import uk.ac.manchester.tornado.api.runtime.TornadoAPIProvider;
  * Tornado Task Graph API.
  * <p>
  * Task-based parallel API to express methods to be accelerated on any OpenCL,
- * PTX or SPIR-V compatible device.
+ * PTX and/or SPIR-V compatible device.
  * </p>
  *
- * @since TornadoVM-0.15
+ * @since v0.15
  */
 public class TaskGraph implements TaskGraphInterface {
 
@@ -70,14 +70,6 @@ public class TaskGraph implements TaskGraphInterface {
         this.taskGraphName = name;
         taskGraphImpl = TornadoAPIProvider.loadScheduleRuntime(name);
         taskNames = new HashSet<>();
-    }
-
-    private String checkTaskName(String id) {
-        if (taskNames.contains(id)) {
-            throw new TornadoTaskRuntimeException(ERROR_TASK_NAME_DUPLICATION);
-        }
-        taskNames.add(id);
-        return id;
     }
 
     /**
@@ -704,27 +696,23 @@ public class TaskGraph implements TaskGraphInterface {
         return new ImmutableTaskGraph(cloneTaskGraph);
     }
 
-    public TaskGraph withDevice(TornadoDevice device) {
+    public void withDevice(TornadoDevice device) {
         taskGraphImpl.setDevice(device);
-        return this;
     }
 
-    public TaskGraph withDevice(String taskName, TornadoDevice device) {
+    public void withDevice(String taskName, TornadoDevice device) {
         taskGraphImpl.setDevice(taskName, device);
-        return this;
     }
 
-    TaskGraph batch(String batchSize) {
+    void batch(String batchSize) {
         taskGraphImpl.withBatch(batchSize);
-        return this;
     }
 
-    public TaskGraph withMemoryLimit(String memoryLimit) {
+    void withMemoryLimit(String memoryLimit) {
         taskGraphImpl.withMemoryLimit(memoryLimit);
-        return this;
     }
 
-    public void withoutMemoryLimit() {
+    void withoutMemoryLimit() {
         taskGraphImpl.withoutMemoryLimit();
     }
 
@@ -754,14 +742,6 @@ public class TaskGraph implements TaskGraphInterface {
         taskGraphImpl.warmup();
     }
 
-    void dumpEvents() {
-        taskGraphImpl.dumpEvents();
-    }
-
-    void dumpTimes() {
-        taskGraphImpl.dumpTimes();
-    }
-
     void dumpProfiles() {
         taskGraphImpl.dumpProfiles();
     }
@@ -770,9 +750,8 @@ public class TaskGraph implements TaskGraphInterface {
         taskGraphImpl.clearProfiles();
     }
 
-    TaskGraph freeDeviceMemory() {
+    void freeDeviceMemory() {
         taskGraphImpl.freeDeviceMemory();
-        return this;
     }
 
     void syncRuntimeTransferToHost(Object... objects) {
@@ -788,9 +767,8 @@ public class TaskGraph implements TaskGraphInterface {
         return taskGraphImpl.getDevice();
     }
 
-    TaskGraph useDefaultThreadScheduler(boolean use) {
+    void useDefaultThreadScheduler(boolean use) {
         taskGraphImpl.useDefaultThreadScheduler(use);
-        return this;
     }
 
     boolean isFinished() {
@@ -868,36 +846,32 @@ public class TaskGraph implements TaskGraphInterface {
         taskGraphImpl.disableProfiler(profilerMode);
     }
 
-    public void withConcurrentDevices() {
+    void withConcurrentDevices() {
         taskGraphImpl.withConcurrentDevices();
     }
 
-    public void withoutConcurrentDevices() {
+    void withoutConcurrentDevices() {
         taskGraphImpl.withoutConcurrentDevices();
     }
 
-    public void withThreadInfo() {
+    void withThreadInfo() {
         taskGraphImpl.withThreadInfo();
     }
 
-    public void withoutThreadInfo() {
+    void withoutThreadInfo() {
         taskGraphImpl.withoutThreadInfo();
     }
 
-    public void withPrintKernel() {
+    void withPrintKernel() {
         taskGraphImpl.withPrintKernel();
     }
 
-    public void withoutPrintKernel() {
+    void withoutPrintKernel() {
         taskGraphImpl.withoutPrintKernel();
     }
 
-    public void withGridScheduler(GridScheduler gridScheduler) {
+    void withGridScheduler(GridScheduler gridScheduler) {
         taskGraphImpl.withGridScheduler(gridScheduler);
-    }
-
-    private CompletableFuture<TaskGraphInterface> selfFuture(CompletableFuture<?> any) {
-        return any.thenApply(__ -> this);     
     }
 
     long getTotalBytesTransferred() {
@@ -912,17 +886,15 @@ public class TaskGraph implements TaskGraphInterface {
         return taskGraphImpl.getCurrentDeviceMemoryUsage();
     }
 
-    /*
-    void execute(GridScheduler gridScheduler) {
-        taskGraphImpl.schedule(gridScheduler).waitOn();
+    private String checkTaskName(String id) {
+        if (taskNames.contains(id)) {
+            throw new TornadoTaskRuntimeException(ERROR_TASK_NAME_DUPLICATION);
+        }
+        taskNames.add(id);
+        return id;
     }
 
-    public CompletableFuture<TaskGraphInterface> executeAsync(GridScheduler gridScheduler) {
-        return selfFuture(taskGraphImpl.schedule(gridScheduler).waitAsyncOn());
+    private CompletableFuture<TaskGraphInterface> selfFuture(CompletableFuture<?> any) {
+        return any.thenApply(__ -> this);     
     }
-
-    public CompletableFuture<TaskGraphInterface> executeAsync(GridScheduler gridScheduler, Executor executor) {
-        return selfFuture(taskGraphImpl.schedule(gridScheduler).waitAsyncOn(executor));
-    }
-    */
 }

@@ -217,9 +217,9 @@ public abstract class AbstractMetaData implements TaskMetaDataInterface {
         return device != null ? device : (device = resolveDevice(Tornado.getProperty(id + ".device", backendIndex + ":" + deviceIndex)));
     }
 
-    private int getDeviceIndex(int backendIndex, TornadoDevice device) {
-        TornadoAcceleratorBackend driver = TornadoCoreRuntime.getTornadoRuntime().getBackend(backendIndex);
-        int devs = driver.getBackendCounter();
+    private int getDeviceIndex(int driverIndex, TornadoDevice device) {
+        TornadoAcceleratorBackend driver = TornadoCoreRuntime.getTornadoRuntime().getBackend(driverIndex);
+        int devs = driver.getNumDevices();
         int index = 0;
         for (int i = 0; i < devs; i++) {
             if (driver.getDevice(i).getPlatformName().equals(device.getPlatformName()) && (driver.getDevice(i).getDeviceName().equals(device.getDeviceName()))) {

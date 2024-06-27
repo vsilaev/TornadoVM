@@ -21,10 +21,10 @@ package uk.ac.manchester.tornado.unittests.common;
 import org.junit.Before;
 
 import uk.ac.manchester.tornado.api.TornadoBackend;
-import uk.ac.manchester.tornado.api.TornadoRuntimeInterface;
+import uk.ac.manchester.tornado.api.TornadoRuntime;
 import uk.ac.manchester.tornado.api.common.TornadoDevice;
 import uk.ac.manchester.tornado.api.enums.TornadoVMBackendType;
-import uk.ac.manchester.tornado.api.runtime.TornadoRuntime;
+import uk.ac.manchester.tornado.api.runtime.TornadoRuntimeProvider;
 import uk.ac.manchester.tornado.unittests.tools.TornadoHelper;
 
 public abstract class TornadoTestBase {
@@ -33,16 +33,16 @@ public abstract class TornadoTestBase {
     public static final float DELTA_05 = 0.5f;
     protected static boolean wasDeviceInspected = false;
 
-    public static TornadoRuntimeInterface getTornadoRuntime() {
-        return TornadoRuntime.getTornadoRuntime();
+    public static TornadoRuntime getTornadoRuntime() {
+        return TornadoRuntimeProvider.getTornadoRuntime();
     }
 
     @Before
     public void before() {
-        TornadoRuntimeInterface tornadoRuntime = getTornadoRuntime();
+        TornadoRuntime tornadoRuntime = getTornadoRuntime();
         for (int backendIndex = 0; backendIndex < tornadoRuntime.getNumBackends(); backendIndex++) {
             final TornadoBackend driver = tornadoRuntime.getBackend(backendIndex);
-            for (int deviceIndex = 0; deviceIndex < driver.getBackendCounter(); deviceIndex++) {
+            for (int deviceIndex = 0; deviceIndex < driver.getNumDevices(); deviceIndex++) {
                 driver.getDevice(deviceIndex).clean();
             }
         }
@@ -74,7 +74,7 @@ public abstract class TornadoTestBase {
     }
 
     protected Tuple2<Integer, Integer> getDriverAndDeviceIndex() {
-        String defaultDeviceAndDriver = TornadoRuntime.getProperty("tornado.backend", "0") + ":" + TornadoRuntime.getProperty("tornado.device", "0");
+        String defaultDeviceAndDriver = TornadoRuntimeProvider.getProperty("tornado.backend", "0") + ":" + TornadoRuntimeProvider.getProperty("tornado.device", "0");
         String driverAndDevice = System.getProperty("tornado.unittests.device", defaultDeviceAndDriver);
         String[] propertyValues = driverAndDevice.split(":");
         return new Tuple2<>(Integer.parseInt(propertyValues[0]), Integer.parseInt(propertyValues[1]));
@@ -85,7 +85,7 @@ public abstract class TornadoTestBase {
     }
 
     public void assertNotBackend(TornadoVMBackendType backend, String customBackendAssertionMessage) {
-        TornadoRuntimeInterface tornadoRuntime = getTornadoRuntime();
+        TornadoRuntime tornadoRuntime = getTornadoRuntime();
         int driverIndex = tornadoRuntime.getDefaultDevice().getDriverIndex();
         if (tornadoRuntime.getBackendType(driverIndex) == backend) {
             switch (backend) {
@@ -101,7 +101,7 @@ public abstract class TornadoTestBase {
         if (!TornadoHelper.OPTIMIZE_LOAD_STORE_SPIRV) {
             return;
         }
-        TornadoRuntimeInterface tornadoRuntime = getTornadoRuntime();
+        TornadoRuntime tornadoRuntime = getTornadoRuntime();
         int driverIndex = tornadoRuntime.getDefaultDevice().getDriverIndex();
         if (tornadoRuntime.getBackendType(driverIndex) == backend) {
             if (backend == TornadoVMBackendType.SPIRV) {
@@ -111,7 +111,7 @@ public abstract class TornadoTestBase {
     }
 
     private void assertIfNeeded(TornadoDevice device, int driverIndex) {
-        TornadoVMBackendType backendType = TornadoRuntime.getTornadoRuntime().getBackend(driverIndex).getBackendType();
+        TornadoVMBackendType backendType = getTornadoRuntime().getBackend(driverIndex).getBackendType();
         if (backendType != TornadoVMBackendType.OPENCL || !device.isSPIRVSupported()) {
             assertNotBackend(TornadoVMBackendType.OPENCL);
         }
@@ -124,7 +124,7 @@ public abstract class TornadoTestBase {
      */
     protected TornadoDevice getSPIRVSupportedDevice() {
         Tuple2<Integer, Integer> driverAndDeviceIndex = getDriverAndDeviceIndex();
-        TornadoRuntimeInterface tornadoRuntime = getTornadoRuntime();
+        TornadoRuntime tornadoRuntime = getTornadoRuntime();
 
         // Check if a specific device has been selected for testing
         if (driverAndDeviceIndex.f0() != 0) {
@@ -134,13 +134,13 @@ public abstract class TornadoTestBase {
             return device;
         }
 
-        // Search for a device with SPIRV support. This method will return even an
-        // OpenCL device if SPIRV is supported.
+        // Search for a device with SPIR-V support. This method will return even an
+        // OpenCL device if SPIR-V is supported.
         int numDrivers = tornadoRuntime.getNumBackends();
         for (int driverIndex = 0; driverIndex < numDrivers; driverIndex++) {
             TornadoBackend driver = tornadoRuntime.getBackend(driverIndex);
             if (driver.getBackendType() != TornadoVMBackendType.PTX) {
-                int maxDevices = driver.getBackendCounter();
+                int maxDevices = driver.getNumDevices();
                 for (int i = 0; i < maxDevices; i++) {
                     TornadoDevice device = driver.getDevice(i);
                     if (device.isSPIRVSupported()) {
@@ -150,7 +150,7 @@ public abstract class TornadoTestBase {
             }
         }
 
-        return null; // No device with SPIRV support found
+        return null; // No device with SPIR-V support found
     }
 
     protected static class Tuple2<T0, T1> {

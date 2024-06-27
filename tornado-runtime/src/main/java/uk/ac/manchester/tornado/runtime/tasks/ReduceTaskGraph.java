@@ -60,7 +60,7 @@ import uk.ac.manchester.tornado.api.enums.TornadoDeviceType;
 import uk.ac.manchester.tornado.api.exceptions.TornadoRuntimeException;
 import uk.ac.manchester.tornado.api.exceptions.TornadoTaskRuntimeException;
 import uk.ac.manchester.tornado.api.memory.TaskMetaDataInterface;
-import uk.ac.manchester.tornado.api.runtime.TornadoRuntime;
+import uk.ac.manchester.tornado.api.runtime.TornadoRuntimeProvider;
 import uk.ac.manchester.tornado.api.types.arrays.ByteArray;
 import uk.ac.manchester.tornado.api.types.arrays.ShortArray;
 import uk.ac.manchester.tornado.api.types.arrays.CharArray;
@@ -380,7 +380,7 @@ class ReduceTaskGraph {
     }
 
     private static boolean isDeviceAnAccelerator(int driverIndex, int deviceToRun) {
-        TornadoDeviceType deviceType = TornadoRuntime.getTornadoRuntime().getBackend(driverIndex).getDevice(deviceToRun).getDeviceType();
+        TornadoDeviceType deviceType = TornadoRuntimeProvider.getTornadoRuntime().getBackend(driverIndex).getDevice(deviceToRun).getDeviceType();
         return (deviceType == TornadoDeviceType.ACCELERATOR);
     }
 
@@ -532,7 +532,8 @@ class ReduceTaskGraph {
         }
 
         // Inherit device of the owning schedule   
-        rewrittenTaskGraph = new TaskGraph(taskScheduleReduceName).withDevice(owner.getDevice());
+        rewrittenTaskGraph = new TaskGraph(taskScheduleReduceName);
+        rewrittenTaskGraph.withDevice(owner.getDevice());
 
         updateStreamInOutVariables(metaReduceTable.getTable());
 
@@ -588,7 +589,7 @@ class ReduceTaskGraph {
                 AbstractMetaData.withPropertiesOverride(propertiesOverride, () -> rewrittenTaskGraph.addTask(taskPackage));
             }
             // Inherit device of the original task
-            rewrittenTaskGraph = rewrittenTaskGraph.withDevice(taskScheduleReduceName + "." + taskPackage.getId(), originalDevice);
+            rewrittenTaskGraph.withDevice(taskScheduleReduceName + "." + taskPackage.getId(), originalDevice);
 
             // Add extra task with the final reduction
             if (tableReduce.containsKey(taskNumber)) {
@@ -623,7 +624,7 @@ class ReduceTaskGraph {
                         }
 
                         // Inherit device of the original task
-                        rewrittenTaskGraph = rewrittenTaskGraph.withDevice(taskScheduleReduceName + "." + newTaskSequentialName, originalDevice);
+                        rewrittenTaskGraph.withDevice(taskScheduleReduceName + "." + newTaskSequentialName, originalDevice);
 
                         if (hybridMode) {
                             if (hybridMergeTable == null) {
