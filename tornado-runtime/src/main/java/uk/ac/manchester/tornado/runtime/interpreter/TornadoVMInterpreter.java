@@ -413,7 +413,7 @@ public class TornadoVMInterpreter {
 
     private List<Integer> executeDeAlloc(StringBuilder tornadoVMBytecodeList, final int objectIndex) {
         Object object = objects.get(objectIndex);
-        if (TornadoOptions.PRINT_BYTECODES && isObjectAtomic(object)) {
+        if (TornadoOptions.PRINT_BYTECODES && isNotObjectAtomic(object)) {
             String verbose = String.format(STR."bc: \{InterpreterUtilities.debugHighLightBC("DEALLOC")}[0x%x] %s on %s", object.hashCode(), object, InterpreterUtilities.debugDeviceBC(
                     deviceForInterpreter));
             tornadoVMBytecodeList.append(verbose).append("\n");
@@ -431,21 +431,23 @@ public class TornadoVMInterpreter {
         Object object = objects.get(objectIndex);
 
         if (isObjectKernelContext(object)) {
-            return single(0);
+            return Collections.emptyList();
         }
 
         final XPUDeviceBufferState objectState = resolveObjectState(objectIndex);
 
         // We need to stream-in when using batches, because the whole data is not copied
-        List<Integer> allEvents = (sizeBatch > 0) 
-                ? deviceForInterpreter.streamIn(executionContext.getExecutionPlanId(), object, sizeBatch, offset, objectState, waitList)
-                : deviceForInterpreter.ensurePresent(executionContext.getExecutionPlanId(), object, objectState, waitList, sizeBatch, offset);
-
+        List<Integer> allEvents;
+        if (sizeBatch > 0) {
+            allEvents = deviceForInterpreter.streamIn(executionContext.getExecutionPlanId(), object, sizeBatch, offset, objectState, waitList);
+        } else {
+            allEvents = deviceForInterpreter.ensurePresent(executionContext.getExecutionPlanId(), object, objectState, waitList, sizeBatch, offset);
+        }
         /*
         resetEventIndexes(eventList);
         */
 
-        if (TornadoOptions.PRINT_BYTECODES && isObjectAtomic(object)) {
+        if (TornadoOptions.PRINT_BYTECODES && isNotObjectAtomic(object)) {
             DebugInterpreter.logTransferToDeviceOnce(allEvents, object, deviceForInterpreter, sizeBatch, offset, eventList, tornadoVMBytecodeList);
         }
 
@@ -471,10 +473,10 @@ public class TornadoVMInterpreter {
         Object object = objects.get(objectIndex);
 
         if (isObjectKernelContext(object)) {
-            return single(0);
+            return Collections.emptyList();
         }
 
-        if (TornadoOptions.PRINT_BYTECODES && isObjectAtomic(object)) {
+        if (TornadoOptions.PRINT_BYTECODES && isNotObjectAtomic(object)) {
             DebugInterpreter.logTransferToDeviceAlways(object, deviceForInterpreter, sizeBatch, offset, eventList, tornadoVMBytecodeList);
         }
 
@@ -500,14 +502,14 @@ public class TornadoVMInterpreter {
                 timeProfiler.setTimer(ProfilerType.TOTAL_DISPATCH_DATA_TRANSFERS_TIME, dispatchValue);
             }
         }
-        return single(0);
+        return allEvents;
     }
 
     private List<Integer> transferDeviceToHost(StringBuilder tornadoVMBytecodeList, boolean outOfOrder, final int objectIndex, final long offset, final int eventList, final long sizeBatch, final int[] waitList) {
         Object object = objects.get(objectIndex);
 
         if (isObjectKernelContext(object)) {
-            return Collections.emptyList(); //single(0)
+            return Collections.emptyList();
         }
 
         if (TornadoOptions.PRINT_BYTECODES) {
@@ -519,19 +521,19 @@ public class TornadoVMInterpreter {
         }
 
         final XPUDeviceBufferState objectState = resolveObjectState(objectIndex);
-        int lastEvent;
+        int readEvent;
         if (useDependencies || outOfOrder) {
-           lastEvent = deviceForInterpreter.streamOut(executionContext.getExecutionPlanId(), object, offset, objectState, waitList);
+           readEvent = deviceForInterpreter.streamOut(executionContext.getExecutionPlanId(), object, offset, objectState, waitList);
         } else {
-           lastEvent = deviceForInterpreter.streamOutBlocking(executionContext.getExecutionPlanId(), object, offset, objectState, waitList);
+           readEvent = deviceForInterpreter.streamOutBlocking(executionContext.getExecutionPlanId(), object, offset, objectState, waitList);
         }
 
         /*
         resetEventIndexes(eventList);
         */
 
-        if (TornadoOptions.isProfilerEnabled() && lastEvent != -1) {
-            Event event = deviceForInterpreter.resolveEvent(executionContext.getExecutionPlanId(), lastEvent);
+        if (TornadoOptions.isProfilerEnabled() && readEvent != -1) {
+            Event event = deviceForInterpreter.resolveEvent(executionContext.getExecutionPlanId(), readEvent);
             event.waitForEvents(executionContext.getExecutionPlanId());
             long value = timeProfiler.getTimer(ProfilerType.COPY_OUT_TIME);
             value += event.getElapsedTime();
@@ -543,7 +545,7 @@ public class TornadoVMInterpreter {
             dispatchValue += event.getDriverDispatchTime();
             timeProfiler.setTimer(ProfilerType.TOTAL_DISPATCH_DATA_TRANSFERS_TIME, dispatchValue);
         }
-        return single(lastEvent);
+        return single(readEvent);
     }
 
     private boolean isRecompilationNeededForLastBatch(TornadoInstalledCode installedCode, SchedulableTask task, long batchThreads) {
@@ -813,11 +815,8 @@ public class TornadoVMInterpreter {
         return (object instanceof KernelContext);
     }
 
-    private boolean isObjectAtomic(Object object) {
-        // ???
-        return (object instanceof AtomicInteger);
-        // new looks wrong
-        //return !(object instanceof AtomicInteger);
+    private boolean isNotObjectAtomic(Object object) {
+        return !(object instanceof AtomicInteger);
     }
 
     /*

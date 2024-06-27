@@ -173,7 +173,7 @@ public class OCLVectorWrapper implements XPUBuffer {
             throw new TornadoRuntimeException("ERROR] Data to be copied is NULL");
         }
         List<Integer> listEvents = Collections.singletonList(enqueueWriteArrayData(executionPlanId, toBuffer(), bufferOffset, bufferSize, array, hostOffset, (useDeps) ? events : null));
-        return useDeps ? listEvents : null;
+        return listEvents;
     }
 
     private int enqueueWriteArrayData(long executionPlanId, long bufferId, long offset, long bytes, Object value, long hostOffset, int[] waitEvents) {
