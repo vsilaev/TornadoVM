@@ -751,7 +751,7 @@ public class TornadoVMInterpreter {
         // We attach the profiler information
         metadata.attachProfiler(timeProfiler);
         metadata.setGridScheduler(gridScheduler);
-        metadata.setThreadInfo(executionContext.meta().isThreadInfoEnabled());
+        metadata.setThreadInfoEnabled(executionContext.meta().isThreadInfoEnabled());
 
         try {
             int lastEvent = useDependencies

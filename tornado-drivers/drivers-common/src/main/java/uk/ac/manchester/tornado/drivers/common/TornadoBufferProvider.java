@@ -2,7 +2,7 @@
  * This file is part of Tornado: A heterogeneous programming framework:
  * https://github.com/beehive-lab/tornadovm
  *
- * Copyright (c) 2022, APT Group, Department of Computer Science,
+ * Copyright (c) 2022, 2024, APT Group, Department of Computer Science,
  * The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -43,6 +43,11 @@ import uk.ac.manchester.tornado.runtime.common.TornadoOptions;
  */
 public abstract class TornadoBufferProvider {
 
+    private static final String RESET = "\u001B[0m";
+    private static final String YELLOW = "\u001B[33m";
+    private static final String OUT_OF_MEMORY_MESSAGE = YELLOW + "\n\tTo increase the maximum device memory, use -Dtornado.device.memory=<X>GB\n" + RESET;
+
+
     protected final TornadoDeviceContext deviceContext;
     private final MemoryResourcePool<Long> deviceMemoryPool;
     
@@ -80,7 +85,10 @@ public abstract class TornadoBufferProvider {
         try {
             return deviceMemoryPool.acquire(sizeInBytes, 15, TimeUnit.SECONDS);
         } catch (InterruptedException ex) {
-            throw new TornadoOutOfMemoryException("Unable to allocate " + sizeInBytes + " bytes of memory, available size is " + deviceMemoryPool.availableCapacity() + " out of " + deviceMemoryPool.totalCapacity());
+            throw new TornadoOutOfMemoryException(
+                "Unable to allocate " + sizeInBytes + 
+                " bytes of memory, available size is " + deviceMemoryPool.availableCapacity() + 
+                " out of " + deviceMemoryPool.totalCapacity() + ". " + OUT_OF_MEMORY_MESSAGE);
         }
     }
 
@@ -92,8 +100,16 @@ public abstract class TornadoBufferProvider {
         deviceMemoryPool.release(buffer);
     }
 
-    public boolean checkBufferAvailability(int numBuffersRequired) {
-        return deviceMemoryPool.availableCapacity() >= numBuffersRequired;
+
+    /**
+     * Function that returns true if the there are, at least numBuffers available in the free list.
+     * 
+     * @param numBuffers
+     *     Number of free buffers.
+     * @return boolean.
+     */
+    public boolean isNumFreeBuffersAvailable(int numBuffers) {
+        return deviceMemoryPool.availableCapacity() >= numBuffers;
     }
 
     @Deprecated
@@ -102,7 +118,7 @@ public abstract class TornadoBufferProvider {
     }
 
     public long deallocate() {
-/*
+        /*
         // Attempts to free buffers of given size.
         long spaceDeallocated = 0;
         while (!freeBuffers.isEmpty()) {
@@ -113,7 +129,8 @@ public abstract class TornadoBufferProvider {
             releaseBuffer(bufferInfo.buffer);
         }
         return spaceDeallocated;
-*/return 0;
+        */
+        return 0;
     }
     
     public void close() {
