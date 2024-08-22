@@ -146,6 +146,17 @@ public final class SPIRVBackendImpl implements TornadoAcceleratorBackend {
 
     @Override
     public void setDefaultDevice(int index) {
+        swapDefaultDevice(index);
+    }
+
+    private void swapDefaultDevice(final int device) {
+        SPIRVBackend tmp = flatBackends[0];
+        flatBackends[0] = flatBackends[device];
+        flatBackends[device] = tmp;
+        SPIRVBackend backend = flatBackends[0];
+        if (!backend.isInitialised()) {
+            backend.init();
+        }
     }
 
     private int getNumDevicesForPlatform(int platform) {
@@ -166,7 +177,7 @@ public final class SPIRVBackendImpl implements TornadoAcceleratorBackend {
         if (index < flatBackends.length) {
             return flatBackends[index].getDeviceContext().asMapping();
         } else {
-            throw new TornadoDeviceNotFound(STR."[ERROR]-[SPIRV-DRIVER] Device required not found: \{index} - Max: \{spirvBackends.length}");
+            throw new TornadoDeviceNotFound("[ERROR]-[SPIRV-DRIVER] Device required not found: " + index + " - Max: " + spirvBackends.length);
         }
     }
 

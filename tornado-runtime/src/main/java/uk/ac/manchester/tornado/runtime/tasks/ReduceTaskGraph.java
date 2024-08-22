@@ -207,8 +207,8 @@ class ReduceTaskGraph {
             for (int i = 0; i < binaries.length; i += 2) {
                 String givenTaskName = binaries[i + 1].split(".device")[0];
                 if (givenTaskName.equals(taskMeta.getId())) {
-                    String additionPrefix = STR.",\{binaries[i]},\{taskScheduleName}.";
-                    String additionSuffix = STR.".device=\{taskMeta.getBackendIndex()}:\{taskMeta.getDeviceIndex()}";
+                    String additionPrefix = "," + binaries[i] + "," + taskScheduleName + ".";
+                    String additionSuffix = ".device=" + taskMeta.getBackendIndex() + ":" + taskMeta.getDeviceIndex();
                     if (null == sequentialTaskName) {
                         originalBinaries.append(additionPrefix + taskNameSimple + additionSuffix);
                     } else {
@@ -656,7 +656,7 @@ class ReduceTaskGraph {
                     continue;
                 }
                 if (!rewrittenTaskGraph.getArgumentsLookup().contains(parameter)) {
-                    throw new TornadoTaskRuntimeException(STR."Parameter #\{i} <\{parameter}> from task <\{task.getId()}> not specified either in `transferToDevice` or `transferToHost` functions");
+                    throw new TornadoTaskRuntimeException("Parameter #" + i + " <" + parameter + "> from task <" + task.getId() + "> not specified either in `transferToDevice` or `transferToHost` functions");
                 }
             }
         }
@@ -787,7 +787,7 @@ class ReduceTaskGraph {
             case FloatArray panamaFloatArray -> ((FloatArray) originalReduceVariable).set(0, panamaFloatArray.get(0));
             case DoubleArray panamaDoubleArray -> ((DoubleArray) originalReduceVariable).set(0, panamaDoubleArray.get(0));
             case LongArray panamaLongArray -> ((LongArray) originalReduceVariable).set(0, panamaLongArray.get(0));
-            default -> new TornadoRuntimeException(STR."[ERROR] Reduce data type not supported yet: \{newArray.getClass().getTypeName()}");
+            default -> throw new TornadoRuntimeException("[ERROR] Reduce data type not supported yet: " + newArray.getClass().getTypeName());
         }
     }
 
@@ -833,7 +833,7 @@ class ReduceTaskGraph {
                 long bnl = panamaLongArray.get(0);
                 ((LongArray) originalReduceVariable).set(0, operateFinalReduction(anl, bnl, hybridMergeTable.get(panamaLongArray)));
             }
-            default -> new TornadoRuntimeException(STR."[ERROR] Reduce data type not supported yet: \{newArray.getClass().getTypeName()}");
+            default -> throw new TornadoRuntimeException("[ERROR] Reduce data type not supported yet: " + newArray.getClass().getTypeName());
         }
     }
 

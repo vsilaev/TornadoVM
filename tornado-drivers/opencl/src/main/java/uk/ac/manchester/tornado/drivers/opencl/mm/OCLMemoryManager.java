@@ -63,6 +63,13 @@ public class OCLMemoryManager implements TornadoMemoryProvider {
         });
     }
 
+    public void releaseKernelStackFrame(long executionPlanId) {
+        OCLKernelStackFrame stackFrame = oclKernelStackFrame.remove(executionPlanId);
+        if (stackFrame != null) {
+            stackFrame.invalidate();
+        }
+    }
+
     public XPUBuffer createAtomicsBuffer(final int[] array) {
         return new AtomicsBuffer(array, deviceContext);
     }

@@ -178,19 +178,12 @@ public class OCLContext implements OCLContextInterface {
         }
 
         try {
-            long t0 = System.nanoTime();
-            for (OCLProgram program : programs) {
-                program.cleanup();
-            }
             long t1 = System.nanoTime();
-            bufferProvider.close();
             clReleaseContext(contextID);
             long t2 = System.nanoTime();
 
             if (TornadoOptions.FULL_DEBUG) {
-                System.out.printf("cleanup: %-10s..........%.9f s%n", "programs", (t1 - t0) * 1e-9);
                 System.out.printf("cleanup: %-10s..........%.9f s%n", "context", (t2 - t1) * 1e-9);
-                System.out.printf("cleanup: %-10s..........%.9f s%n", "total", (t2 - t0) * 1e-9);
             }
         } catch (OCLException e) {
             logger.error(e.getMessage());

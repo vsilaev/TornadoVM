@@ -685,6 +685,16 @@ public class OCLDeviceContext implements OCLDeviceContextInterface {
     public void reset(long executionPlanId) {
         OCLEventPool eventPool = getOCLEventPool(executionPlanId);
         eventPool.reset();
+        oclEventPool.remove(executionPlanId);
+        OCLCommandQueueTable table = commandQueueTable.get(executionPlanId);
+        if (table != null) {
+            table.cleanup(device);
+            if (table.size() == 0) {
+                commandQueueTable.remove(executionPlanId);
+            }
+            executionIDs.remove(executionPlanId);
+        }
+        getMemoryManager().releaseKernelStackFrame(executionPlanId);
         codeCache.reset();
         wasReset = true;
     }
@@ -811,13 +821,13 @@ public class OCLDeviceContext implements OCLDeviceContextInterface {
     @Override
     public boolean isCached(String id, String entryPoint) {
         entryPoint = checkKernelName(entryPoint);
-        return codeCache.isCached(STR."\{id}-\{entryPoint}");
+        return codeCache.isCached(id + "-" + entryPoint);
     }
 
     @Override
     public boolean isCached(String methodName, SchedulableTask task) {
         methodName = checkKernelName(methodName);
-        return codeCache.isCached(STR."\{task.getId()}-\{methodName}");
+        return codeCache.isCached(task.getId() + "-" + methodName);
     }
 
     @Override
