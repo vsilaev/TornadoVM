@@ -59,7 +59,7 @@ import uk.ac.manchester.tornado.api.enums.ProfilerMode;
 import uk.ac.manchester.tornado.api.enums.TornadoDeviceType;
 import uk.ac.manchester.tornado.api.exceptions.TornadoRuntimeException;
 import uk.ac.manchester.tornado.api.exceptions.TornadoTaskRuntimeException;
-import uk.ac.manchester.tornado.api.memory.TaskMetaDataInterface;
+import uk.ac.manchester.tornado.api.runtime.TaskContextInterface;
 import uk.ac.manchester.tornado.api.runtime.TornadoRuntimeProvider;
 import uk.ac.manchester.tornado.api.types.arrays.ByteArray;
 import uk.ac.manchester.tornado.api.types.arrays.ShortArray;
@@ -75,9 +75,9 @@ import uk.ac.manchester.tornado.runtime.analyzer.MetaReduceTasks;
 import uk.ac.manchester.tornado.runtime.analyzer.ReduceCodeAnalysis;
 import uk.ac.manchester.tornado.runtime.analyzer.ReduceCodeAnalysis.REDUCE_OPERATION;
 import uk.ac.manchester.tornado.runtime.common.TornadoOptions;
-import uk.ac.manchester.tornado.runtime.tasks.meta.AbstractMetaData;
+import uk.ac.manchester.tornado.runtime.tasks.meta.AbstractRTContext;
 import uk.ac.manchester.tornado.runtime.tasks.meta.MetaDataUtils;
-import uk.ac.manchester.tornado.runtime.tasks.meta.TaskMetaData;
+import uk.ac.manchester.tornado.runtime.tasks.meta.TaskDataContext;
 
 class ReduceTaskGraph {
 
@@ -190,7 +190,7 @@ class ReduceTaskGraph {
         return value;
     }
 
-    private static void inspectBinariesFPGA(String taskScheduleName, TaskMetaDataInterface taskMeta, String taskNameSimple, String sequentialTaskName) {
+    private static void inspectBinariesFPGA(String taskScheduleName, TaskContextInterface taskMeta, String taskNameSimple, String sequentialTaskName) {
         StringBuilder originalBinaries = TornadoOptions.FPGA_BINARIES;
         if (originalBinaries != null) {
             String[] binaries = originalBinaries.toString().split(",");
@@ -388,8 +388,8 @@ class ReduceTaskGraph {
         // Update GLOBAL and LOCAL workgroup size if device to run is the FPGA
         if (isAheadOfTime() && isDeviceAnAccelerator(driverIndex, deviceToRun)) {
             Map<String, Object> result = new HashMap<>();
-            result.put(TaskMetaData.GLOBAL_WORKGROUP_SUFFIX, Integer.valueOf(inputSize));
-            result.put(TaskMetaData.LOCAL_WORKGROUP_SUFFIX, Integer.valueOf(64));
+            result.put(TaskDataContext.GLOBAL_WORKGROUP_SUFFIX, Integer.valueOf(inputSize));
+            result.put(TaskDataContext.LOCAL_WORKGROUP_SUFFIX, Integer.valueOf(64));
             return result;
         } else  {
             return Collections.emptyMap();
@@ -460,8 +460,8 @@ class ReduceTaskGraph {
 
             List<Object> streamReduceList = new ArrayList<>();
 
-            TaskMetaDataInterface originalMeta = owner.getTask(tsName + "." + taskPackage.getId()).meta();
-            int driverToRun = originalMeta.getBackendIndex();
+            TaskContextInterface originalMeta = owner.getTask(tsName + "." + taskPackage.getId()).meta();
+            int backendToRun = originalMeta.getBackendIndex();
             int deviceToRun = originalMeta.getDeviceIndex();
 
             // TODO Check device propagation here!
@@ -494,7 +494,7 @@ class ReduceTaskGraph {
                         int elementsReductionLeftOver = (int) (inputSize - closestPowerOf2);
                         inputSize -= elementsReductionLeftOver;
                         final int sizeTargetDevice = inputSize;
-                        if (isTaskEligibleSplitHostAndDevice(driverToRun, deviceToRun, elementsReductionLeftOver)) {
+                        if (isTaskEligibleSplitHostAndDevice(backendToRun, deviceToRun, elementsReductionLeftOver)) {
                             hostHybridModeArray = createHostArrayForHybridMode(originalReduceArray, taskPackage, sizeTargetDevice);
                         }
                     }
@@ -502,7 +502,7 @@ class ReduceTaskGraph {
                     inputSizes.put(originalMeta.getId(), Integer.valueOf(inputSize));
                     
                     // Set the new array size
-                    int sizeReductionArray = obtainSizeArrayResult(driverToRun, deviceToRun, inputSize);
+                    int sizeReductionArray = obtainSizeArrayResult(backendToRun, deviceToRun, inputSize);
                     Object newDeviceArray = createNewReduceArray(originalReduceArray, sizeReductionArray);
                     Object neutralElement = getNeutralElement(originalReduceArray);
                     fillOutputArrayWithNeutral(newDeviceArray, neutralElement);
@@ -572,7 +572,7 @@ class ReduceTaskGraph {
                 }
             }            
 
-            TaskMetaDataInterface originalMeta = owner.getTask(tsName + "." + taskPackage.getId()).meta();
+            TaskContextInterface originalMeta = owner.getTask(tsName + "." + taskPackage.getId()).meta();
             TornadoDevice originalDevice = owner.getDeviceForTask(originalMeta.getId());
 
             Map<String, Object> propertiesOverride = new HashMap<>();
@@ -586,7 +586,7 @@ class ReduceTaskGraph {
                 rewrittenTaskGraph.addTask(taskPackage);
             } else {
                 // Execute with overriden gloabl/local FPGA dimensions (inherited from parent task)
-                AbstractMetaData.withPropertiesOverride(propertiesOverride, () -> rewrittenTaskGraph.addTask(taskPackage));
+                AbstractRTContext.withPropertiesOverride(propertiesOverride, () -> rewrittenTaskGraph.addTask(taskPackage));
             }
             // Inherit device of the original task
             rewrittenTaskGraph.withDevice(taskScheduleReduceName + "." + taskPackage.getId(), originalDevice);
@@ -656,7 +656,9 @@ class ReduceTaskGraph {
                     continue;
                 }
                 if (!rewrittenTaskGraph.getArgumentsLookup().contains(parameter)) {
-                    throw new TornadoTaskRuntimeException("Parameter #" + i + " <" + parameter + "> from task <" + task.getId() + "> not specified either in `transferToDevice` or `transferToHost` functions");
+                    throw new TornadoTaskRuntimeException("Parameter #" + i + " <" + parameter + "> from task <" + task
+                            .getId() + "> not specified either in `transferToDevice` or `transferToHost` functions");
+
                 }
             }
         }

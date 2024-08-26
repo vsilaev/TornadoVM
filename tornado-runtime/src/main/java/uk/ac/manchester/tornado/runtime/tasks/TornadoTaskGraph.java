@@ -103,6 +103,7 @@ import uk.ac.manchester.tornado.api.enums.DataTransferMode;
 import uk.ac.manchester.tornado.api.enums.ProfilerMode;
 import uk.ac.manchester.tornado.api.enums.TornadoDeviceType;
 import uk.ac.manchester.tornado.api.enums.TornadoExecutionStatus;
+import uk.ac.manchester.tornado.api.enums.TornadoVMBackendType;
 import uk.ac.manchester.tornado.api.exceptions.TornadoBailoutRuntimeException;
 import uk.ac.manchester.tornado.api.exceptions.TornadoDynamicReconfigurationException;
 import uk.ac.manchester.tornado.api.exceptions.TornadoRuntimeException;
@@ -138,8 +139,8 @@ import uk.ac.manchester.tornado.runtime.profiler.TimeProfiler;
 import uk.ac.manchester.tornado.runtime.sketcher.Sketch;
 import uk.ac.manchester.tornado.runtime.sketcher.SketchRequest;
 import uk.ac.manchester.tornado.runtime.sketcher.TornadoSketcher;
-import uk.ac.manchester.tornado.runtime.tasks.meta.ScheduleMetaData;
-import uk.ac.manchester.tornado.runtime.tasks.meta.TaskMetaData;
+import uk.ac.manchester.tornado.runtime.tasks.meta.ScheduleContext;
+import uk.ac.manchester.tornado.runtime.tasks.meta.TaskDataContext;
 
 /**
  * Implementation of the Tornado API for running on heterogeneous devices.
@@ -222,7 +223,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
      * Task Schedule implementation that uses GPU/FPGA and multicore backends. This constructor must be public. It is invoked using the reflection API.
      *
      * @param taskScheduleName
-     *         Task-Schedule name
+     *     Task-Schedule name
      */
     public TornadoTaskGraph(String taskScheduleName) {
         executionContext = new TornadoExecutionContext(taskScheduleName);
@@ -502,6 +503,11 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
     }
 
     @Override
+    public void withCompilerFlags(TornadoVMBackendType backendType, String compilerFlags) {
+        executionContext.meta().setCompilerFlags(backendType, compilerFlags);
+    }
+
+    @Override
     public long getCurrentDeviceMemoryUsage() {
         return executionContext.getCurrentDeviceMemoryUsage();
     }
@@ -535,7 +541,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
     @Override
     public void setDevice(TornadoDevice device) {
 
-        TornadoDevice oldDevice = meta().getLogicDevice();
+        TornadoDevice oldDevice = meta().getXPUDevice();
 
         // prevent to set again the same device as it invalidates its state
         if (oldDevice.equals(device)) {
@@ -551,7 +557,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
             task.meta().setDevice(device);
             if (task instanceof CompilableTask compilableTask) {
                 ResolvedJavaMethod method = TornadoCoreRuntime.getTornadoRuntime().resolveMethod(compilableTask.getMethod());
-                if (!meta().getLogicDevice().getDeviceContext().isCached(method.getName(), compilableTask)) {
+                if (!meta().getXPUDevice().getDeviceContext().isCached(method.getName(), compilableTask)) {
                     updateInner(i, executionContext.getTask(i));
                 }
             }
@@ -584,7 +590,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
     @Override
     public void setDevice(String taskName, TornadoDevice device) {
 
-        TornadoDevice oldDevice = meta().getLogicDevice();
+        TornadoDevice oldDevice = meta().getXPUDevice();
 
         // Make sure that a sketch is available for the device.
         for (int i = 0; i < executionContext.getTaskCount(); i++) {
@@ -633,7 +639,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
 
         if (task instanceof CompilableTask compilableTask) {
             final ResolvedJavaMethod resolvedMethod = TornadoCoreRuntime.getTornadoRuntime().resolveMethod(compilableTask.getMethod());
-            final TaskMetaData taskMetaData = compilableTask.meta();
+            final TaskDataContext taskMetaData = compilableTask.meta();
             new SketchRequest(resolvedMethod, providers, suites.getGraphBuilderSuite(), suites.getSketchTier(), taskMetaData.getBackendIndex(), taskMetaData.getDeviceIndex()).run();
 
             Sketch sketchGraph = TornadoSketcher.lookup(resolvedMethod, taskMetaData.getBackendIndex(), taskMetaData.getDeviceIndex());
@@ -652,7 +658,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
         if (task instanceof CompilableTask compilableTask) {
             checkForMemorySegmentAsTaskParameter(compilableTask);
             final ResolvedJavaMethod resolvedMethod = TornadoCoreRuntime.getTornadoRuntime().resolveMethod(compilableTask.getMethod());
-            final TaskMetaData taskMetaData = compilableTask.meta();
+            final TaskDataContext taskMetaData = compilableTask.meta();
             new SketchRequest(resolvedMethod, providers, suites.getGraphBuilderSuite(), suites.getSketchTier(), taskMetaData.getBackendIndex(), taskMetaData.getDeviceIndex()).run();
 
             Sketch lookup = TornadoSketcher.lookup(resolvedMethod, compilableTask.meta().getBackendIndex(), compilableTask.meta().getDeviceIndex());
@@ -695,14 +701,14 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
     }
 
     private void updateDeviceContext() {
-        executionContext.setDevice(meta().getLogicDevice());
+        executionContext.setDevice(meta().getXPUDevice());
     }
 
     /**
      * Compile a {@link TaskGraph} into TornadoVM byte-code.
      *
      * @param setNewDevice:
-     *         boolean that specifies if set a new device or not.
+     *     boolean that specifies if set a new device or not.
      */
     private TornadoVM compileGraphAndBuildVM(boolean setNewDevice) {
         final ByteBuffer buffer = ByteBuffer.wrap(highLevelCode);
@@ -720,7 +726,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
         // TornadoVM byte-code generation
         TornadoVM tornadoVM = new TornadoVM(executionContext, tornadoGraph, timeProfiler);
 
-        if (meta().shouldDumpTaskGraph()) {
+        if (meta().isDebug()) {
             executionContext.dumpExecutionContextMeta();
             tornadoGraph.dumpTornadoGraph();
         }
@@ -752,7 +758,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
             return COMPILE_ONLY;
         }
 
-        if (tornadoVMBytecodeBuilder != null && !isLastDeviceListEmpty() && !(compareDevices(executionContext.getLastDevices(), meta().getLogicDevice()))) {
+        if (tornadoVMBytecodeBuilder != null && !isLastDeviceListEmpty() && !(compareDevices(executionContext.getLastDevices(), meta().getXPUDevice()))) {
             return COMPILE_AND_UPDATE;
         }
 
@@ -760,7 +766,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
             return COMPILE_ONLY;
         }
 
-        if (!compareDevices(executionContext.getLastDevices(), meta().getLogicDevice())) {
+        if (!compareDevices(executionContext.getLastDevices(), meta().getXPUDevice())) {
             return COMPILE_AND_UPDATE;
         }
 
@@ -790,12 +796,12 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
             timeProfiler.start(ProfilerType.TOTAL_BYTE_CODE_GENERATION);
             executionContext.scheduleTaskToDevices();
             TornadoVM tornadoVM = compileGraphAndBuildVM(compileInfo.updateDevice);
-            vmTable.put(meta().getLogicDevice(), tornadoVM);
+            vmTable.put(meta().getXPUDevice(), tornadoVM);
             timeProfiler.stop(ProfilerType.TOTAL_BYTE_CODE_GENERATION);
         }
-        executionContext.addLastDevice(meta().getLogicDevice());
+        executionContext.addLastDevice(meta().getXPUDevice());
 
-        vm = vmTable.get(meta().getLogicDevice());
+        vm = vmTable.get(meta().getXPUDevice());
 
         /*
          * Set the grid scheduler outside the constructor of the {@link
@@ -1072,8 +1078,8 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
     @Override
     public void dump() {
         final int width = 16;
-        System.out.printf("code  : capacity = %s, in use = %s %n", RuntimeUtilities.humanReadableByteCount(hlBuffer.capacity(), true),
-                RuntimeUtilities.humanReadableByteCount(hlBuffer.position(), true));
+        System.out.printf("code  : capacity = %s, in use = %s %n", RuntimeUtilities.humanReadableByteCount(hlBuffer.capacity(), true), RuntimeUtilities.humanReadableByteCount(hlBuffer.position(),
+                true));
         for (int i = 0; i < hlBuffer.position(); i += width) {
             System.out.printf("[0x%04x]: ", i);
             for (int j = 0; j < Math.min(hlBuffer.capacity() - i, width); j++) {
@@ -1106,9 +1112,6 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
 
     private void reuseDeviceBufferObject(Object object) {
         final LocalObjectState localState = executionContext.getLocalStateObject(object);
-        /*
-        reuseDeviceBufferObject(localState, meta().getLogicDevice());
-        */ 
         // Since we do not know upfront the device to use, we need to set the lock buffer
         // for all available devices. This does not allocate any buffer, just annotates
         // a Java object as pinned, so the TornadoVM runtime is free to reuse the space
@@ -1142,12 +1145,12 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
         }
         inputModesObjects.forEach(inputStreamObject -> freeDeviceMemoryObject(inputStreamObject.getObject()));
         outputModeObjects.forEach(outputStreamObject -> freeDeviceMemoryObject(outputStreamObject.getObject()));
-        meta().getLogicDevice().getDeviceContext().reset(executionPlanId);
+        meta().getXPUDevice().getDeviceContext().reset(executionPlanId);
     }
 
     private void freeDeviceMemoryObject(Object object) {
         final LocalObjectState localState = executionContext.getLocalStateObject(object);
-        releaseObjectFromDeviceMemory(localState, meta().getLogicDevice());
+        releaseObjectFromDeviceMemory(localState, meta().getXPUDevice());
     }
 
     private void releaseObjectFromDeviceMemory(final LocalObjectState localState, final TornadoDevice device) {
@@ -1172,7 +1175,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
     private Event syncObjectInner(Object object) {
         final LocalObjectState localState = executionContext.getLocalStateObject(object);
         final DataObjectState dataObjectState = localState.getDataObjectState();
-        final TornadoXPUDevice device = meta().getLogicDevice();
+        final TornadoXPUDevice device = meta().getXPUDevice();
         final XPUDeviceBufferState deviceState = dataObjectState.getDeviceBufferState(device);
         if (deviceState.isLockedBuffer()) {
             return device.resolveEvent(executionPlanId, device.streamOutBlocking(executionPlanId, object, 0, deviceState, null));
@@ -1183,7 +1186,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
     private Event syncObjectInner(Object object, long offset, long partialCopySize) {
         final LocalObjectState localState = executionContext.getLocalStateObject(object);
         final DataObjectState dataObjectState = localState.getDataObjectState();
-        final TornadoXPUDevice device = meta().getLogicDevice();
+        final TornadoXPUDevice device = meta().getXPUDevice();
         final XPUDeviceBufferState deviceState = dataObjectState.getDeviceBufferState(device);
         deviceState.setPartialCopySize(partialCopySize);
         if (deviceState.isLockedBuffer()) {
@@ -1195,7 +1198,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
     private Event syncObjectInnerLazy(Object object, long hostOffset, long bufferSize) {
         final LocalObjectState localState = executionContext.getLocalStateObject(object);
         final DataObjectState dataObjectState = localState.getDataObjectState();
-        final TornadoXPUDevice device = meta().getLogicDevice();
+        final TornadoXPUDevice device = meta().getXPUDevice();
         final XPUDeviceBufferState deviceBufferState = dataObjectState.getDeviceBufferState(device);
         if (deviceBufferState.isLockedBuffer()) {
             deviceBufferState.getXPUBuffer().setSizeSubRegion(bufferSize);
@@ -1269,7 +1272,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
                 value += eventParameter.getElapsedTime();
                 timeProfiler.setTimer(ProfilerType.COPY_OUT_TIME_SYNC, value);
                 LocalObjectState localState = executionContext.getLocalStateObject(objects[i]);
-                XPUDeviceBufferState deviceObjectState = localState.getDataObjectState().getDeviceBufferState(meta().getLogicDevice());
+                XPUDeviceBufferState deviceObjectState = localState.getDataObjectState().getDeviceBufferState(meta().getXPUDevice());
                 timeProfiler.addValueToMetric(ProfilerType.COPY_OUT_SIZE_BYTES_SYNC, TimeProfiler.NO_TASK_NAME, deviceObjectState.getXPUBuffer().size());
             }
             updateProfiler();
@@ -1300,7 +1303,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
                 value += event.getElapsedTime();
                 timeProfiler.setTimer(ProfilerType.COPY_OUT_TIME_SYNC, value);
                 LocalObjectState localState = executionContext.getLocalStateObject(object);
-                XPUDeviceBufferState deviceObjectState = localState.getDataObjectState().getDeviceBufferState(meta().getLogicDevice());
+                XPUDeviceBufferState deviceObjectState = localState.getDataObjectState().getDeviceBufferState(meta().getXPUDevice());
                 timeProfiler.addValueToMetric(ProfilerType.COPY_OUT_SIZE_BYTES_SYNC, TimeProfiler.NO_TASK_NAME, deviceObjectState.getXPUBuffer().size());
                 updateProfiler();
             }
@@ -1313,7 +1316,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
     }
 
     @Override
-    public ScheduleMetaData meta() {
+    public ScheduleContext meta() {
         return executionContext.meta();
     }
 
@@ -1377,7 +1380,8 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
                     continue;
                 }
                 if (!argumentsLookUp.contains(parameter)) {
-                    throw new TornadoTaskRuntimeException("Parameter #" + i + " <" + parameter + "> from task <" + task.getId() + "> not specified either in transferToDevice or transferToHost functions");
+                    throw new TornadoTaskRuntimeException("Parameter #" + i + " <" + parameter + "> from task <" + task
+                            .getId() + "> not specified either in transferToDevice or transferToHost functions");
                 }
             }
         }
@@ -2069,9 +2073,9 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
      * Experimental method to sync all objects when making a clone copy for all output objects per device.
      *
      * @param policy
-     *         input policy
+     *     input policy
      * @param numDevices
-     *         number of devices
+     *     number of devices
      */
     private void restoreVarsIntoJavaHeap(Policy policy, int numDevices) {
         if (policyTimeTable.get(policy) < numDevices) {
@@ -2143,7 +2147,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private void addInner(int index, int type, Method method, ScheduleMetaData meta, String id, Object[] parameters) {
+    private void addInner(int index, int type, Method method, ScheduleContext meta, String id, Object[] parameters) {
         switch (type) {
             case 0:
                 updateInner(index, TaskUtils.createTask(method, meta, id, (Task) parameters[0]));
@@ -2207,7 +2211,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
-    private void addInner(int type, Method method, ScheduleMetaData meta, String id, Object[] parameters) {
+    private void addInner(int type, Method method, ScheduleContext meta, String id, Object[] parameters) {
         switch (type) {
             case 0:
                 addInner(TaskUtils.createTask(method, meta, id, (Task) parameters[0]));
@@ -2276,7 +2280,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
         Object[] parameters = taskPackage.getTaskParameters();
 
         Method method = TaskUtils.resolveMethodHandle(parameters[0]);
-        ScheduleMetaData meta = meta();
+        ScheduleContext meta = meta();
 
         // Set the number of threads to run. If 0, it will execute as many
         // threads as input size (after Tornado analyses the right block-size).
@@ -2304,7 +2308,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
         Object[] parameters = taskPackage.getTaskParameters();
 
         Method method = TaskUtils.resolveMethodHandle(parameters[0]);
-        ScheduleMetaData meta = meta();
+        ScheduleContext meta = meta();
 
         // Set the number of threads to run. If 0, it will execute as many
         // threads as input size (after Tornado analyses the right block-size).

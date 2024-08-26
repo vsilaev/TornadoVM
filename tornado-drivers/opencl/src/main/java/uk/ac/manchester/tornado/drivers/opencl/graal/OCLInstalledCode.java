@@ -50,7 +50,7 @@ import uk.ac.manchester.tornado.runtime.common.RuntimeUtilities;
 import uk.ac.manchester.tornado.runtime.common.TornadoInstalledCode;
 import uk.ac.manchester.tornado.runtime.common.TornadoLogger;
 import uk.ac.manchester.tornado.runtime.common.TornadoOptions;
-import uk.ac.manchester.tornado.runtime.tasks.meta.TaskMetaData;
+import uk.ac.manchester.tornado.runtime.tasks.meta.TaskDataContext;
 
 public class OCLInstalledCode extends InstalledCode implements TornadoInstalledCode {
 
@@ -124,9 +124,9 @@ public class OCLInstalledCode extends InstalledCode implements TornadoInstalledC
      * @param kernelArgs
      *     OpenCL kernel parameters {@link OCLByteBuffer}
      * @param meta
-     *     task metadata {@link TaskMetaData}
+     *     task metadata {@link TaskDataContext}
      */
-    private void setKernelArgs(final OCLKernelStackFrame kernelArgs, final XPUBuffer atomicSpace, TaskMetaData meta) {
+    private void setKernelArgs(final OCLKernelStackFrame kernelArgs, final XPUBuffer atomicSpace, TaskDataContext meta) {
         int index = 0;
         ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
         buffer.order(deviceContext.getByteOrder());
@@ -204,7 +204,15 @@ public class OCLInstalledCode extends InstalledCode implements TornadoInstalledC
         }
     }
 
-    public int submitWithEvents(long executionPlanId, final OCLKernelStackFrame kernelArgs, final XPUBuffer atomicSpace, final TaskMetaData meta, final int[] events, long batchThreads) {
+    private void printDebugLaunchInfo(final TaskDataContext meta) {
+        System.out.println("Running on: ");
+        System.out.println("\tPlatform: " + meta.getXPUDevice().getPlatformName());
+        if (meta.getXPUDevice() instanceof OCLTornadoDevice) {
+            System.out.println("\tDevice  : " + ((OCLTornadoDevice) meta.getXPUDevice()).getPhysicalDevice().getDeviceName());
+        }
+    }
+
+    public int submitWithEvents(long executionPlanId, final OCLKernelStackFrame kernelArgs, final XPUBuffer atomicSpace, final TaskDataContext meta, final int[] events, long batchThreads) {
         guarantee(kernel != null, "kernel is null");
 
         if (DEBUG) {
@@ -225,29 +233,16 @@ public class OCLInstalledCode extends InstalledCode implements TornadoInstalledC
             task = deviceContext.enqueueNDRangeKernel(executionPlanId, kernel, 1, null, singleThreadGlobalWorkSize, singleThreadLocalWorkSize, waitEvents);
         } else {
             if (meta.isParallel() || meta.isWorkerGridAvailable() /* CHECK*/) {
-                if (meta.enableThreadCoarsener()) {
-                    task = DEFAULT_SCHEDULER.submit(executionPlanId, kernel, meta, waitEvents, batchThreads);
-                } else {
-                    task = scheduler.submit(executionPlanId, kernel, meta, waitEvents, batchThreads);
-                }
+                task = scheduler.submit(executionPlanId, kernel, meta, waitEvents, batchThreads);
             } else {
                 if (meta.isDebug()) {
-                    System.out.println("Running on: ");
-                    System.out.println("\tPlatform: " + meta.getLogicDevice().getPlatformName());
-                    if (meta.getLogicDevice() instanceof OCLTornadoDevice) {
-                        System.out.println("\tDevice  : " + ((OCLTornadoDevice) meta.getLogicDevice()).getPhysicalDevice().getDeviceName());
-                    }
+                    printDebugLaunchInfo(meta);
                 }
                 if ((meta.getGlobalWork() == null) || (meta.getGlobalWork().length == 0) /*CHECK*/) {
                     task = deviceContext.enqueueNDRangeKernel(executionPlanId, kernel, 1, null, singleThreadGlobalWorkSize, singleThreadLocalWorkSize, waitEvents);
                 } else {
                     task = deviceContext.enqueueNDRangeKernel(executionPlanId, kernel, 1, null, meta.getGlobalWork(), meta.getLocalWork(), waitEvents);
                 }
-            }
-
-            if (meta.shouldDumpProfiles()) {
-                deviceContext.retainEvent(executionPlanId, task);
-                meta.addProfile(task);
             }
         }
 
@@ -258,7 +253,7 @@ public class OCLInstalledCode extends InstalledCode implements TornadoInstalledC
         return deviceContext.enqueueNDRangeKernel(executionPlanId, kernel, 1, null, singleThreadGlobalWorkSize, singleThreadLocalWorkSize, null);
     }
 
-    private int submitSequential(long executionPlanId, final TaskMetaData meta) {
+    private int submitSequential(long executionPlanId, final TaskDataContext meta) {
         final int task;
 
         if (meta.isThreadInfoEnabled()) {
@@ -288,27 +283,16 @@ public class OCLInstalledCode extends InstalledCode implements TornadoInstalledC
         return task;
     }
 
-    private int submitParallel(long executionPlanId, final TaskMetaData meta, long batchThreads) {
-        final int task;
-        if (meta.enableThreadCoarsener()) {
-            task = DEFAULT_SCHEDULER.submit(executionPlanId, kernel, meta, batchThreads);
-        } else {
-            task = scheduler.submit(executionPlanId, kernel, meta, batchThreads);
-        }
-        return task;
+    private int submitParallel(long executionPlanId, final TaskDataContext meta, long batchThreads) {
+        return scheduler.submit(executionPlanId, kernel, meta, batchThreads);
     }
 
-    private int launchKernel(long executionPlanId, final OCLKernelStackFrame callWrapper, final TaskMetaData meta, long batchThreads) {
+    private int launchKernel(long executionPlanId, final OCLKernelStackFrame callWrapper, final TaskDataContext meta, long batchThreads) {
         final int task;
         if (meta.isParallel() || meta.isWorkerGridAvailable()) {
             task = submitParallel(executionPlanId, meta, batchThreads);
         } else {
             task = submitSequential(executionPlanId, meta);
-        }
-
-        if (meta.shouldDumpProfiles()) {
-            deviceContext.retainEvent(executionPlanId, task);
-            meta.addProfile(task);
         }
         return task;
     }
@@ -319,7 +303,7 @@ public class OCLInstalledCode extends InstalledCode implements TornadoInstalledC
         }
     }
 
-    private int submitWithoutEvents(long executionPlanId, final OCLKernelStackFrame oclKernelStackFrame, final XPUBuffer atomicSpace, final TaskMetaData meta, long batchThreads) {
+    private int submitWithoutEvents(long executionPlanId, final OCLKernelStackFrame oclKernelStackFrame, final XPUBuffer atomicSpace, final TaskDataContext meta, long batchThreads) {
 
         checkKernelNotNull();
 
@@ -338,7 +322,7 @@ public class OCLInstalledCode extends InstalledCode implements TornadoInstalledC
         }
     }
 
-    private void updateProfilerKernelContextWrite(long executionPlanId, int kernelContextWriteEventId, TaskMetaData meta, OCLKernelStackFrame callWrapper) {
+    private void updateProfilerKernelContextWrite(long executionPlanId, int kernelContextWriteEventId, TaskDataContext meta, OCLKernelStackFrame callWrapper) {
         if (TornadoOptions.isProfilerEnabled()) {
             TornadoProfiler profiler = meta.getProfiler();
             Event event = deviceContext.resolveEvent(executionPlanId, kernelContextWriteEventId);
@@ -355,12 +339,12 @@ public class OCLInstalledCode extends InstalledCode implements TornadoInstalledC
     }
 
     @Override
-    public int launchWithDependencies(long executionPlanId, KernelStackFrame callWrapper, XPUBuffer atomicSpace, TaskMetaData meta, long batchThreads, int[] waitEvents) {
+    public int launchWithDependencies(long executionPlanId, KernelStackFrame callWrapper, XPUBuffer atomicSpace, TaskDataContext meta, long batchThreads, int[] waitEvents) {
         return submitWithEvents(executionPlanId, (OCLKernelStackFrame) callWrapper, atomicSpace, meta, waitEvents, batchThreads);
     }
 
     @Override
-    public int launchWithoutDependencies(long executionPlanId, KernelStackFrame callWrapper, XPUBuffer atomicSpace, TaskMetaData meta, long batchThreads) {
+    public int launchWithoutDependencies(long executionPlanId, KernelStackFrame callWrapper, XPUBuffer atomicSpace, TaskDataContext meta, long batchThreads) {
         return submitWithoutEvents(executionPlanId, (OCLKernelStackFrame) callWrapper, atomicSpace, meta, batchThreads);
     }
 

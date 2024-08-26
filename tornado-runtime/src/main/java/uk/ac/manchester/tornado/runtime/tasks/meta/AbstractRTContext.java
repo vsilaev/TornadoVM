@@ -30,6 +30,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 import jdk.vm.ci.meta.ResolvedJavaMethod;
@@ -37,79 +38,72 @@ import uk.ac.manchester.tornado.api.GridScheduler;
 import uk.ac.manchester.tornado.api.WorkerGrid;
 import uk.ac.manchester.tornado.api.common.TornadoDevice;
 import uk.ac.manchester.tornado.api.common.TornadoEvents;
-import uk.ac.manchester.tornado.api.memory.TaskMetaDataInterface;
+import uk.ac.manchester.tornado.api.enums.TornadoVMBackendType;
 import uk.ac.manchester.tornado.api.profiler.TornadoProfiler;
+import uk.ac.manchester.tornado.api.runtime.TaskContextInterface;
 import uk.ac.manchester.tornado.runtime.TornadoAcceleratorBackend;
 import uk.ac.manchester.tornado.runtime.TornadoCoreRuntime;
 import uk.ac.manchester.tornado.runtime.common.Tornado;
 import uk.ac.manchester.tornado.runtime.common.TornadoOptions;
 import uk.ac.manchester.tornado.runtime.common.TornadoXPUDevice;
+import uk.ac.manchester.tornado.runtime.tasks.meta.MetaDataUtils.BackendSelectionContainer;
 
-public abstract class AbstractMetaData implements TaskMetaDataInterface {
+/**
+ * Abstract Runtime (RT) Context: Class that maintains fields for deployment and compilation for the
+ * supported drivers (e.g., device indexes, drivers, thread-block etc.)
+ *
+ * <p>
+ * This class bridges the external (user requirements) from the internals (runtime and compiler parameters).
+ * </p>
+ */
+public abstract class AbstractRTContext implements TaskContextInterface {
 
-    private static final long[] SEQUENTIAL_GLOBAL_WORK_GROUP = { 1, 1, 1 };
     private static final String TRUE = "True";
     private static final String FALSE = "False";
+    private static final long[] SEQUENTIAL_GLOBAL_WORK_GROUP = { 1, 1, 1 };
+
+    private final String id;
     private final boolean isDeviceDefined;
-    private final HashSet<String> openCLBuiltOptions = new HashSet<>(Arrays.asList(//
-            "-cl-single-precision-constant", //
-            "-cl-denorms-are-zero", //
-            "-cl-opt-disable", //
-            "-cl-strict-aliasing", //
-            "-cl-mad-enable", //
-            "-cl-no-signed-zeros", //
-            "-cl-unsafe-math-optimizations", //
-            "-cl-finite-math-only", //
-            "-cl-fast-relaxed-math", //
-            "-w", //
-            "-cl-std=CL2.0" //
-    ));
+    private TornadoXPUDevice device;
+    private int backendIndex;
+    private int deviceIndex;
+    private boolean deviceManuallySet;
+
     private boolean threadInfoEnabled;
-    private final boolean debugMode;
-    private final boolean dumpEvents;
-    private final boolean dumpProfiles;
+    private boolean printKernel;
+    private boolean resetThreads;
+
     private final boolean isOpenclGpuBlockXDefined;
     private final int openclGpuBlockX;
     private final boolean isOpenclGpuBlock2DXDefined;
     private final int openclGpuBlock2DX;
     private final boolean isOpenclGpuBlock2DYDefined;
     private final int openclGpuBlock2DY;
-    private final boolean enableOooExecution;
-    private final boolean enableParallelization;
-    private final boolean useThreadCoarsener;
-    private final boolean dumpTaskGraph;
-    private final boolean isEnableParallelizationDefined;
-    private final boolean isCpuConfigDefined;
-    private final String cpuConfig;
-    private final String id;
-    private TornadoXPUDevice device;
-    private int backendIndex;
-    private int deviceIndex;
-    private boolean deviceManuallySet;
     private long numThreads;
-    private TornadoProfiler profiler;
+
     private GridScheduler gridScheduler;
     private long[] ptxBlockDim;
     private long[] ptxGridDim;
 
+    private TornadoProfiler profiler;
+
     private ResolvedJavaMethod graph;
     private boolean useGridScheduler;
-
-    private boolean isOpenclCompilerFlagsDefined;
-    private String openclCompilerOptions;
+    private final Map<TornadoVMBackendType, String> compilerOptionsPerBackend;
 
     private boolean openclUseDriverScheduling;
-    private boolean printKernel;
-    private boolean resetThreads;
 
-    AbstractMetaData(String id, TaskMetaDataInterface parent) {
+    private final boolean enableOooExecution;
+
+
+    AbstractRTContext(String id, AbstractRTContext parent) {
         this.id = id;
 
         String xdevice;
         if (null != (xdevice = getProperty(id + ".device"))) {
-            int[] deviceOverride = MetaDataUtils.resolveDriverDeviceIndexes(xdevice);
-            backendIndex = deviceOverride[0];
-            deviceIndex = deviceOverride[1];
+            BackendSelectionContainer backendSelection = MetaDataUtils.resolveDriverDeviceIndexes(xdevice);
+            backendIndex = backendSelection.backendIndex();
+            deviceIndex = backendSelection.deviceIndex();
             isDeviceDefined = true;
         } else if (null != parent) {
             backendIndex = parent.getBackendIndex();
@@ -123,19 +117,13 @@ public abstract class AbstractMetaData implements TaskMetaDataInterface {
         }
         enableOooExecution = parseBoolean(getDefault("ooo-execution.enable", id, FALSE));
 
-        enableParallelization = parseBoolean(getDefault("parallelise", id, TRUE));
-        isEnableParallelizationDefined = getProperty(id + ".parallelise") != null;
-
         threadInfoEnabled = TornadoOptions.THREAD_INFO;
         printKernel = TornadoOptions.PRINT_KERNEL_SOURCE;
-        debugMode = parseBoolean(getDefault("debug", id, FALSE));
-        dumpEvents = parseBoolean(getDefault("events.dump", id, TRUE));
-        dumpProfiles = parseBoolean(getDefault("profiles.print", id, FALSE));
-        dumpTaskGraph = Boolean.parseBoolean(System.getProperty("dump.taskgraph", FALSE));
 
-        // Compilation flags - > only for OpenCL
-        openclCompilerOptions = (getProperty("tornado.opencl.compiler.options") == null) ? "-w" : getProperty("tornado.opencl.compiler.options");
-        isOpenclCompilerFlagsDefined = getProperty("tornado.opencl.compiler.options") != null;
+        compilerOptionsPerBackend = new ConcurrentHashMap<>();
+        compilerOptionsPerBackend.put(TornadoVMBackendType.OPENCL, TornadoOptions.DEFAULT_OPENCL_COMPILER_FLAGS);
+        compilerOptionsPerBackend.put(TornadoVMBackendType.PTX, TornadoOptions.DEFAULT_PTX_COMPILER_FLAGS);
+        compilerOptionsPerBackend.put(TornadoVMBackendType.SPIRV, TornadoOptions.DEFAULT_SPIRV_LEVEL_ZERO_COMPILER_FLAGS);
 
         // Thread Configurations
         openclGpuBlockX = parseInt(getDefault("opencl.gpu.block.x", id, "256"));
@@ -146,10 +134,6 @@ public abstract class AbstractMetaData implements TaskMetaDataInterface {
 
         openclGpuBlock2DY = parseInt(getDefault("opencl.gpu.block2d.y", id, "4"));
         isOpenclGpuBlock2DYDefined = getProperty(id + ".opencl.gpu.block2d.y") != null;
-
-        cpuConfig = getDefault("cpu.config", id, null);
-        isCpuConfigDefined = getProperty(id + ".cpu.config") != null;
-        useThreadCoarsener = Boolean.parseBoolean(getDefault("coarsener", id, FALSE));
     }
 
     private static String getProperty(String key) {
@@ -177,9 +161,11 @@ public abstract class AbstractMetaData implements TaskMetaDataInterface {
         }
     }
 
-
-    public TornadoXPUDevice getLogicDevice() {
-        return device != null ? device : (device = resolveDevice(Tornado.getProperty(id + ".device", backendIndex + ":" + deviceIndex)));
+    public TornadoXPUDevice getXPUDevice() {
+        if (device == null) {
+            device = resolveDevice(Tornado.getProperty(id + ".device", backendIndex + ":" + deviceIndex));
+        }
+        return device;
     }
 
     private int getDeviceIndex(int driverIndex, TornadoDevice device) {
@@ -200,7 +186,7 @@ public abstract class AbstractMetaData implements TaskMetaDataInterface {
     }
 
     /**
-     * Set a device in the default driver.
+     * Select a device for the next execution.
      *
      * @param device
      *     {@link TornadoDevice}
@@ -224,10 +210,6 @@ public abstract class AbstractMetaData implements TaskMetaDataInterface {
         return deviceIndex;
     }
 
-    public String getCpuConfig() {
-        return cpuConfig;
-    }
-
     @Override
     public String getId() {
         return id;
@@ -238,29 +220,16 @@ public abstract class AbstractMetaData implements TaskMetaDataInterface {
     }
 
     public boolean isDebug() {
-        return debugMode;
+        return TornadoOptions.DEBUG;
     }
 
-    public boolean shouldDumpEvents() {
-        return dumpEvents;
-    }
-
-    public boolean shouldDumpProfiles() {
-        return dumpProfiles;
-    }
-
-    public boolean shouldDumpTaskGraph() {
-        return dumpTaskGraph;
-    }
-
-    public String getCompilerFlags() {
-        return composeBuiltOptions(openclCompilerOptions);
+    public String getCompilerFlags(TornadoVMBackendType backendType) {
+        return compilerOptionsPerBackend.get(backendType);
     }
 
     @Override
-    public void setCompilerFlags(String value) {
-        openclCompilerOptions = value;
-        isOpenclCompilerFlagsDefined = true;
+    public void setCompilerFlags(TornadoVMBackendType backendType, String compilerFlags) {
+        compilerOptionsPerBackend.put(backendType, compilerFlags);
     }
 
     public int getOpenCLGpuBlockX() {
@@ -283,35 +252,8 @@ public abstract class AbstractMetaData implements TaskMetaDataInterface {
         return enableOooExecution;
     }
 
-    public boolean enableParallelization() {
-        return enableParallelization;
-    }
-
-    public boolean enableThreadCoarsener() {
-        return useThreadCoarsener;
-    }
-
     public boolean isDeviceDefined() {
         return isDeviceDefined;
-    }
-
-    boolean isEnableParallelizationDefined() {
-        return isEnableParallelizationDefined;
-    }
-
-    public boolean isOpenclCompilerFlagsDefined() {
-        return isOpenclCompilerFlagsDefined;
-    }
-
-    public String composeBuiltOptions(String rawFlags) {
-        rawFlags = rawFlags.replace(",", " ");
-        for (String str : rawFlags.split(" ")) {
-            if (!openCLBuiltOptions.contains(str)) {
-                rawFlags = " ";
-                break;
-            }
-        }
-        return rawFlags;
     }
 
     public boolean isOpenclGpuBlockXDefined() {
@@ -324,10 +266,6 @@ public abstract class AbstractMetaData implements TaskMetaDataInterface {
 
     public boolean isOpenclGpuBlock2DYDefined() {
         return isOpenclGpuBlock2DYDefined;
-    }
-
-    public boolean isCpuConfigDefined() {
-        return isCpuConfigDefined;
     }
 
     @Override
