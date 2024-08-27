@@ -638,7 +638,7 @@ public class TestAtomics extends TornadoTestBase {
         ImmutableTaskGraph immutableTaskGraph = taskGraph.snapshot();
         final int iterations = 50;
         try (TornadoExecutionPlan executionPlan = new TornadoExecutionPlan(immutableTaskGraph)) {
-            IntStream.range(0, iterations).forEach(_ -> executionPlan.execute());
+            IntStream.range(0, iterations).forEach(it -> executionPlan.execute());
         }
 
         int lastValue = ai.get();
