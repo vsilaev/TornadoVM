@@ -160,7 +160,7 @@ public class VirtualOCLDeviceContext implements OCLDeviceContextInterface {
     }
 
     @Override
-    public VirtualOCLTornadoDevice asMapping() {
+    public VirtualOCLTornadoDevice toDevice() {
         return new VirtualOCLTornadoDevice(context.getPlatformIndex(), device.getIndex());
     }
 

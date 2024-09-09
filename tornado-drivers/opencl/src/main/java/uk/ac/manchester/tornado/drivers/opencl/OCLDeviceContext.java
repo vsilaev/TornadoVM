@@ -700,7 +700,7 @@ public class OCLDeviceContext implements OCLDeviceContextInterface {
     }
 
     @Override
-    public OCLTornadoDevice asMapping() {
+    public OCLTornadoDevice toDevice() {
         return new OCLTornadoDevice(context.getPlatformIndex(), device.getIndex());
     }
 

@@ -292,7 +292,7 @@ public class TornadoExecutionContext {
         if (tornadoDevice instanceof TornadoXPUDevice tornadoAcceleratorDevice) {
             devices.clear();
             devices.addFirst(tornadoAcceleratorDevice);
-            apply(task -> task.mapTo(tornadoDevice));
+            apply(task -> task.setDevice(tornadoDevice));
             Arrays.fill(taskToDeviceMapTable, tornadoDevice);
         } else {
             throw new TornadoRuntimeException("Device " + tornadoDevice.getClass() + " not supported yet");
@@ -470,15 +470,13 @@ public class TornadoExecutionContext {
      *
      * @param deviceContext
      *     The device context of the device.
-     * @param driverIndex
-     *     The index of the driver.
      * @return A list of {@link SchedulableTask} objects associated with the
      *     specified device and driver.
      */
-    public List<SchedulableTask> getTasksForDevice(TornadoDeviceContext deviceContext, int driverIndex) {
+    public List<SchedulableTask> getTasksForDevice(TornadoDeviceContext deviceContext) {
         List<SchedulableTask> tasksForDevice = new ArrayList<>();
         for (SchedulableTask task : tasks) {
-            task.getDevice().getDriverIndex();
+            task.getDevice().getBackendIndex();
             if (task.getDevice().getDeviceContext() == deviceContext) {
                 tasksForDevice.add(task);
             }
@@ -538,7 +536,7 @@ public class TornadoExecutionContext {
                 deviceIndex = devices.size();
                 devices.add(accelerator);
             }
-            task.mapTo(accelerator);
+            task.setDevice(accelerator);
             // taskToDevice[taskIndex] = deviceIndex;
             taskToDeviceMapTable[taskIndex] = accelerator;
         } else {
@@ -636,11 +634,11 @@ public class TornadoExecutionContext {
     public TornadoExecutionContext clone() {
         TornadoExecutionContext newExecutionContext = new TornadoExecutionContext(this.getId());
 
-        newExecutionContext.tasks = new ArrayList<>(this.tasks);
+        newExecutionContext.tasks = new ArrayList<>(tasks);
 
         newExecutionContext.kernelStackFrame = this.kernelStackFrame.clone();
 
-        newExecutionContext.constants = new ArrayList<>(this.constants);
+        newExecutionContext.constants = new ArrayList<>(constants);
 
         newExecutionContext.objectMap = new HashMap<>(objectMap);
 

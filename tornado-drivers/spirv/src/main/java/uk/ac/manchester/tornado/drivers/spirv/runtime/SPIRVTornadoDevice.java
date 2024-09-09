@@ -26,6 +26,7 @@ package uk.ac.manchester.tornado.drivers.spirv.runtime;
 import java.lang.foreign.MemorySegment;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -54,7 +55,6 @@ import uk.ac.manchester.tornado.drivers.spirv.SPIRVBackend;
 import uk.ac.manchester.tornado.drivers.spirv.SPIRVBackendImpl;
 import uk.ac.manchester.tornado.drivers.spirv.SPIRVDevice;
 import uk.ac.manchester.tornado.drivers.spirv.SPIRVDeviceContext;
-import uk.ac.manchester.tornado.drivers.spirv.SPIRVRuntimeImpl;
 import uk.ac.manchester.tornado.drivers.spirv.graal.SPIRVProviders;
 import uk.ac.manchester.tornado.drivers.spirv.graal.compiler.SPIRVCompilationResult;
 import uk.ac.manchester.tornado.drivers.spirv.graal.compiler.SPIRVCompiler;
@@ -93,12 +93,6 @@ public class SPIRVTornadoDevice implements TornadoXPUDevice {
     private final SPIRVDevice device;
     private final int deviceIndex;
     private final int platformIndex;
-
-    public SPIRVTornadoDevice(int platformIndex, int deviceIndex) {
-        this.platformIndex = platformIndex;
-        this.deviceIndex = deviceIndex;
-        device = SPIRVRuntimeImpl.getInstance().getPlatform(platformIndex).getDevice(deviceIndex);
-    }
 
     public SPIRVTornadoDevice(SPIRVDevice lowLevelDevice) {
         this.platformIndex = lowLevelDevice.getPlatformIndex();
@@ -486,7 +480,7 @@ public class SPIRVTornadoDevice implements TornadoXPUDevice {
 
     @Override
     public void clean() {
-        Set<Long> ids = device.getDeviceContext().getRegisteredPlanIds();
+        Set<Long> ids = new HashSet<>(device.getDeviceContext().getRegisteredPlanIds());
         ids.forEach(id -> device.getDeviceContext().reset(id));
         ids.clear();
         disableProfilerOptions();
@@ -563,7 +557,7 @@ public class SPIRVTornadoDevice implements TornadoXPUDevice {
     }
 
     @Override
-    public int getDriverIndex() {
+    public int getBackendIndex() {
         return TornadoCoreRuntime.getTornadoRuntime().getBackendIndex(SPIRVBackendImpl.class);
     }
 

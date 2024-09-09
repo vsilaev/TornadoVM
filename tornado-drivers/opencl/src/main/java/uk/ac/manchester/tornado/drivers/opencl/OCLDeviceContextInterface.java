@@ -53,7 +53,7 @@ public interface OCLDeviceContextInterface extends TornadoDeviceContext {
 
     void reset(long executionPlanId);
 
-    TornadoXPUDevice asMapping();
+    TornadoXPUDevice toDevice();
 
     void dumpEvents();
 
