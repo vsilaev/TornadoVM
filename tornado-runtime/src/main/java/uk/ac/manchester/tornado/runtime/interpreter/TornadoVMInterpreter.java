@@ -624,7 +624,7 @@ public class TornadoVMInterpreter {
                     task.forceCompilation();
                 }
 
-                installedCodes[localTaskIndex] = installedCode = interpreterDevice.installCode(task);
+                installedCodes[localTaskIndex] = installedCode = interpreterDevice.installCode(graphExecutionContext.getExecutionPlanId(), task);
                 profilerUpdateForPreCompiledTask(task);
                 // After the compilation has been completed, increment
                 // the batch number of the task and update it.
@@ -662,7 +662,7 @@ public class TornadoVMInterpreter {
         if (installedCode == null) {
             // After warming-up, it is possible to get a null pointer in the task-cache due
             // to lazy compilation for FPGAs. In tha case, we check again the code cache.
-            installedCodes[localTaskIndex] = installedCode = interpreterDevice.getCodeFromCache(task);
+            installedCodes[localTaskIndex] = installedCode = interpreterDevice.getCodeFromCache(graphExecutionContext.getExecutionPlanId(), task);
         }
 
         if (installedCode == null) {

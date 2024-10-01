@@ -54,5 +54,6 @@ tornado-runtime/target/
 tornado-drivers/opencl-jni/src/main/cpp/headers/
 OpenCL-Headers/
 /tempOpenCLHeaderDirectory
+/OpenCL-Headers/
 /.metadata/
 /.recommenders/

@@ -459,7 +459,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
     }
 
     @Override
-    public void disableProfiler(ProfilerMode profilerMode) {
+    public void disableProfiler() {
         TornadoOptions.TORNADO_PROFILER = false;
         TornadoOptions.TORNADO_PROFILER_LOG = false;
         this.timeProfiler = null;
@@ -503,13 +503,13 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
     }
 
     @Override
-    public void withCompilerFlags(TornadoVMBackendType backendType, String compilerFlags) {
-        executionContext.meta().setCompilerFlags(backendType, compilerFlags);
+    public long getCurrentDeviceMemoryUsage() {
+        return executionContext.getCurrentDeviceMemoryUsage();
     }
 
     @Override
-    public long getCurrentDeviceMemoryUsage() {
-        return executionContext.getCurrentDeviceMemoryUsage();
+    public void withCompilerFlags(TornadoVMBackendType backendType, String compilerFlags) {
+        executionContext.meta().setCompilerFlags(backendType, compilerFlags);
     }
 
     @Override
@@ -557,7 +557,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
             task.meta().setDevice(device);
             if (task instanceof CompilableTask compilableTask) {
                 ResolvedJavaMethod method = TornadoCoreRuntime.getTornadoRuntime().resolveMethod(compilableTask.getMethod());
-                if (!meta().getXPUDevice().getDeviceContext().isCached(method.getName(), compilableTask)) {
+                if (!meta().getXPUDevice().getDeviceContext().isCached(executionPlanId, method.getName(), compilableTask)) {
                     updateInner(i, executionContext.getTask(i));
                 }
             }
@@ -600,7 +600,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
                 task.meta().setDevice(device);
                 if (task instanceof CompilableTask) {
                     ResolvedJavaMethod method = TornadoCoreRuntime.getTornadoRuntime().resolveMethod(((CompilableTask) task).getMethod());
-                    if (!task.getDevice().getDeviceContext().isCached(method.getName(), task)) {
+                    if (!task.getDevice().getDeviceContext().isCached(executionPlanId, method.getName(), task)) {
                         updateInner(i, task);
                     }
                 }
@@ -832,7 +832,7 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
         if (TornadoOptions.FPGA_EMULATION) {
             compile = true;
         } else if (executionContext.getDeviceOfFirstTask() instanceof TornadoXPUDevice tornadoAcceleratorDevice) {
-            if (tornadoAcceleratorDevice.isFullJITMode(executionContext.getTask(0))) {
+            if (tornadoAcceleratorDevice.isFullJITMode(executionPlanId, executionContext.getTask(0))) {
                 compile = true;
             }
         }
@@ -1097,12 +1097,14 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
     }
 
     @Override
-    public void warmup() {
+    public void warmup(ExecutorFrame executionPackage) {
         setupProfiler();
         getDevice().getDeviceContext().setResetToFalse();
         timeProfiler.clean();
 
         compileComputeGraphToTornadoVMBytecode();
+        executionPlanId = executionPackage.getExecutionPlanId();
+        executionContext.setExecutionPlanId(executionPlanId);
         vm.warmup();
 
         if (TornadoOptions.isProfilerEnabled() && !TornadoOptions.PROFILER_LOGS_ACCUMULATE()) {
@@ -1478,18 +1480,30 @@ public class TornadoTaskGraph implements TornadoTaskGraphInterface {
         return this;
     }
 
+    private void checkProfilerOn(ExecutorFrame executorFrame) {
+        if (executorFrame.getProfilerMode() != null) {
+            enableProfiler(executorFrame.getProfilerMode());
+        } else {
+            disableProfiler();
+        }
+    }
+
+    private TornadoTaskGraphInterface executeWithDynamicReconfiguration(ExecutorFrame executorFrame) {
+        return switch (executorFrame.getDRMode()) {
+            case SERIAL -> scheduleDynamicReconfigurationSequential(executorFrame.getDynamicReconfigurationPolicy());
+            case PARALLEL -> scheduleDynamicReconfigurationParallel(executorFrame.getDynamicReconfigurationPolicy());
+            case null, default -> throw new TornadoRuntimeException("[Error] Dynamic Reconfiguration Mode not Implemented: " + executorFrame.getDRMode());
+        };
+    }
+
     @Override
-    public TornadoTaskGraphInterface execute(ExecutorFrame executionPackage) {
-        executionPlanId = executionPackage.getExecutionPlanId();
-        if (executionPackage.getDynamicReconfigurationPolicy() == null) {
+    public TornadoTaskGraphInterface execute(ExecutorFrame executorFrame) {
+        executionPlanId = executorFrame.getExecutionPlanId();
+        checkProfilerOn(executorFrame);
+        if (executorFrame.getDynamicReconfigurationPolicy() == null) {
             return execute();
         } else {
-            if (executionPackage.getDRMode() == DRMode.SERIAL) {
-                return scheduleDynamicReconfigurationSequential(executionPackage.getDynamicReconfigurationPolicy());
-            } else if (executionPackage.getDRMode() == DRMode.PARALLEL) {
-                return scheduleDynamicReconfigurationParallel(executionPackage.getDynamicReconfigurationPolicy());
-            }
-            throw new TornadoRuntimeException("Unsupported execution mode: " + executionPackage.getDRMode());
+            return executeWithDynamicReconfiguration(executorFrame);
         }
     }
 
