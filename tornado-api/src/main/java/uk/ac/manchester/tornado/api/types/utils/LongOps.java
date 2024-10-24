@@ -15,19 +15,16 @@
  * limitations under the License.
  *
  */
-package uk.ac.manchester.tornado.api.plan.types;
+package uk.ac.manchester.tornado.api.types.utils;
 
-import uk.ac.manchester.tornado.api.ExecutionPlanType;
-import uk.ac.manchester.tornado.api.TornadoExecutionPlan;
+public class LongOps {
 
-public final class WithDevicePlan extends ExecutionPlanType {
+    public static final String FMT = "%d";
+    public static final String FMT_2 = "{%d,%d}";
+    public static final String FMT_3 = "{%d,%d,%d}";
+    public static final String FMT_4 = "{%d,%d,%d,%d}";
+    public static final String FMT_6 = "{%d,%d,%d,%d,%d,%d}";
+    public static final String FMT_8 = "{%d,%d,%d,%d,%d,%d,%d,%d}";
+    public static final String FMT_16 = "{%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d}";
 
-    public WithDevicePlan(TornadoExecutionPlan parent) {
-        super(parent);
-    }
-
-    @Override
-    public String toString() {
-        return parentLink.toString() + "\n -> withDevice ";
-    }
 }

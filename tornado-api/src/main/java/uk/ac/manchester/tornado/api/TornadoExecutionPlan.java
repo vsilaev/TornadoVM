@@ -17,6 +17,9 @@
  */
 package uk.ac.manchester.tornado.api;
 
+import java.util.Objects;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ForkJoinPool;
@@ -26,18 +29,18 @@ import uk.ac.manchester.tornado.api.common.TornadoDevice;
 import uk.ac.manchester.tornado.api.enums.ProfilerMode;
 import uk.ac.manchester.tornado.api.enums.TornadoVMBackendType;
 import uk.ac.manchester.tornado.api.exceptions.TornadoExecutionPlanException;
+import uk.ac.manchester.tornado.api.exceptions.TornadoRuntimeException;
 import uk.ac.manchester.tornado.api.plan.types.OffConcurrentDevices;
 import uk.ac.manchester.tornado.api.plan.types.OffMemoryLimit;
 import uk.ac.manchester.tornado.api.plan.types.OffPrintKernel;
 import uk.ac.manchester.tornado.api.plan.types.OffProfiler;
 import uk.ac.manchester.tornado.api.plan.types.OffThreadInfo;
-import uk.ac.manchester.tornado.api.plan.types.WithWarmUp;
 import uk.ac.manchester.tornado.api.plan.types.WithBatch;
 import uk.ac.manchester.tornado.api.plan.types.WithClearProfiles;
 import uk.ac.manchester.tornado.api.plan.types.WithCompilerFlags;
 import uk.ac.manchester.tornado.api.plan.types.WithConcurrentDevices;
 import uk.ac.manchester.tornado.api.plan.types.WithDefaultScheduler;
-import uk.ac.manchester.tornado.api.plan.types.WithDevicePlan;
+import uk.ac.manchester.tornado.api.plan.types.WithDevice;
 import uk.ac.manchester.tornado.api.plan.types.WithDynamicReconfiguration;
 import uk.ac.manchester.tornado.api.plan.types.WithFreeDeviceMemory;
 import uk.ac.manchester.tornado.api.plan.types.WithGridScheduler;
@@ -46,6 +49,7 @@ import uk.ac.manchester.tornado.api.plan.types.WithPrintKernel;
 import uk.ac.manchester.tornado.api.plan.types.WithProfiler;
 import uk.ac.manchester.tornado.api.plan.types.WithResetDevice;
 import uk.ac.manchester.tornado.api.plan.types.WithThreadInfo;
+import uk.ac.manchester.tornado.api.plan.types.WithWarmUp;
 import uk.ac.manchester.tornado.api.runtime.ExecutorFrame;
 import uk.ac.manchester.tornado.api.runtime.TornadoRuntimeProvider;
 
@@ -79,19 +83,21 @@ public sealed class TornadoExecutionPlan implements AutoCloseable permits Execut
 
     // Pointers
     /**
-     * Pointer to the Root of the List
+     * Pointer to the Root of the List.
      */
     protected TornadoExecutionPlan rootNode;
 
     /**
-     * Pointer to the next node in the list
+     * Pointer to the next node in the list.
      */
     protected TornadoExecutionPlan childLink;
 
     /**
-     * Pointer to the previous node in the list
+     * Pointer to the previous node in the list.
      */
     protected TornadoExecutionPlan parentLink;
+
+    protected List<TornadoExecutionResult> planResults;
 
     /**
      * Create an Execution Plan: Object to create and optimize an execution plan for
@@ -108,6 +114,7 @@ public sealed class TornadoExecutionPlan implements AutoCloseable permits Execut
         final long id = globalExecutionPlanCounter.incrementAndGet();
         executionFrame = new ExecutorFrame(id);
         rootNode = this;
+        planResults = new ArrayList<>();
     }
 
     /**
@@ -155,8 +162,12 @@ public sealed class TornadoExecutionPlan implements AutoCloseable permits Execut
      */
     public TornadoExecutionResult execute() {
         tornadoExecutor.execute(executionFrame);
-        TornadoProfilerResult profilerResult = new TornadoProfilerResult(tornadoExecutor);
-        return new TornadoExecutionResult(profilerResult);
+        TornadoProfilerResult profilerResult = new TornadoProfilerResult(tornadoExecutor, this.getTraceExecutionPlan());
+        TornadoExecutionResult executionResult = new TornadoExecutionResult(profilerResult);
+        synchronized (planResults) {
+            planResults.add(executionResult);
+        }
+        return executionResult;
     }
 
     public CompletableFuture<TornadoExecutionResult> executeAsync() {
@@ -165,7 +176,14 @@ public sealed class TornadoExecutionPlan implements AutoCloseable permits Execut
     
     public CompletableFuture<TornadoExecutionResult> executeAsync(Executor executor) {
         return tornadoExecutor.executeAsync(executionFrame, executor)
-                              .thenApply(v -> new TornadoExecutionResult(new TornadoProfilerResult(tornadoExecutor)));
+                              .thenApply(v -> {
+                                  TornadoProfilerResult profilerResult = new TornadoProfilerResult(tornadoExecutor, this.getTraceExecutionPlan());
+                                  TornadoExecutionResult executionResult = new TornadoExecutionResult(profilerResult);
+                                  synchronized (planResults) {
+                                     planResults.add(executionResult);
+                                  }  
+                                  return executionResult;
+                              });
     }
 
     /**
@@ -187,7 +205,7 @@ public sealed class TornadoExecutionPlan implements AutoCloseable permits Execut
      */
     public TornadoExecutionPlan withDevice(TornadoDevice device) {
         tornadoExecutor.setDevice(device);
-        return new WithDevicePlan(this);
+        return new WithDevice(this, device);
     }
 
     /**
@@ -196,7 +214,7 @@ public sealed class TornadoExecutionPlan implements AutoCloseable permits Execut
      * @since 1.0.8
      */
     public void printTraceExecutionPlan() {
-        System.out.println(childLink);
+        System.out.println(Objects.requireNonNullElse(childLink, this));
     }
 
     /**
@@ -206,7 +224,10 @@ public sealed class TornadoExecutionPlan implements AutoCloseable permits Execut
      * @since 1.0.8
      */
     public String getTraceExecutionPlan() {
-        return childLink.toString();
+        if (childLink != null) {
+            return childLink.toString();
+        }
+        return toString();
     }
 
     @Override
@@ -227,7 +248,7 @@ public sealed class TornadoExecutionPlan implements AutoCloseable permits Execut
      */
     public TornadoExecutionPlan withDevice(String taskName, TornadoDevice device) {
         tornadoExecutor.setDevice(taskName, device);
-        return new WithDevicePlan(this);
+        return new WithDevice(this, device);
     }
 
     /**
@@ -297,7 +318,7 @@ public sealed class TornadoExecutionPlan implements AutoCloseable permits Execut
      */
     public TornadoExecutionPlan withGridScheduler(GridScheduler gridScheduler) {
         tornadoExecutor.withGridScheduler(gridScheduler);
-        return new WithGridScheduler(this);
+        return new WithGridScheduler(this, gridScheduler);
     }
 
     /**
@@ -322,7 +343,7 @@ public sealed class TornadoExecutionPlan implements AutoCloseable permits Execut
      */
     public TornadoExecutionPlan withDynamicReconfiguration(Policy policy, DRMode mode) {
         executionFrame.withPolicy(policy).withMode(mode);
-        return new WithDynamicReconfiguration(this);
+        return new WithDynamicReconfiguration(this, policy, mode);
     }
 
     /**
@@ -337,7 +358,7 @@ public sealed class TornadoExecutionPlan implements AutoCloseable permits Execut
      */
     public TornadoExecutionPlan withBatch(String batchSize) {
         tornadoExecutor.withBatch(batchSize);
-        return new WithBatch(this);
+        return new WithBatch(this, batchSize);
     }
 
     /**
@@ -351,7 +372,7 @@ public sealed class TornadoExecutionPlan implements AutoCloseable permits Execut
      */
     public TornadoExecutionPlan withProfiler(ProfilerMode profilerMode) {
         executionFrame.withProfilerOn(profilerMode);
-        return new WithProfiler(this);
+        return new WithProfiler(this, profilerMode);
     }
 
     /**
@@ -377,7 +398,7 @@ public sealed class TornadoExecutionPlan implements AutoCloseable permits Execut
      */
     public TornadoExecutionPlan withMemoryLimit(String memoryLimit) {
         tornadoExecutor.withMemoryLimit(memoryLimit);
-        return new WithMemoryLimit(this);
+        return new WithMemoryLimit(this, memoryLimit);
     }
 
     /**
@@ -492,7 +513,7 @@ public sealed class TornadoExecutionPlan implements AutoCloseable permits Execut
      */
     public TornadoExecutionPlan withCompilerFlags(TornadoVMBackendType backend, String compilerFlags) {
         tornadoExecutor.withCompilerFlags(backend, compilerFlags);
-        return new WithCompilerFlags(this);
+        return new WithCompilerFlags(this, compilerFlags);
     }
 
     /**
@@ -516,4 +537,12 @@ public sealed class TornadoExecutionPlan implements AutoCloseable permits Execut
         return tornadoExecutor.getCurrentDeviceMemoryUsage();
     }
 
+    public TornadoExecutionResult getPlanResult(int index) {
+        synchronized (planResults) {
+            if (index >= planResults.size()) {
+                throw new TornadoRuntimeException("[ERROR] Execution result not found");
+            }
+            return planResults.get(index);
+        }
+    }
 }

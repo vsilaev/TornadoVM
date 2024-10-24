@@ -51,6 +51,7 @@ def check_java_version():
     java_version_output = subprocess.check_output(
         [java_cmd, "-version"], stderr=subprocess.STDOUT, universal_newlines=True
     )
+
     return java_version_output
 
 
@@ -175,11 +176,13 @@ def build_levelzero_jni_lib(rebuild=False):
 
         ## Always pull for the latest changes
         subprocess.run(["git", "pull", "origin", __LEVEL_ZERO_JNI_VERSION__])
+        mvnProcess = ["mvn"]
         if os.name == 'nt':
+            mvnProcess = ["bash"] + mvnProcess
             isWinCmdOrBat = True
         else:
             isWinCmdOrBat = False
-        subprocess.run(["mvn", "clean", "install"], shell=isWinCmdOrBat)
+        subprocess.run(mvnProcess + ["clean", "install"], shell=isWinCmdOrBat)
 
         ## Build native library
         os.chdir("levelZeroLib")
@@ -225,18 +228,20 @@ def build_spirv_toolkit_and_level_zero(rebuild=False):
         )
 
         subprocess.run(["git", "pull", "origin", "master"])
+        mvnProcess = ["mvn"]
         if os.name == 'nt':
+            mvnProcess = ["bash"] + mvnProcess
             isWinCmdOrBat = True
         else:
             isWinCmdOrBat = False
-        subprocess.run(["mvn", "clean", "package"], shell=isWinCmdOrBat)
-        subprocess.run(["mvn", "install"], shell=isWinCmdOrBat)
+        subprocess.run(mvnProcess + ["clean", "package"], shell=isWinCmdOrBat)
+        subprocess.run(mvnProcess + ["install"], shell=isWinCmdOrBat)
         os.chdir(current)
 
         level_zero_lib = "level-zero"
 
         if not os.path.exists(level_zero_lib):
-            subprocess.run(["git", "clone", "https://github.com/oneapi-src/level-zero"])
+            subprocess.run(["git", "clone", "--branch", "v1.17.45", "https://github.com/oneapi-src/level-zero"])
             os.chdir(level_zero_lib)
             os.mkdir("build")
             os.chdir("build")
@@ -245,7 +250,7 @@ def build_spirv_toolkit_and_level_zero(rebuild=False):
             os.chdir(current)
 
     if os.name == 'nt':
-        subprocess.run([os.path.join(level_zero_lib, "build", "bin", "Release", "zello_world")])
+        ''' subprocess.run([os.path.join(level_zero_lib, "build", "bin", "Release", "zello_world")]) '''
     else:
         subprocess.run([os.path.join(level_zero_lib, "build", "bin", "zello_world")])
 

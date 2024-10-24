@@ -19,12 +19,12 @@ package uk.ac.manchester.tornado.unittests.executor;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 import java.util.Arrays;
 
 import org.junit.Test;
 
-import uk.ac.manchester.tornado.api.ExecutionPlanType;
 import uk.ac.manchester.tornado.api.GridScheduler;
 import uk.ac.manchester.tornado.api.ImmutableTaskGraph;
 import uk.ac.manchester.tornado.api.TaskGraph;
@@ -263,6 +263,14 @@ public class TestExecutor extends TornadoTestBase {
 
         try (TornadoExecutionPlan executionPlan = new TornadoExecutionPlan(tg.snapshot())) {
 
+            executionPlan.execute();
+            executionPlan.printTraceExecutionPlan();
+            try {
+                String traceExecutionPlan = executionPlan.getTraceExecutionPlan();
+            } catch (NullPointerException e) {
+                fail();
+            }
+
             TornadoDevice device = TornadoExecutionPlan.getDevice(0, 0);
 
             WorkerGrid workerGrid = new WorkerGrid1D(16);
@@ -287,6 +295,10 @@ public class TestExecutor extends TornadoTestBase {
             String trace1 = trace.getTraceExecutionPlan();
             String trace2 = executionPlan.getTraceExecutionPlan();
             assertEquals(trace1, trace2);
+
+            TornadoExecutionResult planResult = executionPlan.getPlanResult(0);
+            System.out.println("After the execution");
+            System.out.println(planResult.getProfilerResult().getTraceExecutionPlan());
 
         }
     }

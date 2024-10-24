@@ -17,24 +17,21 @@
  */
 package uk.ac.manchester.tornado.api.plan.types;
 
-import uk.ac.manchester.tornado.api.DRMode;
 import uk.ac.manchester.tornado.api.ExecutionPlanType;
-import uk.ac.manchester.tornado.api.Policy;
 import uk.ac.manchester.tornado.api.TornadoExecutionPlan;
+import uk.ac.manchester.tornado.api.common.TornadoDevice;
 
-public final class WithDynamicReconfiguration extends ExecutionPlanType {
+public final class WithDevice extends ExecutionPlanType {
 
-    final private Policy policy;
-    final private DRMode mode;
+    private final TornadoDevice device;
 
-    public WithDynamicReconfiguration(TornadoExecutionPlan parent, Policy policy, DRMode mode) {
+    public WithDevice(TornadoExecutionPlan parent, TornadoDevice device) {
         super(parent);
-        this.policy = policy;
-        this.mode = mode;
+        this.device = device;
     }
 
     @Override
     public String toString() {
-        return parentLink.toString() + "\n -> withDynamicReconfiguration(" + policy.name() + ", " + mode.name() + ")";
+        return parentLink.toString() + "\n -> withDevice(" + device.getTornadoVMBackend() + ":" + device.getPhysicalDevice().getDeviceName() + ")";
     }
 }
