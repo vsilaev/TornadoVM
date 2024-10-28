@@ -128,7 +128,6 @@ public class OCLMemorySegmentWrapper implements XPUBuffer {
     }
 
     @Override
-
     public void write(long executionPlanId, Object reference) {
         MemorySegment segment;
         segment = getSegmentWithHeader(reference);
@@ -144,12 +143,14 @@ public class OCLMemorySegmentWrapper implements XPUBuffer {
     public int enqueueRead(long executionPlanId, Object reference, long hostOffset, int[] events, boolean useDeps) {
         MemorySegment segment;
         segment = getSegmentWithHeader(reference);
-
-        final int returnEvent;
+        final long numBytes = getSizeSubRegionSize() > 0 ? getSizeSubRegionSize() : bufferSize;
+        int returnEvent;
         if (batchSize <= 0) {
-            returnEvent = deviceContext.enqueueReadBuffer(executionPlanId, toBuffer(), bufferOffset, bufferSize, segment.address(), hostOffset, (useDeps) ? events : null);
+            returnEvent = deviceContext.enqueueReadBuffer(executionPlanId, toBuffer(), bufferOffset, numBytes, segment.address(), hostOffset, (useDeps) ? events : null);
         } else {
-            throw new TornadoUnsupportedError("[UNSUPPORTED] batch processing for enqueueReadBuffer operation");
+            returnEvent = deviceContext.enqueueReadBuffer(executionPlanId, toBuffer(), TornadoNativeArray.ARRAY_HEADER, numBytes, segment.address(), 
+                    hostOffset + TornadoNativeArray.ARRAY_HEADER, (useDeps) ? events : null);
+            //throw new TornadoUnsupportedError("[UNSUPPORTED] batch processing for enqueueReadBuffer operation");
         }
         return useDeps ? returnEvent : -1;
     }
@@ -164,7 +165,7 @@ public class OCLMemorySegmentWrapper implements XPUBuffer {
         if (batchSize <= 0) {
             internalEvent = deviceContext.enqueueWriteBuffer(executionPlanId, toBuffer(), bufferOffset, bufferSize, segment.address(), hostOffset, (useDeps) ? events : null);
         } else {
-            internalEvent = deviceContext.enqueueWriteBuffer(executionPlanId, toBuffer(), 0, TornadoNativeArray.ARRAY_HEADER, segment.address(), 0, (useDeps) ? events : null);
+            internalEvent = deviceContext.enqueueWriteBuffer(executionPlanId, toBuffer(), 0, TornadoNativeArray.ARRAY_HEADER, segment.address(), hostOffset /*hostOffset ???*/, (useDeps) ? events : null);
             returnEvents.add(internalEvent);
             internalEvent = deviceContext.enqueueWriteBuffer(executionPlanId, toBuffer(), bufferOffset + TornadoNativeArray.ARRAY_HEADER, bufferSize, segment.address(),
                     hostOffset + TornadoNativeArray.ARRAY_HEADER, (useDeps) ? events : null);
