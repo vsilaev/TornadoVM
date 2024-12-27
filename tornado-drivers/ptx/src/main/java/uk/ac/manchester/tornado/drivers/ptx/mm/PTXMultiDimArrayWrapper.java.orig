@@ -100,9 +100,19 @@ public class PTXMultiDimArrayWrapper<T, E> extends PTXArrayWrapper<T> {
             throw new TornadoMemoryException("[ERROR] Bytes Allocated < 0: " + Array.getLength(value));
         }
         addresses = new long[Array.getLength(value)];
+<<<<<<< HEAD
+        @SuppressWarnings("unchecked")
+        PTXArrayWrapper<E>[] newWrappers = new PTXArrayWrapper[Array.getLength(value)]; 
+        wrappers = newWrappers;
+        tableWrapper.allocate(addresses, batchSize);
+        @SuppressWarnings("unchecked")
+        T element = (T)value;
+        allocateElements(element, batchSize);
+=======
         wrappers = new PTXArrayWrapper[Array.getLength(value)];
         tableWrapper.allocate(addresses, batchSize, access);
         allocateElements((T) value, batchSize, access);
+>>>>>>> 4a144f15ca615ea0638c4633fd0f1a39cb0c8f9a
     }
 
     private void allocateElements(T values, long batchSize, Access access) {

@@ -30,6 +30,7 @@ import java.util.Collections;
 import java.util.List;
 
 import jdk.vm.ci.meta.JavaKind;
+import uk.ac.manchester.tornado.api.common.Access;
 import uk.ac.manchester.tornado.api.exceptions.TornadoInternalError;
 import uk.ac.manchester.tornado.api.exceptions.TornadoMemoryException;
 import uk.ac.manchester.tornado.api.exceptions.TornadoRuntimeException;
@@ -64,8 +65,9 @@ public class OCLVectorWrapper implements XPUBuffer {
     private long bufferOffset;
     private long bufferSize;
     private long setSubRegionSize;
+    private Access access;
 
-    public OCLVectorWrapper(final OCLDeviceContext device, final Object object, long batchSize) {
+    public OCLVectorWrapper(final OCLDeviceContext device, final Object object, long batchSize, Access access) {
         TornadoInternalError.guarantee(object instanceof PrimitiveStorage, "Expecting a PrimitiveStorage type, but found: " + object.getClass());
         this.deviceContext = device;
         this.batchSize = batchSize;
@@ -74,6 +76,7 @@ public class OCLVectorWrapper implements XPUBuffer {
         Object payload = TornadoUtils.getAnnotatedObjectFromField(object, Payload.class);
         this.kind = getJavaKind(payload.getClass());
         this.bufferSize = sizeOf(payload);
+        this.access = access;
     }
 
     public long getBatchSize() {
@@ -81,7 +84,7 @@ public class OCLVectorWrapper implements XPUBuffer {
     }
 
     @Override
-    public void allocate(Object value, long batchSize) {
+    public void allocate(Object value, long batchSize, Access access) {
         TornadoInternalError.guarantee(value instanceof PrimitiveStorage, "Expecting a PrimitiveStorage type");
         final Object hostArray = TornadoUtils.getAnnotatedObjectFromField(value, Payload.class);
         if (batchSize <= 0) {
@@ -94,7 +97,7 @@ public class OCLVectorWrapper implements XPUBuffer {
             throw new TornadoMemoryException("[ERROR] Bytes Allocated <= 0: " + bufferSize);
         }
 
-        this.bufferId = deviceContext.getBufferProvider().getOrAllocateBufferWithSize(bufferSize);
+        this.bufferId = deviceContext.getBufferProvider().getOrAllocateBufferWithSize(bufferSize, access);
 
         if (TornadoOptions.FULL_DEBUG) {
             new TornadoLogger().info("allocated: array kind=%s, size=%s, length offset=%d, header size=%d", kind.getJavaName(), humanReadableByteCount(bufferSize, true), bufferOffset,
@@ -107,7 +110,7 @@ public class OCLVectorWrapper implements XPUBuffer {
     public void markAsFreeBuffer() {
         TornadoInternalError.guarantee(bufferId != INIT_VALUE, "Fatal error: trying to deallocate an invalid buffer");
 
-        deviceContext.getBufferProvider().markBufferReleased(bufferId);
+        deviceContext.getBufferProvider().markBufferReleased(bufferId, access);
         bufferId = INIT_VALUE;
         bufferSize = INIT_VALUE;
 
@@ -277,19 +280,19 @@ public class OCLVectorWrapper implements XPUBuffer {
     
     private OCLArrayWrapper<Object> toProxy() {
         if (kind == JavaKind.Byte) {
-            return cast(new OCLByteArrayWrapper(deviceContext, batchSize));
+            return cast(new OCLByteArrayWrapper(deviceContext, batchSize, access));
         } else if (kind == JavaKind.Short) {
-            return cast(new OCLShortArrayWrapper(deviceContext, batchSize));
+            return cast(new OCLShortArrayWrapper(deviceContext, batchSize, access));
         } if (kind == JavaKind.Char) {
-            return cast(new OCLCharArrayWrapper(deviceContext, batchSize));
+            return cast(new OCLCharArrayWrapper(deviceContext, batchSize, access));
         } if (kind == JavaKind.Int) {
-            return cast(new OCLIntArrayWrapper(deviceContext, batchSize));
+            return cast(new OCLIntArrayWrapper(deviceContext, batchSize, access));
         } else if (kind == JavaKind.Float) {
-            return cast(new OCLFloatArrayWrapper(deviceContext, batchSize));
+            return cast(new OCLFloatArrayWrapper(deviceContext, batchSize, access));
         } else if (kind == JavaKind.Long) {
-            return cast(new OCLLongArrayWrapper(deviceContext, batchSize));
+            return cast(new OCLLongArrayWrapper(deviceContext, batchSize, access));
         } else if (kind == JavaKind.Double) {
-            return cast(new OCLDoubleArrayWrapper(deviceContext, batchSize));
+            return cast(new OCLDoubleArrayWrapper(deviceContext, batchSize, access));
         } else {
             TornadoInternalError.shouldNotReachHere("Expecting an array type");
             return null;
@@ -344,6 +347,6 @@ public class OCLVectorWrapper implements XPUBuffer {
 
     @Override
     public long deallocate() {
-        return deviceContext.getBufferProvider().deallocate();
+        return deviceContext.getBufferProvider().deallocate(access);
     }
 }

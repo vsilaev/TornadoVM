@@ -27,16 +27,18 @@ import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 
 import jdk.vm.ci.meta.JavaKind;
+
+import uk.ac.manchester.tornado.api.common.Access;
 import uk.ac.manchester.tornado.drivers.opencl.OCLDeviceContext;
 
 public class OCLIntArrayWrapper extends OCLArrayWrapper<int[]> {
 
-    public OCLIntArrayWrapper(OCLDeviceContext device, long batchSize) {
-        super(device, JavaKind.Int, batchSize);
+    public OCLIntArrayWrapper(OCLDeviceContext device, long batchSize, Access access) {
+        super(device, JavaKind.Int, batchSize, access);
     }
 
-    protected OCLIntArrayWrapper(int[] array, final OCLDeviceContext device, long batchSize) {
-        super(array, device, JavaKind.Int, batchSize);
+    protected OCLIntArrayWrapper(int[] array, final OCLDeviceContext device, long batchSize, Access access) {
+        super(array, device, JavaKind.Int, batchSize, access);
     }
 
     @Override

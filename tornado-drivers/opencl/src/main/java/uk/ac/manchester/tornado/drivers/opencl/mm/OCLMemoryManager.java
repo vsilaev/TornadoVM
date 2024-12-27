@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import uk.ac.manchester.tornado.api.common.Access;
 import uk.ac.manchester.tornado.api.memory.TornadoMemoryProvider;
 import uk.ac.manchester.tornado.api.memory.XPUBuffer;
 import uk.ac.manchester.tornado.drivers.opencl.OCLDeviceContext;
@@ -70,8 +71,8 @@ public class OCLMemoryManager implements TornadoMemoryProvider {
         }
     }
 
-    public XPUBuffer createAtomicsBuffer(final int[] array) {
-        return new AtomicsBuffer(array, deviceContext);
+    public XPUBuffer createAtomicsBuffer(final int[] array, Access access) {
+        return new AtomicsBuffer(array, deviceContext, access);
     }
 
     /**

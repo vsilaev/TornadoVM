@@ -30,6 +30,7 @@ import net.tascalate.memory.BucketSizer;
 import net.tascalate.memory.MemoryResourceHandler;
 import net.tascalate.memory.MemoryResourcePool;
 import uk.ac.manchester.tornado.api.TornadoDeviceContext;
+import uk.ac.manchester.tornado.api.common.Access;
 import uk.ac.manchester.tornado.api.exceptions.TornadoOutOfMemoryException;
 import uk.ac.manchester.tornado.runtime.common.TornadoOptions;
 
@@ -49,25 +50,15 @@ public abstract class TornadoBufferProvider {
 
 
     protected final TornadoDeviceContext deviceContext;
-    private final MemoryResourcePool<Long> deviceMemoryPool;
+    private final Map<Access, MemoryResourcePool<Long>> deviceMemoryPools = new ConcurrentHashMap<>();
     
     protected TornadoBufferProvider(TornadoDeviceContext deviceContext) {
-        long currentMemoryAvailable = TornadoOptions.DEVICE_AVAILABLE_MEMORY;
-
         this.deviceContext = deviceContext;
-        // There is no way of querying the available memory on the device.
-        // Instead, use a flag similar to -Xmx.
-        this.deviceMemoryPool = new MemoryResourcePool<>(
-            new DeviceMemoryHandler(), currentMemoryAvailable, currentMemoryAvailable,
-            BucketSizer.exponential(2).withMinCapacity(512).withAlignment(64)
-        );
     }
 
-    protected abstract long allocateBuffer(long size);
+    protected abstract long allocateBuffer(long size, Access access);
 
     protected abstract void releaseBuffer(long buffer);
-
-
 
     /**
      * Method that finds a suitable buffer for a requested buffer size. If a free
@@ -81,7 +72,8 @@ public abstract class TornadoBufferProvider {
      * @throws {@link
      *     TornadoOutOfMemoryException}
      */
-    public long getOrAllocateBufferWithSize(long sizeInBytes) {
+    public long getOrAllocateBufferWithSize(long sizeInBytes, Access access) {
+        var deviceMemoryPool = deviceMemoryPool(access);
         try {
             return deviceMemoryPool.acquire(sizeInBytes, 15, TimeUnit.SECONDS);
         } catch (InterruptedException ex) {
@@ -96,8 +88,8 @@ public abstract class TornadoBufferProvider {
      * Removes the buffer from the {@link #usedBuffers} list and add it to
      * the @{@link #freeBuffers} list.
      */
-    public void markBufferReleased(long buffer) {
-        deviceMemoryPool.release(buffer);
+    public void markBufferReleased(long buffer, Access access) {
+        deviceMemoryPool(access).release(buffer);
     }
 
 
@@ -108,16 +100,16 @@ public abstract class TornadoBufferProvider {
      *     Number of free buffers.
      * @return boolean.
      */
-    public boolean isNumFreeBuffersAvailable(int numBuffers) {
-        return deviceMemoryPool.availableCapacity() >= numBuffers;
+    public boolean isNumFreeBuffersAvailable(int numBuffers, Access access) {
+        return deviceMemoryPool(access).availableCapacity() >= numBuffers;
     }
 
     @Deprecated
-    public void resetBuffers() {
+    public void resetBuffers(Access access) {
         //freeBuffers(DEVICE_AVAILABLE_MEMORY);
     }
 
-    public long deallocate() {
+    public long deallocate(Access access) {
         /*
         // Attempts to free buffers of given size.
         long spaceDeallocated = 0;
@@ -134,15 +126,31 @@ public abstract class TornadoBufferProvider {
     }
     
     public void close() {
-        deviceMemoryPool.close();
+        deviceMemoryPools.values().forEach(p -> p.close());
+    }
+
+    private MemoryResourcePool<Long> deviceMemoryPool(Access access) {
+        long currentMemoryAvailable = TornadoOptions.DEVICE_AVAILABLE_MEMORY;
+        return deviceMemoryPools.computeIfAbsent(access, a -> 
+           // There is no way of querying the available memory on the device.
+           // Instead, use a flag similar to -Xmx.
+           new MemoryResourcePool<>(
+               new DeviceMemoryHandler(a), currentMemoryAvailable, currentMemoryAvailable,
+               BucketSizer.exponential(2).withMinCapacity(512).withAlignment(64)
+       ));
     }
     
     class DeviceMemoryHandler implements MemoryResourceHandler<Long> {
         private final Map<Long, Long> ptr2capacity = new ConcurrentHashMap<>();
+        private final Access access;
+
+        DeviceMemoryHandler(Access access) {
+            this.access = access;
+        }
         
         @Override
         public Long create(long capacity) {
-            Long ptr = allocateBuffer(capacity);
+            Long ptr = allocateBuffer(capacity, access);
             Long prev = ptr2capacity.put(ptr, capacity);
             assert prev == null;
             return ptr;

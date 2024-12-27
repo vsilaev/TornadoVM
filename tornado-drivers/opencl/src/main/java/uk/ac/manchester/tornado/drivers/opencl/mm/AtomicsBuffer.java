@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import uk.ac.manchester.tornado.api.common.Access;
 import uk.ac.manchester.tornado.api.exceptions.TornadoMemoryException;
 import uk.ac.manchester.tornado.api.exceptions.TornadoOutOfMemoryException;
 import uk.ac.manchester.tornado.api.exceptions.TornadoRuntimeException;
@@ -41,10 +42,12 @@ public class AtomicsBuffer implements XPUBuffer {
     private static final int OFFSET = 0;
     private final OCLDeviceContext deviceContext;
     private long setSubRegionSize;
+    private Access access;
 
-    public AtomicsBuffer(int[] arr, OCLDeviceContext deviceContext) {
+    public AtomicsBuffer(int[] arr, OCLDeviceContext deviceContext, Access access) {
         this.deviceContext = deviceContext;
         this.atomicsList = arr;
+        this.access = access;
         deviceContext.getMemoryManager().allocateAtomicRegion();
     }
 
@@ -116,7 +119,7 @@ public class AtomicsBuffer implements XPUBuffer {
     }
 
     @Override
-    public void allocate(Object reference, long batchSize) throws TornadoOutOfMemoryException, TornadoMemoryException {
+    public void allocate(Object reference, long batchSize, Access access) throws TornadoOutOfMemoryException, TornadoMemoryException {
         deviceContext.getMemoryManager().allocateAtomicRegion();
     }
 
@@ -152,7 +155,7 @@ public class AtomicsBuffer implements XPUBuffer {
 
     @Override
     public long deallocate() {
-        return deviceContext.getBufferProvider().deallocate();
+        return deviceContext.getBufferProvider().deallocate(access);
     }
 
     private static int div(long a, int b) {
