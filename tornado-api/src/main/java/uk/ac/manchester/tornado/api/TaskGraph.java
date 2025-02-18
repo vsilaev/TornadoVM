@@ -872,6 +872,10 @@ public class TaskGraph implements TaskGraphInterface {
         return taskGraphImpl.getCurrentDeviceMemoryUsage();
     }
 
+    void mapOnDeviceMemoryRegion(Object destArray, Object srcArray, long offset, TornadoTaskGraphInterface taskGraphSrc) {
+        taskGraphImpl.mapOnDeviceMemoryRegion(destArray, srcArray, offset, taskGraphSrc);
+    }
+
     private String checkTaskName(String id) {
         if (taskNames.contains(id)) {
             throw new TornadoTaskRuntimeException(ERROR_TASK_NAME_DUPLICATION);

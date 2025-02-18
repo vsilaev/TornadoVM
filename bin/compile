@@ -300,7 +300,7 @@ def build_tornadovm(args, backend_profiles):
         CompletedProcess: Result of the Maven build process.
     """
     try:
-        process = ["mvn", "-T1.5C"]
+        process = ["mvn", "-T1.5C", "-Dstyle.color=always"]
         if os.name == 'nt':
             process = ["bash"] + process
             isWinCmdOrBat = True

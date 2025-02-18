@@ -29,6 +29,7 @@ import java.nio.CharBuffer;
 import jdk.vm.ci.meta.JavaKind;
 import uk.ac.manchester.tornado.api.common.Access;
 import uk.ac.manchester.tornado.drivers.opencl.OCLDeviceContext;
+import uk.ac.manchester.tornado.drivers.opencl.graal.lir.OCLKind;
 
 public class OCLCharArrayWrapper extends OCLArrayWrapper<char[]> {
 
@@ -65,6 +66,11 @@ public class OCLCharArrayWrapper extends OCLArrayWrapper<char[]> {
         ByteBuffer offHeapBuffer = deviceContext.newDirectByteBuffer(bytes);
         offHeapBuffer.asCharBuffer().put(onHeapBuffer);        
         return deviceContext.enqueueWriteBuffer(executionPlanId, bufferId, offset, bytes, offHeapBuffer, waitEvents, true);
+    }
+
+    @Override
+    public int getSizeOfType() {
+        return OCLKind.CHAR.getSizeInBytes();
     }
 
 }

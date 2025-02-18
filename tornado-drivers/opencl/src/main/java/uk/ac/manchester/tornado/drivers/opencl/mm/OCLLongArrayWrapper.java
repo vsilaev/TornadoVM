@@ -27,9 +27,9 @@ import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
 
 import jdk.vm.ci.meta.JavaKind;
-
 import uk.ac.manchester.tornado.api.common.Access;
 import uk.ac.manchester.tornado.drivers.opencl.OCLDeviceContext;
+import uk.ac.manchester.tornado.drivers.opencl.graal.lir.OCLKind;
 
 public class OCLLongArrayWrapper extends OCLArrayWrapper<long[]> {
 
@@ -66,6 +66,11 @@ public class OCLLongArrayWrapper extends OCLArrayWrapper<long[]> {
         ByteBuffer offHeapBuffer = deviceContext.newDirectByteBuffer(bytes);
         offHeapBuffer.asLongBuffer().put(onHeapBuffer);
         return deviceContext.enqueueWriteBuffer(executionPlanId, bufferId, offset, bytes, offHeapBuffer, waitEvents, true);
+    }
+
+    @Override
+    public int getSizeOfType() {
+        return OCLKind.LONG.getSizeInBytes();
     }
 
 }

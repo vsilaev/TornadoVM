@@ -128,6 +128,11 @@ public class TimeProfiler implements TornadoProfiler {
     }
 
     @Override
+    public void setTimer(ProfilerType type, long time) {
+        profilerTime.put(type, time);
+    }
+    
+    @Override
     public long getSize(ProfilerType type) {
         // for all tasks in the task graph, accumulate the size
         Set<String> strings = taskSizeMetrics.keySet();
@@ -147,11 +152,6 @@ public class TimeProfiler implements TornadoProfiler {
     }
 
     @Override
-    public void setTimer(ProfilerType type, long time) {
-        profilerTime.put(type, time);
-    }
-    
-    @Override
     public void setTaskTimer(ProfilerType type, String taskName, long time) {
         Map<ProfilerType, Long> profiledType = taskTimers.computeIfAbsent(taskName, NEW_SAFE_MAP_LONG);
         profiledType.put(type, time);
@@ -161,6 +161,19 @@ public class TimeProfiler implements TornadoProfiler {
     public synchronized void setTaskPowerUsage(ProfilerType type, String taskName, long power) {
         Map<ProfilerType, String> profiledType = taskPowerMetrics.computeIfAbsent(taskName, NEW_SAFE_MAP_STRING);
         profiledType.put(type, power > 0 ? Long.toString(power) : "n/a");
+    }
+
+
+    @Override
+    public void setSystemPowerConsumption(ProfilerType type, String taskName, long powerConsumption) {
+        Map<ProfilerType, String> profiledType = taskPowerMetrics.computeIfAbsent(taskName, NEW_SAFE_MAP_STRING);
+        profiledType.put(type, powerConsumption > 0 ? Long.toString(powerConsumption) : "n/a");
+    }
+
+    @Override
+    public void setSystemVoltage(ProfilerType type, String taskName, long voltage) {
+        Map<ProfilerType, String> profiledType = taskPowerMetrics.computeIfAbsent(taskName, NEW_SAFE_MAP_STRING);
+        profiledType.put(type, voltage > 0 ? Long.toString(voltage) : "n/a");
     }
 
     @Override

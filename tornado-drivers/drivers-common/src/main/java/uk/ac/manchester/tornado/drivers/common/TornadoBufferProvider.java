@@ -95,7 +95,7 @@ public abstract class TornadoBufferProvider {
 
     /**
      * Function that returns true if the there are, at least numBuffers available in the free list.
-     * 
+     *
      * @param numBuffers
      *     Number of free buffers.
      * @return boolean.
@@ -124,7 +124,7 @@ public abstract class TornadoBufferProvider {
         */
         return 0;
     }
-    
+
     public void close() {
         deviceMemoryPools.values().forEach(p -> p.close());
     }
@@ -147,7 +147,7 @@ public abstract class TornadoBufferProvider {
         DeviceMemoryHandler(Access access) {
             this.access = access;
         }
-        
+
         @Override
         public Long create(long capacity) {
             Long ptr = allocateBuffer(capacity, access);
@@ -168,6 +168,6 @@ public abstract class TornadoBufferProvider {
             Long size = ptr2capacity.get(ptr);
             assert ptr != null;
             return size.longValue();
-        }        
+        }
     }
 }

@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2020-2022, APT Group, Department of Computer Science,
+ * Copyright (c) 2020-2022, 2025, APT Group, Department of Computer Science,
  * School of Engineering, The University of Manchester. All rights reserved.
  * Copyright (c) 2013-2020, APT Group, Department of Computer Science,
  * The University of Manchester. All rights reserved.
@@ -88,15 +88,15 @@ JNIEXPORT jobject JNICALL Java_uk_ac_manchester_tornado_drivers_opencl_OCLContex
 (JNIEnv *env, jclass clazz, jlong context_id, jlong flags, jlong size, jlong host_ptr) {
     cl_mem mem;
     cl_int status;
-	if (host_ptr == 0) {
+    if (host_ptr == 0) {
         mem = clCreateBuffer((cl_context) context_id, (cl_mem_flags) flags, (size_t) size, NULL, &status);
-	} else {
-	    mem = clCreateBuffer((cl_context) context_id, (cl_mem_flags) flags, (size_t) size, (void *) host_ptr, &status);
-	}
-	LOG_OCL_AND_VALIDATE("clCreateBuffer", status);
+    } else {
+        mem = clCreateBuffer((cl_context) context_id, (cl_mem_flags) flags, (size_t) size, (void *) host_ptr, &status);
+    }
+    LOG_OCL_AND_VALIDATE("clCreateBuffer", status);
     return env->NewObject(JCL_UK_AC_MANCHESTER_TORNADO_DRIVERS_OPENCL_OCLCONTEXT_OCLBUFFERRESULT,
-    		              JM_UK_AC_MANCHESTER_TORNADO_DRIVERS_OPENCL_OCLCONTEXT_OCLBUFFERRESULT_NEW,
-						  (jlong) mem, (jlong) host_ptr, (jint) status);
+    	                  JM_UK_AC_MANCHESTER_TORNADO_DRIVERS_OPENCL_OCLCONTEXT_OCLBUFFERRESULT_NEW,
+                          reinterpret_cast<jlong>(mem), host_ptr, (jint) status);
 }
 
 /*
