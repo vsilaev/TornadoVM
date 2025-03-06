@@ -587,7 +587,7 @@ public class OCLTornadoDevice implements TornadoXPUDevice {
                 bufferProvider.resetBuffers(access);
             }
         }
-        long allocatedSpace = 0;
+        long allocatedSpace = 0L;
         for (int i = 0; i < objects.length; i++) {
             logger.debug("Allocate object %s with access: %s", objects[i], accesses[i]);
             allocatedSpace += allocate(objects[i], batchSize, states[i], accesses[i]);
@@ -624,7 +624,7 @@ public class OCLTornadoDevice implements TornadoXPUDevice {
 
     @Override
     public synchronized long deallocate(DeviceBufferState deviceBufferState) {
-        long deallocatedSpace = 0;
+        long deallocatedSpace = 0L;
         if (deviceBufferState.isLockedBuffer()) {
             return deallocatedSpace;
         }

@@ -32,6 +32,7 @@ import java.util.BitSet;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import uk.ac.manchester.tornado.api.GridScheduler;
@@ -82,6 +83,7 @@ public class TornadoVMInterpreter {
 
     private final HashMap<Object, Access> objectAccesses;
     private final List<Object> objects;
+    private final List<Object> persistentObjects;
 
     private final DataObjectState[] dataObjectStates;
     private final KernelStackFrame[] kernelStackFrame;
@@ -94,9 +96,9 @@ public class TornadoVMInterpreter {
     private final List<SchedulableTask> taskExecutionContexts;
     private final List<SchedulableTask> localTaskList;
 
-    private TornadoProfiler timeProfiler;
     private final TornadoExecutionContext graphExecutionContext;
     private final TornadoVMBytecodeResult bytecodeResult;
+    private TornadoProfiler timeProfiler;
     private double totalTime;
     private long invocations;
     private boolean finishedWarmup;
@@ -149,6 +151,7 @@ public class TornadoVMInterpreter {
         logger.debug("created %d event lists", events.length);
         objectAccesses = graphExecutionContext.getObjectsAccesses();
         objects = graphExecutionContext.getObjects();
+        persistentObjects = graphExecutionContext.getPersistedObjects();
         dataObjectStates = new DataObjectState[objects.size()];
         fetchGlobalStates();
 
@@ -328,6 +331,15 @@ public class TornadoVMInterpreter {
                     continue;
                 }
                 executeDependency(tornadoVMBytecodeList, lastEvents, eventList);
+            } else if (op == TornadoVMBytecodes.ON_DEVICE.value()) {
+                final int objectIndex = bytecodeResult.getInt();
+                final int eventList = bytecodeResult.getInt();
+                final long offset = bytecodeResult.getLong();
+                final long sizeBatch = bytecodeResult.getLong();
+                if (isWarmup) {
+                    continue;
+                }
+                lastEvents = executeOnDevice(tornadoVMBytecodeList, objectIndex, offset, eventList, sizeBatch, waitList(eventList));
             } else if (op == TornadoVMBytecodes.BARRIER.value()) {
                 final int eventList = bytecodeResult.getInt();
                 if (isWarmup) {
@@ -383,23 +395,60 @@ public class TornadoVMInterpreter {
         }
     }
 
+    /**
+     * Checks if the given object exists in the persistent task objects map in
+     * order to prevent excess allocations.
+     *
+     * @param object
+     *     The object to search for in the persistent tasks
+     * @return true if the object is found in any persistent task, otherwise false
+     */
+    private boolean isPersistentObject(Object object) {
+        if (graphExecutionContext == null || object == null) {
+            return false;
+        }
+
+        return graphExecutionContext.getPersistedTaskToObjectsMap()
+                .values()
+                .stream()
+                .filter(Objects::nonNull)
+                .anyMatch(taskObjects -> taskObjects.contains(object));
+    }
+
     private List<Integer> executeAlloc(StringBuilder tornadoVMBytecodeList, int[] args, long sizeBatch) {
+        final int persistentObjects = graphExecutionContext.getPersistedTaskToObjectsMap().values().stream()
+                .filter(Objects::nonNull)
+                .mapToInt(List::size)
+                .sum();
 
-        Object[] objects = new Object[args.length];
-        Access[] accesses = new Access[args.length];
-        XPUDeviceBufferState[] objectStates = new XPUDeviceBufferState[args.length];
-        for (int i = 0; i < objects.length; i++) {
-            objects[i] = this.objects.get(args[i]);
-            objectStates[i] = resolveObjectState(args[i]);
-            accesses[i] = this.objectAccesses.get(objects[i]);
+        int objectsToAlloc = args.length - persistentObjects; // alloc is only performed on new objects
+        Object[] objects = new Object[objectsToAlloc];
+        Access[] accesses = new Access[objectsToAlloc];
+        XPUDeviceBufferState[] objectStates = new XPUDeviceBufferState[objectsToAlloc];
 
-            if (TornadoOptions.PRINT_BYTECODES) {
-                String verbose = String.format("bc: %s%s on %s, size=%d", InterpreterUtilities.debugHighLightBC("ALLOC"), objects[i], InterpreterUtilities.debugDeviceBC(interpreterDevice), sizeBatch);
-                tornadoVMBytecodeList.append(verbose).append("\n");
+        int allocCounter = 0;
+        long preAllocatedSizes = 0L;
+
+        for (int arg : args) {
+            Object persistentObj = this.objects.get(arg);
+            if (!isPersistentObject(persistentObj)) {
+                objects[allocCounter] = this.objects.get(arg);
+                objectStates[allocCounter] = resolveObjectState(arg);
+                accesses[allocCounter] = this.objectAccesses.get(objects[allocCounter]);
+
+                if (TornadoOptions.PRINT_BYTECODES) {
+                    String verbose = String.format("bc: %s%s on %s, size=%d", InterpreterUtilities.debugHighLightBC("ALLOC"), objects[allocCounter],
+                            InterpreterUtilities.debugDeviceBC(interpreterDevice), sizeBatch);
+                    tornadoVMBytecodeList.append(verbose).append("\n");
+                }
+                allocCounter++;
+            } else {
+                preAllocatedSizes += resolveObjectState(arg).getXPUBuffer().size();
             }
         }
 
-        long allocationsTotalSize = interpreterDevice.allocateObjects(objects, sizeBatch, objectStates, accesses);
+        // total size of objects pre-allocated and current allocation
+        long allocationsTotalSize = interpreterDevice.allocateObjects(objects, sizeBatch, objectStates, accesses) + preAllocatedSizes;
         graphExecutionContext.setCurrentDeviceMemoryUsage(allocationsTotalSize);
 
         if (TornadoOptions.isProfilerEnabled()) {
@@ -424,6 +473,21 @@ public class TornadoVMInterpreter {
         long spaceDeallocated = interpreterDevice.deallocate(objectState);
         // Update current device area use
         graphExecutionContext.setCurrentDeviceMemoryUsage(graphExecutionContext.getCurrentDeviceMemoryUsage() - spaceDeallocated);
+        return Collections.emptyList();
+    }
+
+    private List<Integer> executeOnDevice(StringBuilder tornadoVMBytecodeList, final int objectIndex, final long offset, final int eventList, final long sizeBatch, final int[] waitList) {
+        Object object = objects.get(objectIndex);
+
+        if (TornadoOptions.PRINT_BYTECODES) {
+
+            String verbose = String.format("bc: %s[0x%x] %s on %s", InterpreterUtilities.debugHighLightBC("ON_DEVICE_BUFFER"), object.hashCode(), object, InterpreterUtilities.debugDeviceBC(
+                    interpreterDevice));
+            tornadoVMBytecodeList.append(verbose).append("\n");
+        }
+        /*
+        resetEventIndexes(eventList);
+        */ 
         return Collections.emptyList();
     }
 
@@ -846,13 +910,11 @@ public class TornadoVMInterpreter {
     }
 
     /**
-     * Converts a global task index to a corresponding local task index within the
-     * local task list. This is inorder to preserve the original task list.
+     * Converts a global task index to a corresponding local task index within the local task list. This is inorder to preserve the original task list.
      *
      * @param taskIndex
      *     The global task index to convert.
-     * @return The corresponding local task index, or 0 if the task is not found in
-     *     the local task list.
+     * @return The corresponding local task index, or 0 if the task is not found in the local task list.
      */
     private int globalToLocalTaskIndex(int taskIndex) {
         Object task = taskExecutionContexts.get(taskIndex); 
