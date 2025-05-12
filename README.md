@@ -1,6 +1,6 @@
 # TornadoVM
 
-![TornadoVM version](https://img.shields.io/badge/version-1.0.10-purple)  [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-1.4-4baaaa.svg)](CODE_OF_CONDUCT.md)  [![License: Apache 2](https://img.shields.io/badge/License-Apache%202.0-red.svg)](https://github.com/beehive-lab/TornadoVM/blob/master/LICENSE_APACHE2) [![License: GPL v2](https://img.shields.io/badge/License-GPL%20V2%20Classpth%20Exeception-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
+![TornadoVM version](https://img.shields.io/badge/version-1.1.0-purple)  [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-1.4-4baaaa.svg)](CODE_OF_CONDUCT.md)  [![License: Apache 2](https://img.shields.io/badge/License-Apache%202.0-red.svg)](https://github.com/beehive-lab/TornadoVM/blob/master/LICENSE_APACHE2) [![License: GPL v2](https://img.shields.io/badge/License-GPL%20V2%20Classpth%20Exeception-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
 
 <img align="left" width="250" height="250" src="etc/tornadoVM_Logo.jpg">
 
@@ -20,7 +20,7 @@ Developers can choose which backends to install and run.
 
 For a quick introduction please read the following [FAQ](https://tornadovm.readthedocs.io/en/latest/).
 
-**Latest Release:** TornadoVM 1.0.10 - 31/01/2025 :
+**Latest Release:** TornadoVM 1.1.0 - 31/03/2025 :
 See [CHANGELOG](https://tornadovm.readthedocs.io/en/latest/CHANGELOG.html).
 
 ----------------------
@@ -261,12 +261,12 @@ You can import the TornadoVM API by setting this the following dependency in the
 <dependency>
     <groupId>tornado</groupId>
     <artifactId>tornado-api</artifactId>
-    <version>1.0.10</version>
+    <version>1.1.0</version>
 </dependency>
 <dependency>
     <groupId>tornado</groupId>
     <artifactId>tornado-matrices</artifactId>
-    <version>1.0.10</version>
+    <version>1.1.0</version>
 </dependency>
 </dependencies>
 ```
@@ -326,8 +326,8 @@ Selected publications can be found [here](https://tornadovm.readthedocs.io/en/la
 This work is partially funded by [Intel corporation](https://www.intel.com/content/www/us/en/homepage.html).
 In addition, it has been supported by the following EU & UKRI grants (most recent first):
 
-- EU Horizon Europe & UKRI [AERO 101092850](https://cordis.europa.eu/project/id/101092850).
-- EU Horizon Europe & UKRI [INCODE 101093069](https://cordis.europa.eu/project/id/101093069).
+- EU Horizon Europe & UKRI [AERO 101092850](https://aero-project.eu/).
+- EU Horizon Europe & UKRI [P2CODE 101093069](https://p2code-project.eu/).
 - EU Horizon Europe & UKRI [ENCRYPT 101070670](https://encrypt-project.eu).
 - EU Horizon Europe & UKRI [TANGO 101070052](https://tango-project.eu).
 - EU Horizon 2020 [ELEGANT 957286](https://www.elegant-h2020.eu/).

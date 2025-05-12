@@ -59,7 +59,7 @@ import uk.ac.manchester.tornado.runtime.common.TornadoLogger;
 import uk.ac.manchester.tornado.runtime.utils.TornadoUtils;
 
 // FIXME <REFACTOR> This class can be common for the three backends.
-public class SPIRVXPUBuffer implements XPUBuffer {
+public class SPIRVFieldBuffer implements XPUBuffer {
 
     private static final int BYTES_OBJECT_REFERENCE = 8;
     private final HotSpotResolvedJavaType resolvedType;
@@ -76,7 +76,7 @@ public class SPIRVXPUBuffer implements XPUBuffer {
     private final TornadoLogger logger;
     private final Access access;
 
-    public SPIRVXPUBuffer(final SPIRVDeviceContext deviceContext, Object object, Access access) {
+    public SPIRVFieldBuffer(final SPIRVDeviceContext deviceContext, Object object, Access access) {
         this.objectType = object.getClass();
         this.deviceContext = deviceContext;
         this.logger = new TornadoLogger(this.getClass());
@@ -157,7 +157,7 @@ public class SPIRVXPUBuffer implements XPUBuffer {
             } else if (field.getJavaKind().isObject()) {
                 // We capture the field by the scope definition of the input
                 // lambda expression
-                wrappedField = new SPIRVXPUBuffer(deviceContext, TornadoUtils.getObjectFromField(reflectedField, object), access);
+                wrappedField = new SPIRVFieldBuffer(deviceContext, TornadoUtils.getObjectFromField(reflectedField, object), access);
             }
 
             if (wrappedField != null) {

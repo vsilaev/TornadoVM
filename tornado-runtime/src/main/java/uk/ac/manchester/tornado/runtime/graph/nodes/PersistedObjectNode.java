@@ -27,10 +27,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class OnDeviceObjectNode extends ContextOpNode {
+public class PersistedObjectNode extends ContextOpNode{
     private ObjectNode value;
 
-    public OnDeviceObjectNode(ContextNode context) {
+    public PersistedObjectNode(ContextNode context) {
         super(context);
     }
 
@@ -45,9 +45,9 @@ public class OnDeviceObjectNode extends ContextOpNode {
     @Override
     public String toString() {
         if (value == null) {
-            return String.format("[%d]: on-device object (value not set)", id);
+            return String.format("[%d]: persist on-device object (value not set)", id);
         } else {
-            return String.format("[%d]: on-device object %d", id, value.getIndex());
+            return String.format("[%d]: persist object %d on-device", id, value.getIndex());
         }
     }
 
