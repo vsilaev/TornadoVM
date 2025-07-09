@@ -20,14 +20,7 @@ package uk.ac.manchester.tornado.api.exceptions;
 public class TornadoDeviceFP64NotSupported extends RuntimeException {
     private static final long serialVersionUID = 1L;
     
-    private final String message;
-
     public TornadoDeviceFP64NotSupported(final String msg) {
-        message = msg;
-    }
-
-    @Override
-    public String getMessage() {
-        return message;
+        super(msg);
     }
 }

@@ -85,7 +85,6 @@ class ReduceTaskGraph {
     private static final String OPERATION_NOT_SUPPORTED_MESSAGE = "Operation not supported";
     private static final String SEQUENTIAL_TASK_REDUCE_NAME = "reduce_seq";
 
-    private static final String TASK_GRAPH_PREFIX = "XXX__GENERATED_REDUCE";
     private static final int DEFAULT_GPU_WORK_GROUP = 256;
     private static final AtomicInteger counterName = new AtomicInteger(0);
     private static final AtomicInteger counterSeqName = new AtomicInteger(0);
@@ -436,7 +435,7 @@ class ReduceTaskGraph {
 
         Map<Integer, MetaReduceTasks> tableReduce = metaReduceTable.getTable();
 
-        String taskScheduleReduceName = TASK_GRAPH_PREFIX + counterName.getAndIncrement();
+        String taskScheduleReduceName = TornadoTaskGraph.GENERATED_TASK_GRAPH_PREFIX + counterName.getAndIncrement();
         String tsName = owner.meta().getId();
 
         Map<Integer, List<Object>> streamReduceTable = new HashMap<>();

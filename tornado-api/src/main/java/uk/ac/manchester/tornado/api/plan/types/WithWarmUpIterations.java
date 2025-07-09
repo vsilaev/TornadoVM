@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2023, APT Group, Department of Computer Science,
+ * Copyright (c) 2025, APT Group, Department of Computer Science,
  * The University of Manchester.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,21 +15,23 @@
  * limitations under the License.
  *
  */
-package uk.ac.manchester.tornado.api.exceptions;
+package uk.ac.manchester.tornado.api.plan.types;
 
-import java.io.Serial;
+import uk.ac.manchester.tornado.api.ExecutionPlanType;
+import uk.ac.manchester.tornado.api.TornadoExecutionPlan;
 
-public class TornadoFailureException extends RuntimeException {
+public final class WithWarmUpIterations extends ExecutionPlanType {
 
-    @Serial
-    private static final long serialVersionUID = -7515308573010965892L;
+    private final long iterations;
 
-    public TornadoFailureException(final String msg) {
-        super(msg);
+    public WithWarmUpIterations(TornadoExecutionPlan parentNode, long iterations) {
+        super(parentNode);
+        this.iterations = iterations;
     }
 
-    public TornadoFailureException(Exception e) {
-        super(e);
+    @Override
+    public String toString() {
+        return super.toString() + "\n -> withWarmUpIterations( " + iterations + " ms)";
     }
 
 }

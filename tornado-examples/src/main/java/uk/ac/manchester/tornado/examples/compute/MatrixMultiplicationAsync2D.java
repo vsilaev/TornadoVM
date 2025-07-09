@@ -80,7 +80,7 @@ public class MatrixMultiplicationAsync2D {
         //@formatter:on
         ImmutableTaskGraph immutableTaskGraph = t.snapshot();
         TornadoExecutionPlan executor = new TornadoExecutionPlan(immutableTaskGraph);
-        executor.withWarmUp();
+        executor.withPreCompilation();
 
         double flops = 2 * Math.pow(size, 3);
 

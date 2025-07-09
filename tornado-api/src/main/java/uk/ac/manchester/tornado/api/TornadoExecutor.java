@@ -22,7 +22,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import uk.ac.manchester.tornado.api.common.TornadoDevice;
 import uk.ac.manchester.tornado.api.enums.TornadoVMBackendType;
@@ -77,8 +79,8 @@ class TornadoExecutor {
         }
     }
 
-    void warmup(ExecutorFrame executorFrame) {
-        immutableTaskGraphList.forEach(immutableTaskGraph -> immutableTaskGraph.warmup(executorFrame));
+    void withPreCompilation(ExecutorFrame executorFrame) {
+        immutableTaskGraphList.forEach(immutableTaskGraph -> immutableTaskGraph.withPreCompilation(executorFrame));
     }
 
     void withBatch(String batchSize) {
@@ -336,4 +338,45 @@ class TornadoExecutor {
         }
         return false;
     }
+
+    public void withWarmUpTime(long milliseconds, ExecutorFrame executorFrame) throws InterruptedException {
+        AtomicBoolean run = new AtomicBoolean(true);
+
+        // If iterations takes more than the specified amount of milliseconds,
+        // the next run is stopped. This means that the amount if milliseconds
+        // specified is "at least" the time that the warm-up will take.
+        Thread warmUpThread = new Thread(() -> {
+            while (run.get()) {
+                runForWarmUp(executorFrame);
+            }
+        });
+
+        Thread controllerThread = new Thread(() -> {
+            try {
+                Thread.sleep(milliseconds);
+            } catch (InterruptedException e) {
+                throw new TornadoRuntimeException(e);
+            }
+            run.set(false);
+        });
+        warmUpThread.start();
+        controllerThread.start();
+
+        warmUpThread.join();
+        controllerThread.join();
+    }
+
+    private void runForWarmUp(ExecutorFrame executorFrame) {
+        immutableTaskGraphList.forEach(immutableTaskGraph -> {
+            immutableTaskGraph.execute(executorFrame);
+            // Update state for all task-graphs within the execution plan
+            ImmutableTaskGraph last = immutableTaskGraphList.getLast();
+            immutableTaskGraphList.forEach(itg -> itg.setLastExecutedTaskGraph(last));
+        });
+    }
+
+    public void withWarmUpIterations(int iterations, ExecutorFrame executorFrame) {
+        IntStream.range(0, iterations).forEach(iteration -> runForWarmUp(executorFrame));
+    }
+
 }

@@ -59,8 +59,8 @@ public class ImmutableTaskGraph {
                              .thenApply(v -> this);
     }
 
-    void warmup(ExecutorFrame executionPackage) {
-        taskGraph.warmup(executionPackage);
+    void withPreCompilation(ExecutorFrame executionPackage) {
+        taskGraph.withPreCompilation(executionPackage);
     }
 
     void withDevice(TornadoDevice device) {
