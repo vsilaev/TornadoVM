@@ -26,14 +26,15 @@ package uk.ac.manchester.tornado.drivers.opencl.runtime;
 import uk.ac.manchester.tornado.api.common.Access;
 import uk.ac.manchester.tornado.drivers.common.TornadoBufferProvider;
 import uk.ac.manchester.tornado.drivers.opencl.OCLContext;
+import uk.ac.manchester.tornado.drivers.opencl.OCLDeviceContext;
 import uk.ac.manchester.tornado.drivers.opencl.enums.OCLMemFlags;
 
 public class OCLBufferProvider extends TornadoBufferProvider {
 
     private final OCLContext context;
     
-    public OCLBufferProvider(OCLContext context) {
-        super(null);
+    public OCLBufferProvider(OCLDeviceContext deviceContext, OCLContext context) {
+        super(deviceContext);
         this.context = context;
     }
 

@@ -56,6 +56,7 @@ import uk.ac.manchester.tornado.drivers.opencl.graal.compiler.OCLCompilationResu
 import uk.ac.manchester.tornado.drivers.opencl.mm.OCLMemoryManager;
 import uk.ac.manchester.tornado.drivers.opencl.power.OCLEmptyPowerMetricHandler;
 import uk.ac.manchester.tornado.drivers.opencl.power.OCLNvidiaPowerMetricHandler;
+import uk.ac.manchester.tornado.drivers.opencl.runtime.OCLBufferProvider;
 import uk.ac.manchester.tornado.drivers.opencl.runtime.OCLTornadoDevice;
 import uk.ac.manchester.tornado.runtime.common.TornadoOptions;
 import uk.ac.manchester.tornado.runtime.tasks.meta.TaskDataContext;
@@ -74,6 +75,7 @@ public class OCLDeviceContext implements OCLDeviceContextInterface {
     private final Map<Long, OCLEventPool> oclEventPool;
     private boolean wasReset;
     private final Set<Long> executionIDs;
+    private final TornadoBufferProvider bufferProvider;
 
     /**
      * Map table to represent the compiled-code per execution plan. Each entry in the execution plan has its own
@@ -95,6 +97,7 @@ public class OCLDeviceContext implements OCLDeviceContextInterface {
         } else {
             this.powerMetricHandler = new OCLEmptyPowerMetricHandler();
         }
+        this.bufferProvider = new OCLBufferProvider(this, context);
         codeCache = new ConcurrentHashMap<>();
     }
 
@@ -151,7 +154,7 @@ public class OCLDeviceContext implements OCLDeviceContextInterface {
 
     @Override
     public TornadoBufferProvider getBufferProvider() {
-        return context.bufferProvider();
+        return bufferProvider;
     }
 
     @Override
