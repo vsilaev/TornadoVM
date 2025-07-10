@@ -66,13 +66,13 @@ public abstract class TornadoBufferProvider {
     public static final String YELLOW = "\u001B[33m";
     private static final String OUT_OF_MEMORY_MESSAGE = YELLOW + "\n\tTo increase the maximum device memory, use -Dtornado.device.memory=<X>GB\n" + RESET;
     
-    private final Map<Access, MemoryResourcePool<Long>> deviceMemoryPools = new ConcurrentHashMap<>();
+    private final Map<Access, MemoryResourcePool<BufferContainer>> deviceMemoryPools = new ConcurrentHashMap<>();
     
     protected TornadoBufferProvider(TornadoDeviceContext deviceContext) {
         this.deviceContext = deviceContext;
         this.usedBuffers = initializeBufferHashMap();
         this.freeBuffers = initializeBufferHashMap();
-        currentMemoryAvailable = TornadoOptions.DEVICE_AVAILABLE_MEMORY;
+        currentMemoryAvailable = deviceMaxAllocationSize();
     }
     
     private static Map<Access, List<BufferContainer>> initializeBufferHashMap() {
@@ -116,8 +116,8 @@ public abstract class TornadoBufferProvider {
     protected abstract long allocateBuffer(long size, Access access);
     protected abstract void releaseBuffer(long buffer);
 
-    protected long doAllocateBuffer(long size, Access access) {
-        MemoryResourcePool<Long> deviceMemoryPool = deviceMemoryPool(access);
+    protected BufferContainer doAllocateBuffer(long size, Access access) {
+        MemoryResourcePool<BufferContainer> deviceMemoryPool = deviceMemoryPool(access);
         try {
             return deviceMemoryPool.acquire(size, 15, TimeUnit.SECONDS);
         } catch (InterruptedException ex) {
@@ -129,14 +129,13 @@ public abstract class TornadoBufferProvider {
 
     }
 
-    protected void doReleaseBuffer(long buffer, Access access) {
-        deviceMemoryPool(access).release(buffer);
+    protected void doReleaseBuffer(BufferContainer bc, Access access) {
+        deviceMemoryPool(access).release(bc);
     }
 
     private synchronized long allocate(long size, Access access) {
-        long buffer = doAllocateBuffer(size, access);
+        BufferContainer bufferInfo = doAllocateBuffer(size, access);
         currentMemoryAvailable -= size;
-        BufferContainer bufferInfo = new BufferContainer(buffer, size, access);
         usedBuffers.get(access).add(bufferInfo);
         logger.debug("Buffer %s has been allocated and included in the usedBuffers list with access: %s", bufferInfo, access);
         return bufferInfo.buffer;
@@ -150,7 +149,7 @@ public abstract class TornadoBufferProvider {
             TornadoInternalError.guarantee(!usedBuffers.get(access).contains(bufferInfo), "This buffer should not be used");
             remainingSize -= bufferInfo.size;
             currentMemoryAvailable += bufferInfo.size;
-            doReleaseBuffer(bufferInfo.buffer, access);
+            doReleaseBuffer(bufferInfo, access);
         }
     }
 
@@ -162,7 +161,7 @@ public abstract class TornadoBufferProvider {
             TornadoInternalError.guarantee(!usedBuffers.get(access).contains(bufferInfo), "This buffer should not be used");
             currentMemoryAvailable += bufferInfo.size;
             spaceDeallocated += bufferInfo.size;
-            doReleaseBuffer(bufferInfo.buffer, access);
+            doReleaseBuffer(bufferInfo, access);
         }
         return spaceDeallocated;
     }
@@ -226,11 +225,11 @@ public abstract class TornadoBufferProvider {
      *     TornadoOutOfMemoryException}
      */
     public synchronized long getOrAllocateBufferWithSize(long sizeInBytes, Access access) {
-        TornadoTargetDevice device = deviceContext.getDevice();
-        if (sizeInBytes <= currentMemoryAvailable && sizeInBytes < device.getDeviceMaxAllocationSize()) {
+        long deviceMaxAllocationSize = deviceMaxAllocationSize();
+        if (sizeInBytes <= currentMemoryAvailable && sizeInBytes < deviceMaxAllocationSize) {
             // Allocate if there is enough device memory.
             return allocate(sizeInBytes, access);
-        } else if (sizeInBytes < device.getDeviceMaxAllocationSize()) {
+        } else if (sizeInBytes < deviceMaxAllocationSize) {
             int minBufferIndex = bufferIndexOfAFreeSpace(sizeInBytes, access);
             // If a buffer was found, mark it as used and return it.
             if (minBufferIndex != -1) {
@@ -280,7 +279,16 @@ public abstract class TornadoBufferProvider {
         freeBuffers(DEVICE_AVAILABLE_MEMORY, access);
     }
 
-    private record BufferContainer(long buffer, long size, Access access) {
+    static final class BufferContainer {
+        final long buffer;
+        final long capacity; 
+
+        long size;
+        
+        BufferContainer(long buffer, long capacity) {
+            this.buffer = buffer;
+            this.capacity = capacity;
+        }
 
         @Override
         public boolean equals(Object object) {
@@ -302,21 +310,24 @@ public abstract class TornadoBufferProvider {
     public void close() {
         deviceMemoryPools.values().forEach(p -> p.close());
     }
-
-    private MemoryResourcePool<Long> deviceMemoryPool(Access access) {
+    
+    private long deviceMaxAllocationSize() {
         TornadoTargetDevice device = deviceContext.getDevice();
-        long currentMemoryAvailable = device.getDeviceMaxAllocationSize(); //TornadoOptions.DEVICE_AVAILABLE_MEMORY;
+        return device.getDeviceMaxAllocationSize(); //TornadoOptions.DEVICE_AVAILABLE_MEMORY;
+    }
+
+    private MemoryResourcePool<BufferContainer> deviceMemoryPool(Access access) {
+        long deviceMaxAllocationSize = deviceMaxAllocationSize();
         return deviceMemoryPools.computeIfAbsent(access, a -> 
            // There is no way of querying the available memory on the device.
            // Instead, use a flag similar to -Xmx.
            new MemoryResourcePool<>(
-               new DeviceMemoryHandler(a), currentMemoryAvailable, currentMemoryAvailable,
-               BucketSizer.exponential(2).withMinCapacity(512).withAlignment(64)
+               new DeviceMemoryHandler(a), deviceMaxAllocationSize, deviceMaxAllocationSize,
+               BucketSizer.exponential(2).withMinCapacity(256).withAlignment(64)
        ));
     }
     
-    class DeviceMemoryHandler implements MemoryResourceHandler<Long> {
-        private final Map<Long, Long> ptr2capacity = new ConcurrentHashMap<>();
+    class DeviceMemoryHandler implements MemoryResourceHandler<BufferContainer> {
         private final Access access;
 
         DeviceMemoryHandler(Access access) {
@@ -324,25 +335,27 @@ public abstract class TornadoBufferProvider {
         }
 
         @Override
-        public Long create(long capacity) {
+        public BufferContainer create(long capacity) {
             Long ptr = allocateBuffer(capacity, access);
-            Long prev = ptr2capacity.put(ptr, capacity);
-            assert prev == null;
-            return ptr;
+            return new BufferContainer(ptr, capacity);
         }
         
         @Override
-        public void destroy(Long ptr) {
-            Long size = ptr2capacity.remove(ptr);
-            assert size != null;
-            releaseBuffer(ptr);
+        public void setup(BufferContainer bc, long size, boolean afterCreate) {
+            //if (afterCreate) {
+                //assert bc.size == 0;
+                bc.size = size;
+            //}
         }
         
         @Override
-        public long capacityOf(Long ptr) {
-            Long size = ptr2capacity.get(ptr);
-            assert ptr != null;
-            return size.longValue();
+        public void destroy(BufferContainer bc) {
+            releaseBuffer(bc.buffer);
+        }
+        
+        @Override
+        public long capacityOf(BufferContainer bc) {
+            return bc.capacity;
         }
     }
 }
