@@ -119,7 +119,7 @@ public abstract class TornadoBufferProvider {
     protected BufferContainer doAllocateBuffer(long size, Access access) {
         MemoryResourcePool<BufferContainer> deviceMemoryPool = deviceMemoryPool(access);
         try {
-            return deviceMemoryPool.acquire(size, 15, TimeUnit.SECONDS);
+            return deviceMemoryPool.acquire(size, 5, TimeUnit.MINUTES);
         } catch (InterruptedException ex) {
             throw new TornadoOutOfMemoryException(
                 "Unable to allocate " + size + 
@@ -205,11 +205,15 @@ public abstract class TornadoBufferProvider {
      */
     private synchronized long freeUnusedNativeBufferAndAssignRegion(long sizeInBytes, Access access) {
         freeBuffers(sizeInBytes, access);
+        // pool uses a blocking wait, so other parallel thread will reclaim the memory and we will go on
+        return allocate(sizeInBytes, access);
+        /*
         if (sizeInBytes <= currentMemoryAvailable) {
             return allocate(sizeInBytes, access);
         } else {
             throw new TornadoOutOfMemoryException("Unable to allocate " + sizeInBytes + " bytes of memory." + OUT_OF_MEMORY_MESSAGE);
         }
+        */
     }
 
     /**
@@ -313,7 +317,8 @@ public abstract class TornadoBufferProvider {
     
     private long deviceMaxAllocationSize() {
         TornadoTargetDevice device = deviceContext.getDevice();
-        return device.getDeviceMaxAllocationSize(); //TornadoOptions.DEVICE_AVAILABLE_MEMORY;
+        long result = device.getDeviceMaxAllocationSize(); 
+        return result > 0 ? result : TornadoOptions.DEVICE_AVAILABLE_MEMORY;
     }
 
     private MemoryResourcePool<BufferContainer> deviceMemoryPool(Access access) {
@@ -342,10 +347,7 @@ public abstract class TornadoBufferProvider {
         
         @Override
         public void setup(BufferContainer bc, long size, boolean afterCreate) {
-            //if (afterCreate) {
-                //assert bc.size == 0;
-                bc.size = size;
-            //}
+            bc.size = size;
         }
         
         @Override
